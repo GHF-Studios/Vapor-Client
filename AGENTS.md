@@ -50,7 +50,7 @@ When the user asks what is available, asks to begin, or supplies no specific
 task, respond as a thin interactive menu:
 
 ```text
-VAPOR-ROOT
+VAPOR-CLIENT
 intake: <short state> · atomized: <short state> · active: <short state>
 
 [1] <valid action>
@@ -94,7 +94,7 @@ Use these interaction states:
 When useful, show a short breadcrumb instead of repeating a full header:
 
 ```text
-VAPOR-ROOT / <workstream> / <state>
+VAPOR-CLIENT / <workstream> / <state>
 ```
 
 Depend on the interface for real choices: do not bury a blocking question,
@@ -263,7 +263,7 @@ After completing a task, report the concrete state change and show only compact
 continuation controls appropriate to the live workstream. For example:
 
 ```text
-VAPOR-ROOT / <workstream> / checkpoint
+VAPOR-CLIENT / <workstream> / checkpoint
 <one-line result>
 
 [C] Continue this workstream

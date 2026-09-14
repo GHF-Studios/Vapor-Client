@@ -32,10 +32,10 @@ RustRover already having a valid project model.
 SuperWorkspace/
   SuperWorkspace.vapor.toml
   sources/
-    Vapor-Root/
+    Vapor-Client/
     Loo-Cast/
     Vapor-Registry/
-    Vapor-Server-Root/
+    Vapor-Platform-Server/
   .idea/
 ```
 

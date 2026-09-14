@@ -102,7 +102,7 @@ struct SourcePreset {
 
 const SOURCE_PRESETS: &[SourcePreset] = &[
     SourcePreset {
-        name: "Vapor-Root",
+        name: "Vapor-Client",
         role: "app-source-root",
         remote: "https://github.com/GHF-Studios/Vapor-Client.git",
         branch: "main",
@@ -120,7 +120,7 @@ const SOURCE_PRESETS: &[SourcePreset] = &[
         branch: "main",
     },
     SourcePreset {
-        name: "Vapor-Server-Root",
+        name: "Vapor-Platform-Server",
         role: "server-orchestration",
         remote: "https://github.com/GHF-Studios/Vapor-Platform-Server.git",
         branch: "main",
@@ -139,9 +139,11 @@ const GENERATED_RUN_CONFIGURATION_STEMS: &[&str] = &[
     "00_Setup_Install_Developer_Tools",
     "10_Sources_Check_Source_Checkout",
     "10_Sources_Clone_Vapor_Root",
+    "10_Sources_Clone_Vapor_Client",
     "10_Sources_Clone_Loo_Cast",
     "10_Sources_Clone_Vapor_Registry",
     "10_Sources_Clone_Vapor_Server_Root",
+    "10_Sources_Clone_Vapor_Platform_Server",
     "10_Sources_Create_Basic_Content_Workspace",
     "20_Run_Open_Vapor_Shell",
     "20_Run_Check_App_Binaries",

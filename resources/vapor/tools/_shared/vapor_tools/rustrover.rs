@@ -216,7 +216,7 @@ fn verify_rustrover_setup(
     )?;
     checks.push("shim cargo accepts rustup-style +toolchain directives".to_owned());
 
-    let launcher_manifest = "sources/Vapor-Root/Vapor-Launcher/Cargo.toml";
+    let launcher_manifest = "sources/Vapor-Client/Vapor-Launcher/Cargo.toml";
     if super_root.join(launcher_manifest).is_file() {
         let launcher_metadata =
             cargo_metadata_no_deps(super_root, &toolchain_shim.cargo, launcher_manifest)?;
@@ -237,7 +237,7 @@ fn verify_rustrover_setup(
         checks.push("launcher source not mounted; skipped launcher metadata check".to_owned());
     }
 
-    let shell_manifest = "sources/Vapor-Root/Vapor-Shell/Cargo.toml";
+    let shell_manifest = "sources/Vapor-Client/Vapor-Shell/Cargo.toml";
     if super_root.join(shell_manifest).is_file() {
         let shell_metadata =
             cargo_metadata_no_deps(super_root, &toolchain_shim.cargo, shell_manifest)?;
@@ -432,12 +432,12 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             command: "source-status",
         },
         RunConfiguration {
-            name: "Clone source: Vapor Root",
+            name: "Clone source: Vapor Client",
             folder: "10 Sources",
-            file_stem: "10_Sources_Clone_Vapor_Root",
+            file_stem: "10_Sources_Clone_Vapor_Client",
             kind: Konsole,
             working_directory: ".",
-            command: "source-clone:Vapor-Root",
+            command: "source-clone:Vapor-Client",
         },
         RunConfiguration {
             name: "Clone source: Loo-Cast",
@@ -456,12 +456,12 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             command: "source-clone:Vapor-Registry",
         },
         RunConfiguration {
-            name: "Clone source: Vapor Server Root",
+            name: "Clone source: Vapor Platform Server",
             folder: "10 Sources",
-            file_stem: "10_Sources_Clone_Vapor_Server_Root",
+            file_stem: "10_Sources_Clone_Vapor_Platform_Server",
             kind: Konsole,
             working_directory: ".",
-            command: "source-clone:Vapor-Server-Root",
+            command: "source-clone:Vapor-Platform-Server",
         },
         RunConfiguration {
             name: "Create basic content workspace",
