@@ -84,6 +84,9 @@ case "$launch_target" in
             echo "Update or reinstall the app on the selected Steam branch, then try again."
             exit 127
         fi
+        if [ "$#" -eq 0 ]; then
+            run_command "$installer" install
+        fi
         run_command "$installer" "$@"
         ;;
 esac
@@ -101,7 +104,7 @@ fi
 installer_log="$app_root/.vapor/logs/installer.log"
 clear_bootstrap_failure
 if [ -x "$installer" ]; then
-    if "$installer" --quiet install --app-root "$app_root"; then
+    if "$installer" install; then
         :
     else
         installer_status=$?

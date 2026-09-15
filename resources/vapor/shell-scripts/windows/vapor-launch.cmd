@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 
-set "TARGET=x86_64-pc-windows-gnullvm"
+set "TARGET=x86_64-pc-windows-msvc"
 
 set "SCRIPT_DIR=%~dp0"
 pushd "%SCRIPT_DIR%\.." >nul 2>nul
@@ -75,7 +75,7 @@ call :write_bootstrap_failure "vapor-installer is missing for %TARGET%"
 goto installer_bootstrap_done
 
 :run_installer_bootstrap
-"%INSTALLER%" --quiet install --app-root "%APP_ROOT%"
+"%INSTALLER%" install
 if errorlevel 1 goto installer_bootstrap_failed
 goto installer_bootstrap_done
 
@@ -92,7 +92,11 @@ goto command
 
 :installer
 if not exist "%INSTALLER%" goto missing_installer
-"%INSTALLER%" %FORWARD_ARGS%
+if defined FORWARD_ARGS (
+    "%INSTALLER%" %FORWARD_ARGS%
+) else (
+    "%INSTALLER%" install
+)
 set "STATUS=%ERRORLEVEL%"
 goto done
 
