@@ -8,9 +8,9 @@ use std::{
 };
 
 pub const APP_ROOT_ENV: &str = "LOO_CAST_APP_ROOT";
-pub const SUPER_MANIFEST: &str = "SuperWorkspace.vapor.toml";
+pub const SUPER_MANIFEST: &str = "Superworkspace.vapor.toml";
 pub const APP_MANIFEST: &str = "App.vapor.toml";
-pub const APP_SOURCE_MANIFEST: &str = "App-Source.vapor.toml";
+pub const APP_SOURCE_MANIFEST: &str = "Vapor-Client.vapor.toml";
 pub const STEAM_APP_ID: &str = "2122620";
 pub const STEAM_APP_DIR_NAME: &str = "Loo Cast";
 pub const RUST_TOOLCHAIN: &str = "1.97.0";
