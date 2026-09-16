@@ -15,6 +15,7 @@ repository = "https://github.com/GHF-Studios/Vapor-Client"
 [root.steam]
 app-id = 2122620
 development-branch = "vapor-dev"
+build-account = "ghf_vapor_build"
 
 [root.steam.depots.common]
 id = 2122621
