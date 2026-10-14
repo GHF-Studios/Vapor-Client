@@ -216,20 +216,19 @@ fn verify_rustrover_setup(
     )?;
     checks.push("shim cargo accepts rustup-style +toolchain directives".to_owned());
 
-    let launcher_manifest = "sources/Vapor-Client/Vapor-Launcher/Cargo.toml";
+    let launcher_manifest = "sources/Vapor-Client/Vapor-Studio/Cargo.toml";
     if super_root.join(launcher_manifest).is_file() {
         let launcher_metadata =
             cargo_metadata_no_deps(super_root, &toolchain_shim.cargo, launcher_manifest)?;
         require_metadata_names(
-            "Vapor-Launcher",
+            "Vapor-Studio",
             &launcher_metadata,
             &[
-                "vapor_launcher_cli",
-                "vapor_launcher_core",
+                "vapor_studio_ui",
                 "vapor_core",
-                "clap",
-                "dialoguer",
-                "owo-colors",
+                "vapor_devtools",
+                "vapor_sdk_core",
+                "eframe",
             ],
         )?;
         checks.push("shim cargo metadata sees launcher registry and path dependencies".to_owned());
@@ -237,14 +236,20 @@ fn verify_rustrover_setup(
         checks.push("launcher source not mounted; skipped launcher metadata check".to_owned());
     }
 
-    let shell_manifest = "sources/Vapor-Client/Vapor-Shell/Cargo.toml";
+    let shell_manifest = "sources/Vapor-Client/Vapor-CLI/Cargo.toml";
     if super_root.join(shell_manifest).is_file() {
         let shell_metadata =
             cargo_metadata_no_deps(super_root, &toolchain_shim.cargo, shell_manifest)?;
         require_metadata_names(
-            "Vapor-Shell",
+            "Vapor-CLI",
             &shell_metadata,
-            &["vapor_shell", "clap", "clap-repl"],
+            &[
+                "vapor_shell",
+                "vapor_sdk_cli",
+                "vapor_sdk_core",
+                "clap",
+                "clap-repl",
+            ],
         )?;
         checks.push("shim cargo metadata sees shell workspace dependencies".to_owned());
     } else {
@@ -312,7 +317,8 @@ fn verify_app_root_centered_run_configurations(idea: &Path, app_root: &Path) -> 
             || xml.contains("$PROJECT_DIR$/tools")
             || xml.contains(".idea/vapor-run")
             || xml.contains("cargo run --package vapor_shell")
-            || xml.contains("cargo run --package vapor_launcher_cli")
+            || xml.contains("cargo run --package vapor_studio_ui")
+            || xml.contains("cargo run --package vapor_sdk_cli")
         {
             return Err(format!(
                 "{} still depends on source-local tools, rust-script, or generated workflow scripts",

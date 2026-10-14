@@ -1,6 +1,6 @@
 # Vapor Repository Boundaries and Frontends
 
-**Status:** Draft for owner review
+**Status:** Owner-approved; local migration in progress
 **Goal:** Reshape the Vapor repositories around shared capabilities, two frontends, and separate Studio and Installer products without losing current authored work or Steam launch stability.
 
 ## Owner decisions captured
@@ -82,9 +82,9 @@ Shared behavior has one implementation in Vapor. Frontends submit equivalent typ
 
 ## Preservation and release constraints
 
-The current parent and affected submodules contain uncommitted changes. A local recovery snapshot has been created at `/tmp/vapor-repo-boundary-preserve-20261014T123835Z`, including HEAD identifiers, binary tracked diffs from HEAD, working-tree status, and archives of untracked files. No current changes have been committed or pushed. Do not overwrite or discard those changes during migration.
+The parent and affected submodules were committed locally with scoped messages before migration. A recovery snapshot remains at `/tmp/vapor-repo-boundary-preserve-20261014T123835Z`, including HEAD identifiers, binary tracked diffs from HEAD, working-tree status, and archives of untracked files. The local commits have not been pushed.
 
-Repository renames, repository creation, and submodule pointer changes occur only after source migration is reviewable and the relevant Vapor-managed verification passes. Steam launch-option edits, deployment, and publishing are outside this repository-boundary change.
+Local checkout and submodule-path renames have begun. GitHub repository renames, creation, archive, and pushes are pending because the saved GitHub CLI token is invalid. Steam launch-option values remain unchanged. No build, test, deploy, Steam launch, or publish has been performed for this migration.
 
 ## Review points
 

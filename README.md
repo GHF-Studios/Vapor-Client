@@ -45,9 +45,9 @@ root publish --account ACCOUNT --yes
   content, not app/depot source.
 
 The current Shell command model is documented in
-[`Vapor-Shell/crates/vapor_shell/docs/commands.md`](Vapor-Shell/crates/vapor_shell/docs/commands.md).
+[`Vapor-CLI/crates/vapor_shell/docs/commands.md`](Vapor-CLI/crates/vapor_shell/docs/commands.md).
 The product model behind it is in
-[`product-topology.md`](Vapor-Shell/crates/vapor_shell/docs/design/product-topology.md).
+[`product-topology.md`](Vapor-CLI/crates/vapor_shell/docs/design/product-topology.md).
 
 ## Repository Checkouts
 
@@ -59,10 +59,11 @@ git submodule update --init --recursive
 
 Key checkouts:
 
-- [`Vapor-Shell`](Vapor-Shell/) — installed shell and command model.
-- [`Vapor-Entrypoint`](Vapor-Entrypoint/) — Steam-facing terminal entrypoint.
-- [`Vapor-SDK`](Vapor-SDK/) — SDK surface.
-- [`Vapor-Launcher`](Vapor-Launcher/) — launcher surface.
+- [`Vapor-CLI`](Vapor-CLI/) — terminal facade.
+- [`Vapor-GUI`](Vapor-GUI/) — graphical app host.
+- [`Vapor-Installer`](Vapor-Installer/) — bootstrap and recovery installer.
+- [`Vapor-Steam-Entrypoint`](Vapor-Steam-Entrypoint/) — Steam-facing entrypoint.
+- [`Vapor-Studio`](Vapor-Studio/) — Studio product UI.
 - [`Vapor`](Vapor/) — core application workspace.
 - [`Vapor-Examples`](Vapor-Examples/) — examples when present.
 
@@ -84,7 +85,7 @@ provider scripts but perform no upload. Real Workshop create, publish, and
 delete operations remain manual authority-changing actions.
 
 See
-[`Vapor-Shell/crates/vapor_shell/docs/content.md`](Vapor-Shell/crates/vapor_shell/docs/content.md)
+[`Vapor-CLI/crates/vapor_shell/docs/content.md`](Vapor-CLI/crates/vapor_shell/docs/content.md)
 for layout, receipts, fingerprints, and repair behavior.
 
 ## Setup And Recovery

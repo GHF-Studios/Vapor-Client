@@ -330,8 +330,11 @@ pub fn ide_run_main() -> Result<(), String> {
             require_executable(&vapor, "app-local Vapor shell")?;
             require_executable(&installer, "app-local Vapor installer")?;
             require_executable(&entrypoint, "app-local Vapor entrypoint")?;
+            let gui = app_bin_dir.join(executable("vapor-gui"));
+            require_executable(&gui, "app-local Vapor GUI")?;
             println!("App-local binaries:");
             println!("  vapor:           {}", vapor.display());
+            println!("  vapor-gui:       {}", gui.display());
             println!("  vapor-installer: {}", installer.display());
             println!("  vapor-entrypoint: {}", entrypoint.display());
             println!();

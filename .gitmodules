@@ -1,21 +1,21 @@
 [submodule "Vapor"]
 	path = Vapor
 	url = https://github.com/GHF-Studios/Vapor
-[submodule "Vapor-SDK"]
-	path = Vapor-SDK
-	url = https://github.com/GHF-Studios/Vapor-SDK
-[submodule "Vapor-Launcher"]
-	path = Vapor-Launcher
-	url = https://github.com/GHF-Studios/Vapor-Launcher
-[submodule "Vapor-Shell"]
-	path = Vapor-Shell
-	url = https://github.com/GHF-Studios/Vapor-Shell
+[submodule "Vapor-GUI"]
+	path = Vapor-GUI
+	url = https://github.com/GHF-Studios/Vapor-GUI
+[submodule "Vapor-Studio"]
+	path = Vapor-Studio
+	url = https://github.com/GHF-Studios/Vapor-Studio
+[submodule "Vapor-CLI"]
+	path = Vapor-CLI
+	url = https://github.com/GHF-Studios/Vapor-CLI
 [submodule "Vapor-Examples"]
 	path = Vapor-Examples
 	url = https://github.com/GHF-Studios/Vapor-Examples
 [submodule "Vapor-Installer"]
 	path = Vapor-Installer
 	url = https://github.com/GHF-Studios/Vapor-Installer
-[submodule "Vapor-Entrypoint"]
-	path = Vapor-Entrypoint
-	url = https://github.com/GHF-Studios/Vapor-Entrypoint
+[submodule "Vapor-Steam-Entrypoint"]
+	path = Vapor-Steam-Entrypoint
+	url = https://github.com/GHF-Studios/Vapor-Steam-Entrypoint

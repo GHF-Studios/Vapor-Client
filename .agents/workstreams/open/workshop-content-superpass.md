@@ -11,10 +11,10 @@
   discovery, shared Vapor operations, Workshop lifecycle, in-game IDE and script
   workbench, Rust-defined content/pack vocabulary, Rhai composition, and app-root
   tool ownership. Preserve completed Workshop work and integrate it into this goal.
-- Path claims: `Vapor-Shell/**`, `Vapor-CLI/**`, `Vapor/crates/**`,
-  `Vapor-GUI/**`, `Vapor-Launcher/**`, `Vapor-Studio/**`, `Vapor-SDK/**`,
-  `Loo-Cast/**` (including `spacetime-engine/src/devtools/script_workbench/**`),
-  `Vapor-Installer/**`, `Vapor-Entrypoint/**`, `Vapor-Steam-Entrypoint/**`,
+- Path claims: `Vapor-CLI/**`, `Vapor/crates/**`, `Vapor-GUI/**`,
+  `Vapor-Studio/**`, `Loo-Cast/**` (including
+  `spacetime-engine/src/devtools/script_workbench/**`), `Vapor-Installer/**`,
+  `Vapor-Steam-Entrypoint/**`,
   `.vapor/launch/**`,
   `resources/vapor/shell-scripts/**`,
   `App-Source.vapor.toml`, `README.md`, `AGENTS.md`,
@@ -22,10 +22,10 @@
   `resources/vapor/tools/**`,
   `.agents/workstreams/open/vapor-studio-launcher-design.md`,
   `docs/superpowers/specs/2026-10-14-vapor-repository-boundaries-design.md`,
-  and this record. Do not claim unrelated local flight
-  changes as part of this workstream. Build/test may run only through Vapor's
-  managed commands at the owning workspace root; no raw Cargo. Deploy, publish,
-  Steam launch, and commit remain explicit owner-controlled actions.
+  and this record. Do not claim unrelated local flight changes as part of this
+  workstream. Build/test may run only through Vapor's managed commands at the
+  owning workspace root; no raw Cargo. Deploy, publish, and Steam launch remain
+  owner-controlled actions.
 
 ## Completed
 
@@ -34,8 +34,22 @@
 - Mapped the owner-approved repository direction: dissolve Vapor-SDK, rename
   Vapor-Shell to Vapor-CLI, Vapor-Launcher to Vapor-Studio, and
   Vapor-Entrypoint to Vapor-Steam-Entrypoint; create Vapor-GUI; and keep
-  Vapor-Installer as a separate product. Drafted the repository-boundary
-  design; no repository or remote mutations have occurred.
+  Vapor-Installer as a separate product. Drafted the repository-boundary design.
+- Committed the pre-existing changes locally in Vapor, Vapor-CLI, Vapor-Studio,
+  Vapor-SDK, Vapor-Steam-Entrypoint, and the parent workspace before migrating.
+- Renamed local submodule checkouts to Vapor-CLI, Vapor-Studio, and
+  Vapor-Steam-Entrypoint; created Vapor-GUI with its own local Git history.
+- Moved the SDK core into Vapor and its CLI adapter into Vapor-CLI, exposing
+  that adapter as `vapor sdk` in the unified terminal process. Removed the
+  duplicate Launcher CLI/core packages from Vapor-Studio.
+- Added Vapor-GUI mode dispatch for Studio, Play, and Installer. Installer UI
+  calls Vapor's managed-state, install, repair, and uninstall operations; the
+  existing `vapor-installer` remains the bootstrap fallback.
+- Routed Steam Entrypoint GUI modes to `vapor-gui`, preserving its binary name
+  and Steam launch-option arguments. Removed Vapor-SDK from the active parent
+  submodule list while retaining its Git history in `.git/modules`.
+- GitHub operations are still pending: the configured CLI token is invalid.
+  No build, test, deployment, Steam launch, or publish was run.
 
 - Read the requested Shell design and command docs.
 - Read Vapor-Root README, AGENTS, planning startup files, and open workstream
@@ -811,8 +825,8 @@
 
 ## Smallest resume action
 
-Review `docs/superpowers/plans/2026-10-14-vapor-repository-boundaries.md`.
-After plan approval, migrate shared capabilities and frontends while preserving
-the earlier `vapor-ide-host` work. Rename/archive/create GitHub repositories
-only after local source migration is reviewable. Builds and tests remain
-deferred for this tranche unless the owner changes that constraint.
+Finish extracting shared Shell services from Vapor-CLI into Vapor, reconcile
+workspace/package manifests and lockfiles, then perform the repository rename,
+Vapor-GUI creation, and Vapor-SDK archive on GitHub after authentication is
+restored. Builds and tests remain deferred unless the owner changes that
+constraint.
