@@ -1,23 +1,41 @@
-# Workstream — Workshop Content Superpass
+# Workstream — Full-Stack Authoring Superpass
 
 - State: foreground
-- Goal: implement and document the SteamUGC/Workshop-backed custom-content
-  stack, using Loo-Cast as the first proving workspace.
-- Ordered successor: return to `source-atomization-raw-info-dump` after a safe
-  implementation checkpoint unless the user redirects.
+- Goal: unify the Vapor Studio launcher, composition management, Workshop,
+  Steam root publishing, in-game IDE, workspace operations, and scripting into
+  one full-stack player/creator pipeline, using Loo-Cast as the proving workspace.
+- Ordered successor: none until the full-stack authoring pipeline reaches a
+  coherent implementation checkpoint; keep this workstream foreground.
 - Depends on: owner direction in the current session.
-- Semantic mutation claim: Vapor-Shell source/content command grammar,
-  Workshop/content lifecycle implementation, Loo-Cast content publication
-  metadata and scripts, Vapor-Root user/agent docs for the shell model, and
-  app-root tool ownership with `vapor-installer` as a launch/legacy shim.
-- Path claims: `Vapor-Shell/crates/vapor_shell/**`, `Loo-Cast/**`,
-  `Vapor-Installer/**`, `Vapor-Entrypoint/**`, `.vapor/launch/**`,
+- Semantic mutation claim: the full authoring path across workspace and content
+  discovery, shared Vapor operations, Workshop lifecycle, in-game IDE and script
+  workbench, Rust-defined content/pack vocabulary, Rhai composition, and app-root
+  tool ownership. Preserve completed Workshop work and integrate it into this goal.
+- Path claims: `Vapor-Shell/**`, `Vapor-CLI/**`, `Vapor/crates/**`,
+  `Vapor-GUI/**`, `Vapor-Launcher/**`, `Vapor-Studio/**`, `Vapor-SDK/**`,
+  `Loo-Cast/**` (including `spacetime-engine/src/devtools/script_workbench/**`),
+  `Vapor-Installer/**`, `Vapor-Entrypoint/**`, `Vapor-Steam-Entrypoint/**`,
+  `.vapor/launch/**`,
+  `resources/vapor/shell-scripts/**`,
   `App-Source.vapor.toml`, `README.md`, `AGENTS.md`,
   `.agents/workstreams/README.md`, `../SuperWorkspace.vapor.toml`,
   `resources/vapor/tools/**`,
-  and this record.
+  `.agents/workstreams/open/vapor-studio-launcher-design.md`,
+  `docs/superpowers/specs/2026-10-14-vapor-repository-boundaries-design.md`,
+  and this record. Do not claim unrelated local flight
+  changes as part of this workstream. Build/test may run only through Vapor's
+  managed commands at the owning workspace root; no raw Cargo. Deploy, publish,
+  Steam launch, and commit remain explicit owner-controlled actions.
 
 ## Completed
+
+- Preserved the current parent and submodule HEADs, tracked diffs, status, and
+  untracked files in `/tmp/vapor-repo-boundary-preserve-20261014T123835Z`.
+- Mapped the owner-approved repository direction: dissolve Vapor-SDK, rename
+  Vapor-Shell to Vapor-CLI, Vapor-Launcher to Vapor-Studio, and
+  Vapor-Entrypoint to Vapor-Steam-Entrypoint; create Vapor-GUI; and keep
+  Vapor-Installer as a separate product. Drafted the repository-boundary
+  design; no repository or remote mutations have occurred.
 
 - Read the requested Shell design and command docs.
 - Read Vapor-Root README, AGENTS, planning startup files, and open workstream
@@ -736,6 +754,15 @@
   boundaries.
 - Raw planning intake capture for Vapor server-root/service repository
   topology and future MCP/ACP capability-surface notes.
+- Corrected the Windows Steam recovery script to select the shipped
+  `x86_64-pc-windows-gnullvm` runtime. Steam staging now rejects launch scripts
+  whose selected target differs from the depot target. Declared the Studio,
+  native entrypoint, and IDE host binaries in their owning Vapor workspaces so
+  the root build can promote them alongside Shell and Installer.
+- Reconciled current launch guides and the Studio workstream record with the
+  four-option Steam menu: Studio (default), Play, Shell, and Installer. Leslie
+  reports the Steamworks launch options are current; the local depot has not
+  been deployed or verified.
 - Initial pushed scaffolds for `Vapor-Server-Root`,
   `Vapor-Homepage-Server`, `Vapor-Docs-Server`,
   `Vapor-Identity-Server`, and `Vapor-Diagnostics-Server`.
@@ -752,19 +779,16 @@
   testing: Windows depot binary availability, app-local setup, target-specific
   runtime outputs, and ABI policy. The example dynamic loader now has a Windows
   implementation, but it has not yet been compiled or run under MSVC.
-- Steam launch options for the runtime depot use native entrypoints: Linux Play
-  executable `bin/x86_64-unknown-linux-gnu/vapor-entrypoint` with argument
-  `play`, Linux Shell the same executable with argument `shell`, Linux
-  Installer the same executable with argument `installer`, Windows Play
-  executable `bin\x86_64-pc-windows-gnullvm\vapor-entrypoint.exe` with
-  argument `play`, Windows Shell the same executable with argument `shell`, and
-  Windows Installer the same executable with argument `installer`. Play/Shell
-  launch targets run quiet `vapor-installer install` first; the Installer
-  launch target opens `vapor-installer` directly. Those wrappers expect
-  `bin/x86_64-unknown-linux-gnu/vapor` and
-  `bin/x86_64-unknown-linux-gnu/vapor-installer`, plus
-  `bin\x86_64-pc-windows-gnullvm\vapor.exe` and
-  `bin\x86_64-pc-windows-gnullvm\vapor-installer.exe` respectively.
+- Steamworks launch options now match the four-option matrix. Linux uses
+  `bin/x86_64-unknown-linux-gnu/vapor-entrypoint` with `studio`, `play`,
+  `shell`, or `installer`; Windows uses
+  `bin\x86_64-pc-windows-gnullvm\vapor-entrypoint.exe` with the same
+  arguments. Studio and Play launch sibling Vapor Studio directly; Play adds
+  `--play`. Shell and Installer use the terminal wrapper; Shell runs player
+  setup before opening Vapor, while Installer opens directly. The local Windows
+  script target mismatch is fixed, but the updated root depot still needs an
+  owner-controlled deploy and Steam launch verification. Builds and tests
+  remain deferred for this tranche.
 - Run the owner-controlled installer install path from a fresh runtime-only depot
   install, open the Vapor and Loo-Cast sources only for development work,
   locally deploy root and selected first-party content, then iterate on the
@@ -787,6 +811,8 @@
 
 ## Smallest resume action
 
-Continue the script-first tooling migration: fold remaining source/app-root
-setup affordances into `../tools`, then do one focused compile/syntax pass before
-any local deploy or publish attempt.
+Review `docs/superpowers/plans/2026-10-14-vapor-repository-boundaries.md`.
+After plan approval, migrate shared capabilities and frontends while preserving
+the earlier `vapor-ide-host` work. Rename/archive/create GitHub repositories
+only after local source migration is reviewable. Builds and tests remain
+deferred for this tranche unless the owner changes that constraint.

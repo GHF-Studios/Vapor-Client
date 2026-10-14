@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 
-set "TARGET=x86_64-pc-windows-msvc"
+set "TARGET=x86_64-pc-windows-gnullvm"
 
 set "SCRIPT_DIR=%~dp0"
 pushd "%SCRIPT_DIR%\.." >nul 2>nul

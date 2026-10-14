@@ -5,7 +5,7 @@ work. The governing behavior lives in [`AGENTS.md`](../../AGENTS.md).
 
 ## Ordered work
 
-1. `workshop-content-superpass` — foreground
+1. `workshop-content-superpass` (Full-Stack Authoring) — foreground
 2. `source-atomization-raw-info-dump` — suspended
 3. corpus atomization under the unchanged global gate
 4. `vapor-shell-exploration` — suspended
@@ -13,7 +13,7 @@ work. The governing behavior lives in [`AGENTS.md`](../../AGENTS.md).
 ## Open workstreams
 
 - [`workshop-content-superpass`](open/workshop-content-superpass.md)
-  — foreground.
+  — Full-Stack Authoring, foreground.
 - [`source-atomization-raw-info-dump`](open/source-atomization-raw-info-dump.md)
   — suspended.
 - [`planning-assertion-representation`](open/planning-assertion-representation.md)
