@@ -737,6 +737,19 @@
   `libsteam_api.so` from the GUI build output. The library still needs to be
   included in final Linux/Windows app depot staging; that shipping path and
   live Steam account behavior have not been exercised.
+- Added target-specific `[workspace.runtime.libraries]` declarations and
+  managed root promotion for runtime support files, then declared the GUI's
+  Linux `libsteam_api.so` and Windows `steam_api64.dll`. Existing platform
+  depot rules copy the full target binary directory, so promoted sidecars flow
+  into the corresponding depot. Added safe portable filename validation and a
+  unit test for traversal and cross-platform duplicate names.
+- The managed metadata inspection resolved all seven app workspaces and the
+  Steam depot graph, but reported no Cargo metadata because the installed Loo
+  Cast app root lacks app-local Rust/Cargo and cross-build tools. `root build
+  --host-only` correctly refused to fall back to another toolchain. No
+  deployment, Steam launch, or publication was performed; the new build/test
+  path remains unverified until a Vapor-managed development toolchain is
+  available.
 - Added `vapor sdk test`, dispatched through the same app-owned pinned Cargo
   toolchain and target cache. Vapor, Vapor-CLI, and Vapor-Studio managed checks
   pass; managed tests pass (Vapor: 26 tests; CLI and Studio currently define no
@@ -868,12 +881,14 @@
 
 ## Smallest resume action
 
-Finish Steamworks runtime distribution: include the staged `libsteam_api.so`
-and `steam_api64.dll` beside their target binaries in app packaging, then verify
-the Windows build on the owner's runtime machine. Next, turn subscription data
-into update/download state and connect remote Workshop search results directly
-to profile-targeted install plans. Live Steam calls require Steam and the app
-account to be available; no such call was run here.
+Run managed CLI checks/tests and root build with an app-local development
+toolchain, then verify that Linux and Windows depot staging contains the
+promoted Steamworks runtime sidecars. The installed Steam app root currently
+lacks Rust/Cargo and cross-build tooling, so compilation and tests did not run
+in this pass. Next, turn subscription data into update/download state and
+connect remote Workshop search results directly to profile-targeted install
+plans. Live Steam calls require Steam and the app account to be available; no
+such call was run here.
 
 ## Release checkpoint
 
