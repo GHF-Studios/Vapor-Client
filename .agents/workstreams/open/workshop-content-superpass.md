@@ -750,6 +750,13 @@
   deployment, Steam launch, or publication was performed; the new build/test
   path remains unverified until a Vapor-managed development toolchain is
   available.
+- Steamworks subscription records now include queried title, description,
+  preview URL, Steam-installed/update/download flags, and byte progress. Studio
+  shows those details, distinguishes Steam's download state from presence in
+  Vapor's local catalog, and refreshes subscription state after subscribe or
+  unsubscribe. The existing import action remains the path from Workshop ID to
+  Vapor cache and composition flow. These changes are source-reviewed but not
+  compiled or tested because the managed development toolchain is absent.
 - Added `vapor sdk test`, dispatched through the same app-owned pinned Cargo
   toolchain and target cache. Vapor, Vapor-CLI, and Vapor-Studio managed checks
   pass; managed tests pass (Vapor: 26 tests; CLI and Studio currently define no
@@ -881,14 +888,14 @@
 
 ## Smallest resume action
 
-Run managed CLI checks/tests and root build with an app-local development
-toolchain, then verify that Linux and Windows depot staging contains the
-promoted Steamworks runtime sidecars. The installed Steam app root currently
-lacks Rust/Cargo and cross-build tooling, so compilation and tests did not run
-in this pass. Next, turn subscription data into update/download state and
-connect remote Workshop search results directly to profile-targeted install
-plans. Live Steam calls require Steam and the app account to be available; no
-such call was run here.
+Run managed CLI/GUI checks and tests plus a root build with a Vapor-managed
+development toolchain, then verify Linux and Windows depot staging contains
+the promoted Steamworks sidecars. The installed Steam app root currently lacks
+Rust/Cargo and cross-build tooling, so the packaging and subscription changes
+remain uncompiled and untested. Next, connect remote Workshop search results
+and subscription imports directly to profile-targeted install plans. Live
+Steam calls require Steam and the app account to be available; no such call was
+run here.
 
 ## Release checkpoint
 
