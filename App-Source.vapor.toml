@@ -1,0 +1,91 @@
+schema = 1
+
+[root]
+name = "vapor-client"
+organization = "ghf-studios"
+version = "0.5.0"
+repository = "https://github.com/GHF-Studios/Vapor-Client"
+
+[root.steam]
+app-id = 2122620
+development-branch = "vapor-dev"
+
+[root.steam.depots.common]
+id = 2122621
+
+[[root.steam.depots.common.include]]
+root = "source"
+from = "App.vapor.toml"
+to = "App.vapor.toml"
+required = true
+
+[[root.steam.depots.common.include]]
+root = "installation"
+from = "docs"
+to = "docs"
+required = true
+
+[[root.steam.depots.common.include]]
+root = "source"
+from = "resources/vapor/vapor-scripts"
+to = "resources/vapor/vapor-scripts"
+required = true
+
+[[root.steam.depots.common.include]]
+root = "source"
+from = "resources/vapor/tools"
+to = "resources/vapor/tools"
+exclude = ["target"]
+required = true
+
+[[root.steam.depots.common.include]]
+root = "source"
+from = "Vapor-Examples"
+to = "examples/vapor-examples"
+exclude = [".git", "target"]
+required = true
+
+[root.steam.depots.linux]
+id = 2122622
+
+[[root.steam.depots.linux.include]]
+root = "source"
+from = "resources/vapor/shell-scripts/linux/vapor-launch.sh"
+to = "bin/vapor-launch.sh"
+required = true
+
+[[root.steam.depots.linux.include]]
+root = "installation"
+from = "bin/x86_64-unknown-linux-gnu"
+to = "bin/x86_64-unknown-linux-gnu"
+target = "x86_64-unknown-linux-gnu"
+required = true
+
+[root.steam.depots.windows]
+id = 2122623
+
+[[root.steam.depots.windows.include]]
+root = "source"
+from = "resources/vapor/shell-scripts/windows/vapor-launch.cmd"
+to = "bin/vapor-launch.cmd"
+required = true
+
+[[root.steam.depots.windows.include]]
+root = "installation"
+from = "bin/x86_64-pc-windows-gnullvm"
+to = "bin/x86_64-pc-windows-gnullvm"
+target = "x86_64-pc-windows-gnullvm"
+required = true
+
+[[root.steam.depots.windows.include]]
+root = "installation"
+from = "bin/x86_64-pc-windows-gnullvm/libunwind.dll"
+to = "bin/x86_64-pc-windows-gnullvm/libunwind.dll"
+target = "x86_64-pc-windows-gnullvm"
+required = true
+
+[root.runtime]
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-gnullvm",
+]
