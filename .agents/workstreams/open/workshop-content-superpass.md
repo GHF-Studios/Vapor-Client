@@ -238,6 +238,21 @@
   the Steam app root and smoked installed `source open`, `metadata`,
   `source status`, `source repair`, and `content list` against the real
   Loo-Cast source.
+- Reworked Vapor Studio into a core/UI boundary with profile, catalog, install
+  planning, operation-center, authoring, and workspace views; added managed
+  content validation, safer content/workspace creation, stale-file conflict
+  detection, explicit editor reload, and a navigable workspace file tree.
+- Source-reading/build/install/stage actions now refuse to run while the editor
+  has unsaved changes, and the UI disables those actions with save/reload
+  guidance. Install planning now recognizes an already-cached root artifact.
+- Workshop discovery remains numeric-ID download only. The Rust `steamworks`
+  crate provides the needed client UGC query and subscription APIs, so a manual
+  SDK-header download is not a prerequisite. The remaining integration work is
+  adding the crate and packaging its required Steam API runtime redistributables
+  for Linux and Windows; SteamCMD remains available for existing acquire and
+  publishing flows.
+- Owner requested no compile or test runs for this Studio tranche; only static
+  diff/whitespace checks are permitted until the owner verifies it locally.
 - Added the first product Play entrypoint as a Vapor Shell one-shot command:
   `launch loo-cast`. Steam launch options should target the platform wrapper
   under `.vapor/launch/<platform>/vapor.*`; Play uses wrapper argument `play`
@@ -615,6 +630,196 @@
   owner-authorized 2026-10-15 commit/push. Existing tracked lockfile changes
   are included and preserved.
 
+## Current Studio pass — 2026-10-15
+
+- Owner approved the full-stack Studio redesign plan and asked to stack work in
+  the existing checkout; compile/test remains deferred to Leslie.
+- Added a `vapor_studio_core` crate for versioned composition profiles,
+  migration/recovery, operation identities, and Shell-backed installation
+  coordination. Reorganized the Studio UI into Home, Discover, Library, Create,
+  Workspace, and secondary Diagnostics destinations with a shared activity area.
+- Added local catalog browsing with exact Packagepack version selection, profile
+  resolution, install/verify/repair actions, a basic workspace file editor, and
+  typed content-manifest creation for Rust-defined content kinds.
+- Added exact-root local resolvers in Vapor Core and exact `id@version` selection
+  to Shell content discovery and installed verification.
+- Moved profile-root resolution, resolved-graph snapshots, and authored content
+  workspace creation into Studio Core. Shell dependency installation now chooses
+  local artifacts that satisfy declared semver requirements and returns each
+  installed version to Studio; it reports when a graph requires two versions of
+  one ID because the current app installation index cannot store both.
+- Added a Studio content-detail action that stages a real Shell package for
+  Workshop review and displays its metadata, dependency declarations, payload
+  file list, target, size, and fingerprint. It does not upload.
+- Editor transitions now preserve unsaved text by blocking profile/workspace
+  switches. This is an initial vertical slice, not the completed Studio product.
+- Leslie delegated the provider decision: use Steamworks UGC in the GUI process
+  for catalog queries and subscription state/actions, while keeping local content
+  available without Steam. The repository currently has no Steamworks client
+  binding or packaged redistributable integration; this provider remains a major
+  implementation task. Official `ISteamUGC` exposes query APIs and subscribed-item
+  state/actions: https://partner.steamgames.com/doc/api/isteamugc?language=english
+- Remaining material gaps: per-profile side-by-side installed versions, remote
+  Steamworks UGC catalog and subscriptions, update flow, resolution previews
+  from cache before install, templates and workspace creation, real operation
+  progress/cancellation, Workshop stage/review/publish UI, and Linux/Windows
+  smoke tests.
+- Cached Packagepack installation now enforces declared semver requirements
+  for enabled installed dependencies and compatible source/cache fallbacks; it
+  reports when no compatible version exists. Side-by-side versions remain
+  blocked by Shell's ID-keyed installed index.
+- Studio content creation now opens the generated `Vapor.toml` directly in the
+  workspace editor, keeping the source workspace selected and moving the user
+  from creation into editing without a second operation.
+- Studio installation records now query Shell's app-owned index for every
+  exact node in the resolved local composition. Verification checks each exact
+  graph node, and the Library exposes the engine/game roles, resolved content
+  versions, install count, and repair state without Rust debug formatting.
+  Disabled graph nodes are rejected as an incomplete install result.
+- Shell now owns a verified installed-Packagepack graph and launch plan. Studio's
+  installed Play path uses that service with profile arguments, and never
+  changes Shell's global Packagepack selection. Engine launch paths are checked
+  as regular in-root runtime binaries before execution.
+- Studio install, verify, and repair now persist the graph Shell actually
+  installed, including optional Game absence. Profiles retain their workspace
+  association; source profiles install from that workspace, while Workshop and
+  app-seeded profiles can install from Vapor's cache without depending on the
+  currently open folder.
+- Workshop cache records retain exact versions and accept exact `id@version`
+  selectors. Studio Discover now exposes direct public PublishedFileId download
+  through Shell's app-owned cache and only offers Packagepacks as profile roots.
+  Steamworks UGC search/subscriptions remain unavailable because no client SDK
+  binding or redistributable exists in the shipped stack.
+- Steam Play mode now starts the saved profile, or resolves the app's declared
+  `default` Packagepack seed when the profile has no root, then installs from
+  cache/seed and launches through Shell. The shipped `App.vapor.toml` declares
+  that default seed; the editable `App-Source.vapor.toml` does not.
+- A focused repository search confirmed there is still no Steamworks client
+  binding or `ISteamUGC` implementation in the shipped Vapor repositories.
+  Keep the Studio Workshop screen recoverable/local-capable until the required
+  client SDK binding and redistributable packaging are implemented.
+- Replaced Studio's local-content discovery path with Vapor Shell's registered
+  source catalog, and routed source validation and exact-profile Play through
+  Shell. Removed Studio Core's unused competing local-composition resolver and
+  its now-unneeded semver/TOML dependencies.
+- Added Shell-owned role-specific source project creation. Studio Create now
+  writes the matching role manifest, registers it in `Workspace.vapor.toml`,
+  opens that manifest in the editor, and asks Shell for the compatible child
+  roles. Game creation can select its required Engine dependency.
+- Workspace changes now remain drafts until explicitly opened. Shell validates
+  the candidate before Studio changes the active profile, so an invalid path
+  does not discard the current composition. Home routes Play through the source
+  or installed profile path according to that profile's workspace association.
+- Exposed Shell's existing maintained basic-content initializer through Studio
+  Core and added a guided Create flow that scaffolds a complete starter
+  workspace, then discovers its content and files before switching the active
+  profile. This gives a first-time user an Engine, Game, Packagepack, Cargo
+  workspace, and editable project tree from the Studio UI.
+- Closed a Shell launch gap for the existing pack vocabulary: installed
+  Packagepacks now resolve Enginepack/Gamepack members to their effective
+  Engine/Game before launch, while rejecting ambiguous or missing pack members.
+- Added a focused Studio Core publishing module and bridge that re-stages the
+  source and compares its package fingerprint against the reviewed artifact
+  before delegating to Shell's create or update operation.
+- Added a contextual Studio upload panel that derives create/update from the
+  source PublishedFileId, names the Steam publisher account and target, and
+  requires typing `PUBLISH <content-id>` before the upload action is enabled.
+- Studio records the returned receipt and PublishedFileId in its operation
+  outcome, then refreshes the source catalog. The UI upload path was not
+  invoked during this work.
+- Steamworks UGC is now connected through Vapor's `vapor_steam` crate. Studio
+  Discover can search public Workshop items and list/modify the signed-in
+  account's subscriptions. Results are owned data returned from a bounded
+  callback pump; local catalog and exact-ID acquisition continue to work if
+  Steam cannot initialize.
+- Vapor-GUI stages the Steamworks redistributable beside its built executable
+  and uses a relative Linux runpath. Managed `ldd` inspection now resolves
+  `libsteam_api.so` from the GUI build output. The library still needs to be
+  included in final Linux/Windows app depot staging; that shipping path and
+  live Steam account behavior have not been exercised.
+- Added `vapor sdk test`, dispatched through the same app-owned pinned Cargo
+  toolchain and target cache. Vapor, Vapor-CLI, and Vapor-Studio managed checks
+  pass; managed tests pass (Vapor: 26 tests; CLI and Studio currently define no
+  tests). Vapor-GUI managed build also passes. No Studio launch, Steam call,
+  deploy, publish, or account mutation was performed.
+- Studio Discover now merges exact content identities from the active workspace,
+  Vapor's app-owned cache, and its installed index. Entries retain each local
+  location and installed enabled state; selecting a cached Packagepack can seed
+  a profile without requiring an open source workspace. Catalog refresh runs at
+  Studio startup and after Workshop acquisition or publication. A failed source
+  scan no longer prevents cache/install entries from appearing, and the page
+  copy now describes all three local sources. Remote Workshop search and
+  account subscription actions are now wired through Steamworks; Workshop
+  compatibility metadata and subscription-aware update/download state remain
+  open.
+- The Studio activity center now uses readable names for operation kinds and
+  phases, retains completion/error summaries in recent history, and renders
+  recent history after clearing the finished active operation. Progress bars
+  appear only when an operation reports numeric totals. The current worker
+  bridge still reports no incremental progress or cancellation; those remain
+  future operation-contract work.
+- Saving a `*.vapor.toml` manifest now refreshes authored-source validation and
+  the merged local catalog, so edits to content identity or dependencies are
+  reflected without leaving the workspace. Ordinary source-file saves do not
+  trigger catalog work.
+- Opening or creating a workspace now succeeds independently of cache/install
+  catalog loading; if the latter fails, Studio opens the valid workspace and
+  reports the local catalog error instead of stranding the authoring flow.
+- Workspace now has a safe new-file action for authored scripts and other text
+  content. It accepts only relative paths into existing in-workspace folders,
+  uses exclusive creation so it cannot overwrite a file, selects the new file
+  in the editor, and resets the draft path when switching workspace/profile.
+- Recent activity now renders human-readable operation and phase labels, and
+  completed success/error detail remains visible after the active operation is
+  cleared. Progress is shown only when a worker supplies a total; the current
+  worker bridge still has no incremental progress or cancellation.
+- Shell now exposes a read-only dependency-first install preview over the same
+  source, cache, installed, and first-party-seed records used by installation.
+  It reports exact versions/provenance, missing or disabled dependencies,
+  cycles, version collisions, installed conflicts, optional edges, and seed
+  acquisitions that need a manifest before preview can complete. Workshop
+  cache selectors are rejected if they resolve to the wrong content ID.
+- Installation now enforces the local-authorship closure rule: once a selected
+  node comes from workspace source, every required descendant must also resolve
+  from that workspace; installed/cache fallbacks cannot silently cross that
+  boundary. Studio Library shows the plan and blockers, routes seed acquisition
+  into Discover, and gates install, source build/play, and repair on a ready
+  preview. Content creation also refreshes the catalog after its manifest is
+  generated.
+- Tightened profile composition actions around plan provenance: an installed-only
+  root is offered for verify/play but cannot masquerade as a fresh install or
+  update source; source build/play is enabled only when the selected root comes
+  from the associated workspace. Added root-kind validation, correct Workshop
+  seed identity checks, and a real Update action through Shell's existing
+  source/cache update path. Profile root assignment now resets graph/install
+  state through one shared Studio method, catalog root changes are blocked while
+  operations run, and profiles can be duplicated without manually rebuilding
+  their root and launch settings. Discover now filters the merged local catalog
+  by workspace/cache/installed/Workshop provenance and content type, with the
+  shared search field and matching-result count feeding the same list. Leslie
+  will compile and run tests.
+- Reworked `content create` so each new role project is both a registered Vapor
+  artifact and a real Cargo package. It generates role-aware Rust starters,
+  declares Engine binaries and Game/mod libraries in the content manifest,
+  adds the project to the root Cargo workspace while preserving TOML formatting,
+  and validates Vapor and Cargo workspace discovery. Creation and registration
+  roll back together on failure. Leslie will compile and run tests.
+- Hardened Studio's workspace editor against stale writes: Save now compares the
+  opened snapshot with the current file before writing, reports conflicts
+  without overwriting external edits, and offers an explicit Reload from disk
+  action. Replaced the flat file list with a collapsible directory tree. The
+  inspector identifies Vapor/Cargo manifests, Rhai, Rust, and documentation,
+  and shows TOML syntax diagnostics only when a manifest buffer changes. Added
+  a workspace-wide content validation action through Vapor Shell. This is a
+  first editor-awareness slice; semantic manifest forms, richer project nodes,
+  Rhai tooling, and in-game workbench integration remain open.
+- Corrected install-preview provenance for a cached Packagepack root that is
+  already installed: the plan now marks the exact installed version as present,
+  allowing Library to expose verify/play/update actions accurately.
+- Routed Home's Play action from actual composition readiness: it now uses the
+  installed launch path for installed profiles, source build/play only for a
+  ready workspace-root plan, and otherwise opens Library to resolve the plan.
+
 ## Remaining
 
 - Do not publish the extracted topology until the owner explicitly starts that
@@ -642,8 +847,13 @@
   startup path.
 - Continue the content model pass: packagepack/game/engine dependency semantics,
   legal modding declarations, content-shipped executable/library semantics,
-  command-domain naming, contextual help, and an explicit command design for
-  adding/removing `[[workspace.projects]]` entries without hidden source edits.
+  command-domain naming, contextual help, and an explicit review/removal flow
+  for the `[[workspace.projects]]` and Cargo-member changes made by content
+  creation.
+- The new role starters are intentionally minimal. Their produced binary/library
+  surfaces are declared, but actual Engine/Game/Mod runtime contracts and
+  manifest-aware editing still need integration; confirm local build/run from
+  Studio against the declared Shell runtime outputs.
 - Continue the beginner development loop: turn the template into a playable
   reusable engine/game contract rather than only a buildable/publishable content
   skeleton, add import/adopt/repair operations for existing arbitrary source
@@ -658,9 +868,12 @@
 
 ## Smallest resume action
 
-Revisit the Vapor Studio launcher design against the owner's CurseForge
-reference, starting with the library and composition-management experience.
-Keep the current published build available for the follow-up Windows smoke test.
+Finish Steamworks runtime distribution: include the staged `libsteam_api.so`
+and `steam_api64.dll` beside their target binaries in app packaging, then verify
+the Windows build on the owner's runtime machine. Next, turn subscription data
+into update/download state and connect remote Workshop search results directly
+to profile-targeted install plans. Live Steam calls require Steam and the app
+account to be available; no such call was run here.
 
 ## Release checkpoint
 
