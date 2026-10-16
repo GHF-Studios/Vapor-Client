@@ -964,7 +964,7 @@ operation changes are compiler-verified.
 2. **Shell-owned Packagepack graph editing (implemented, source-only).** Typed load/save operations edit existing authored Packagepacks. `toml_edit` retains untouched document content; the replaced role/dependency tables are authored from the proposed graph. Shell validates source identity, versions, role cardinality, cycles, and local descendant closure before a recoverable same-directory replacement.
 3. **Studio Compose (implemented, source-only).** A dedicated screen loads a local Packagepack, adds/removes workspace edges, saves through a managed operation, and hands a saved graph to the active profile for re-resolution. Library links into the editor; cache and installed copies stay read-only.
 4. **Connect authoring to the full content lifecycle.** Bring graph provenance, source/cache/install status, compatibility, Workshop acquisition/update, and publish review into one legible composition view. Do not conflate Steam subscriptions with Vapor installation.
-5. **Expand the workspace authoring path.** Basic adoption of a valid existing Workspace into Vapor's known-source list is now implemented without changing the active source. Add project-level adoption/repair and semantic manifest/script affordances atop the same Shell-owned contracts; keep arbitrary text editing as the escape hatch.
+5. **Expand the workspace authoring path.** Valid Workspace registration and explicit adoption of an existing content project into the workspace registry are implemented without activating the workspace or moving project files. Add project repair/import and semantic manifest/script affordances atop the same Shell-owned contracts; keep arbitrary text editing as the escape hatch.
 6. **Close operational integration.** Keep Steam and deployment mutations behind reviewed operations, address host-controlled cancellation, and update docs/issues after source review.
 
 Implementation is source-only until Leslie requests managed verification again. Commit/push only files proven to belong to this workstream; preserve unrelated dirty files.
@@ -1010,3 +1010,10 @@ Implementation is source-only until Leslie requests managed verification again. 
 ### Current implementation checkpoint
 
 The current code changes across Vapor Core, Vapor CLI, and Vapor Studio are a large interdependent source-only tranche. There are substantial pre-existing dirty changes in these same repositories, and the exact boundary between prior owner work and this tranche has not yet been isolated for a safe partial commit. Preserve all work; do not commit/push until the current per-repository diffs are reviewed and staged deliberately.
+
+
+## 2026-10-16 explicit content-project adoption
+
+- Added a Vapor Shell operation to adopt one caller-selected relative folder into a valid Vapor Workspace's explicit content registry. It rejects traversal, outside-root resolution, symlinked target/manifest files, unrecognized roles, duplicate paths/IDs, and invalid workspace graph results. It preserves unrelated TOML through `toml_edit`, uses a workspace edit lock, writes a recoverable same-directory replacement, and validates/reverts if discovery fails. Project files remain where they are; Cargo membership is unchanged.
+- Exposed adoption through Vapor Studio Core and the Workspace page as one typed background operation. Success refreshes source content and the catalog; the selected project becomes immediately discoverable, and Packagepacks can continue into Compose/profile selection.
+- Static diff checks only. No build, tests, formatter, deploy, launch, Steam action, commit, or push was run for this tranche.
