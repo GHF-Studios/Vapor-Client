@@ -1096,3 +1096,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `6c68a5e` is pushed; the
   parent pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 nested workspace file creation
+
+- Workspace file creation can now build missing parent folders inside the
+  selected Workspace, allowing a creator to start a Rhai or Rust source tree
+  without pre-creating every directory. Path traversal and symlinked folders
+  are rejected; existing files are never overwritten, and failed creation
+  removes newly created empty folders where possible.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `876e1fe` is pushed; the
+  parent pointer update is recorded in this checkpoint.
