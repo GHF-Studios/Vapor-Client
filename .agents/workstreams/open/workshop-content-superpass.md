@@ -1141,3 +1141,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static review and `git diff --check` only. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `14b4301` is pushed; the parent
   pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 Workspace file-access boundary
+
+- Moved bounded Workspace file discovery, containment checks, UTF-8 reads,
+  nested-file creation, and guarded replacement saves out of the Studio app
+  coordinator into a dedicated file-access module. Overview and Files now use
+  the same explicit boundary. The 4 MiB editor limit reports that large files
+  cannot be opened instead of promising a preview that does not exist yet.
+- Static review and `git diff --check` only. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `87833a6` is pushed; the parent
+  pointer update is recorded in this checkpoint.
