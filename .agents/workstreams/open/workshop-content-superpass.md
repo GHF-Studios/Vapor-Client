@@ -1349,4 +1349,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   older result list looking current.
 - Static review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `d06dde7` is pushed;
+  Vapor-Client checkpoint `d696629` records the matching submodule pointer.
+
+## 2026-10-16 installation readiness lifetime
+
+- Installation readiness is now a live observation rather than saved profile
+  configuration. Reopening Studio deserializes it as `Unknown`, forcing the UI
+  to inspect the app-owned installation again before presenting it as ready.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `92d6f9f` is pushed;
   the parent checkpoint is pending.
