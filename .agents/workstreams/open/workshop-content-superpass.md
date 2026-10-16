@@ -1641,3 +1641,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static UI-route checks and `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-Studio `a21201a`
   is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Discover and Workshop page ownership
+
+- Split the Workshop browser out of the general local Discover page. Workshop
+  search, subscriptions, cross-result selection, import, and profile handoff
+  now share a named page owner; Discover composes it beside the local catalog.
+- Static comparisons retained every prior UI string and self-action, and
+  `git diff --check` passed. No build, tests, formatter, deploy, launch, or
+  Steam action was run. Vapor-Studio `40e110e` is pushed; this checkpoint
+  records the current pointer.
