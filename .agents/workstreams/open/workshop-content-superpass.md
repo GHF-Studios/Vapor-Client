@@ -1129,3 +1129,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static review and `git diff --check` only. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `6d8ffb0` is pushed; the parent
   pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 Workspace surface separation
+
+- Split the Workspace screen into explicit Overview and Files views. The
+  Overview retains workspace selection, content registry actions, validation,
+  and managed development operations. The Files view owns file creation, the
+  project tree, source editor, and inspector. Opening or creating a file moves
+  directly into Files; opening another Workspace returns to Overview.
+- Static review and `git diff --check` only. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `14b4301` is pushed; the parent
+  pointer update is recorded in this checkpoint.
