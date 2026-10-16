@@ -1701,3 +1701,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static diff and delimiter checks passed. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `f741beb` is pushed; parent
   pointer checkpoint is pending.
+
+## 2026-10-16 Workspace quick file search
+
+- Added case-insensitive path filtering to the Workspace file tree, with Enter
+  opening a unique match. It searches only the discovered visible workspace
+  files and uses the same bounded tab and guarded reader as tree selection.
+- Static diff and delimiter checks passed. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `61959b8` is pushed; parent
+  pointer checkpoint is pending.
