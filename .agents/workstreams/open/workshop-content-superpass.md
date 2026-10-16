@@ -1225,3 +1225,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `d59914a` and Vapor-Studio
   `81261af` are pushed; this checkpoint records both submodule pointers.
+
+
+## 2026-10-16 clear confirmations with review invalidation
+
+- Profile/workspace changes, catalog refreshes, source edits, staging failures,
+  and completed publication now use one Workshop-review invalidation path. It
+  clears both the preview and any typed publish confirmation, so a refresh or
+  context switch cannot carry prior approval into a later staged review.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `74f8c06` is pushed;
+  this checkpoint records the matching submodule pointer.
