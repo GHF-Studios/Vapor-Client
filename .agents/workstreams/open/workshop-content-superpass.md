@@ -839,6 +839,45 @@
 - Routed Home's Play action from actual composition readiness: it now uses the
   installed launch path for installed profiles, source build/play only for a
   ready workspace-root plan, and otherwise opens Library to resolve the plan.
+- Connected Workshop identities to profile composition actions across search
+  results and subscriptions. Locally available Packagepacks can become the
+  selected profile root; ambiguous local versions are surfaced for exact
+  selection. Importing a missing dependency from a Library plan now starts the
+  Vapor cache acquisition directly, and imported dependencies offer an explicit
+  plan recheck. Successful root selection opens Compositions.
+- Source-reviewed only. Leslie requested coding without another build or test
+  pass after the 2026-10-15 Steam release cycle; no build, test, launch, deploy,
+  or publication was run for this change.
+- Strengthened the Studio catalog's exact-version identity merge: conflicting
+  kind, Workshop ID, dependency metadata, or recorded cache/install fingerprint
+  is retained as a visible conflict instead of silently accepting the first
+  record. Conflicted identities are blocked from profile-root selection and
+  Workshop staging/publication. Workspace, cache, and install paths identify
+  the competing records; cache/install fingerprints are carried into catalog
+  provenance.
+- Catalog dependency comparisons now include relationship, version
+  requirement, optionality, Workshop ID, and authored reason, so different
+  constraints cannot be merged as if they were the same edge.
+- Persisted per-node installed payload fingerprints in resolved profile graphs
+  and derive a deterministic graph fingerprint from exact nodes and dependency
+  edges. Legacy graph snapshots remain readable without fingerprints.
+- Reused the profile's typed `ContentIdentity` as the catalog merge key and
+  selector adapter, reducing the chance that catalog and profile identity
+  rules drift apart.
+- Exposed Vapor-CLI's recorded installation source on installed snapshots and
+  retained it in each profile graph node. Graph fingerprints now cover node
+  payload fingerprints, exact identities, dependency edges, and recorded source
+  class; Library and Catalog show the recorded source class beside the installed
+  path.
+- Closed a Workshop review/upload time-of-check gap: the GUI now invokes a
+  reviewed Shell operation that stages again, compares the exact payload
+  fingerprint, copies that verified payload to operation-owned temporary
+  storage, and uploads that same copy. The operation receipt records the
+  uploaded payload fingerprint. Source edits or a concurrent overwrite between
+  the displayed review and the final stage stop the upload. Documented the
+  reviewed-upload guarantee in the Shell content guide.
+- Source-reviewed only. Per the owner's current instruction, no build, test,
+  launch, deploy, or publication was run; these changes remain uncompiled.
 
 ## Remaining
 
@@ -847,7 +886,7 @@
   published terminal-proof-in-Loo-Cast state.
 - Verify the published root app in Steam on a non-development Windows
   machine, including Studio, Play, Shell, and Installer entrypoints. BuildID
-  `25939502` was accepted for `vapor-dev`; runtime behavior on Windows remains
+  `25970591` was accepted for `vapor-dev`; runtime behavior on Windows remains
   unverified.
 - Implement and test the Windows/MSVC content build/runtime path before friend
   testing: Windows depot binary availability, app-local setup, target-specific
@@ -860,7 +899,7 @@
   arguments. Studio and Play launch sibling Vapor Studio directly; Play adds
   `--play`. Shell and Installer use the terminal wrapper; Shell runs player
   setup before opening Vapor, while Installer opens directly. The target was
-  uploaded in BuildID `25939502`; test runtime behavior on Windows.
+  uploaded in BuildID `25970591`; test runtime behavior on Windows.
 - Run the owner-controlled installer install path from a fresh runtime-only depot
   install, open the Vapor and Loo-Cast sources only for development work,
   locally deploy root and selected first-party content, then iterate on the
@@ -888,20 +927,86 @@
 
 ## Smallest resume action
 
-Run managed CLI/GUI checks and tests plus a root build with a Vapor-managed
-development toolchain, then verify Linux and Windows depot staging contains
-the promoted Steamworks sidecars. The installed Steam app root currently lacks
-Rust/Cargo and cross-build tooling, so the packaging and subscription changes
-remain uncompiled and untested. Next, connect remote Workshop search results
-and subscription imports directly to profile-targeted install plans. Live
-Steam calls require Steam and the app account to be available; no such call was
-run here.
+Continue source-only review of the Packagepack Compose API and Studio operation
+wiring, then advance the next lifecycle gap. Preserve the owner's request not to
+build or test; the 2026-10-15 managed validation and Steam release remain the
+last verified state. Neither the catalog/provenance tranche nor the Compose and
+operation changes are compiler-verified.
 
 ## Release checkpoint
 
-- Steam accepted app `2122620` BuildID `25939502` with `SetLive` set to
+- On 2026-10-15, the managed seven-workspace `validate --project all` passed:
+  fmt, check, tests, Clippy, and docs. Tests passed: Vapor 26, CLI 2, Examples
+  7, Steam Entrypoint 5; the other workspaces currently define no tests.
+- Fixed the empty workspace library map type, several Clippy failures in Studio
+  and CLI, and app-local toolchain discovery/PATH ordering so Rust 1.97 is
+  selected over older installed toolchains. Added coverage for selecting the
+  newer toolchain. The compiler-selection correction was locally deployed.
+- The `root publish --dry-run` and publish workflow both completed through the
+  Vapor-managed CLI. The publish regenerated docs, promoted Linux and Windows
+  installation binaries into the Steam app root, staged the split depots, and
+  smoke-checked the payload. SteamCMD logged in as `ghf_vapor_build` using
+  cached credentials and accepted app `2122620` BuildID `25970591` with
+  `SetLive` set to
   `vapor-dev`; common, Linux, and Windows depots were uploaded.
-- Vapor's managed publish validation completed before upload. No Steam-client
-  runtime smoke test has been performed yet.
+- The Steam app is locally deployed at
+  `/home/leslieghf/.local/share/Steam/steamapps/common/Loo Cast`. No game or
+  Steam client was launched; Linux/Windows runtime behavior remains unverified
+  until the owner launches it manually.
+- The earlier Steam app build was BuildID `25939502`; replace that checkpoint
+  with `25970591` for current testing.
 - The unused `schema` key under Vapor-GUI's Cargo `[workspace.package]` was
   removed after Cargo warned that it was not recognized.
+
+## Next implementation sequence (owner-approved)
+
+1. **Shared operation boundary (implemented, source-only).** Vapor Core owns process-local identity, typed request metadata, phases, progress, and terminal status. Studio streams lifecycle events into its operation center; Vapor Shell wraps every top-level command family and direct Client deployment, with script steps recorded individually. CLI phases are coarse/diagnostic-only; cancellation is not connected to a host-controlled handle.
+2. **Shell-owned Packagepack graph editing (implemented, source-only).** Typed load/save operations edit existing authored Packagepacks. `toml_edit` retains untouched document content; the replaced role/dependency tables are authored from the proposed graph. Shell validates source identity, versions, role cardinality, cycles, and local descendant closure before a recoverable same-directory replacement.
+3. **Studio Compose (implemented, source-only).** A dedicated screen loads a local Packagepack, adds/removes workspace edges, saves through a managed operation, and hands a saved graph to the active profile for re-resolution. Library links into the editor; cache and installed copies stay read-only.
+4. **Connect authoring to the full content lifecycle.** Bring graph provenance, source/cache/install status, compatibility, Workshop acquisition/update, and publish review into one legible composition view. Do not conflate Steam subscriptions with Vapor installation.
+5. **Expand the workspace authoring path.** Basic adoption of a valid existing Workspace into Vapor's known-source list is now implemented without changing the active source. Add project-level adoption/repair and semantic manifest/script affordances atop the same Shell-owned contracts; keep arbitrary text editing as the escape hatch.
+6. **Close operational integration.** Keep Steam and deployment mutations behind reviewed operations, address host-controlled cancellation, and update docs/issues after source review.
+
+Implementation is source-only until Leslie requests managed verification again. Commit/push only files proven to belong to this workstream; preserve unrelated dirty files.
+
+## 2026-10-16 CLI operation lifecycle integration
+
+- Replaced the content-only lifecycle wrapper with one Shell command dispatcher wrapper. Root, source, workspace, docs, IDE, content, provider, SDK, diagnostics, runtime launch, and direct local Client deployment now emit the shared queued/running/phase/final lifecycle through Vapor Core. A Vapor script records its child commands as individual operations.
+- Centralized the CLI adapter in `run_cli_operation`; the sink records lifecycle transitions in the existing diagnostics event stream. Existing command handlers retain domain authority and synchronous result handling.
+- No build, test, formatting, launch, deployment, Steam action, or commit was run. This remains source-reviewed only. Cancellation is still an explicit operation-contract gap, not claimed as supported.
+
+## 2026-10-16 Packagepack Compose implementation
+
+- Added a Shell-owned `SourceComposition` snapshot and save API. Save uses exact-source stale-write detection, a per-manifest process lock, TOML edit preservation for unrelated fields, a recoverable same-directory replacement, live content-kind/version validation, the Packagepack Engine/Game cardinality rules, cycle rejection, and the owner-approved local-descendant closure rule.
+- Exposed the API through Studio Core, added a dedicated Compose navigation screen, connected it to background operations and the operation center, and added Library-to-Compose plus Compose-to-profile-root handoffs. A changed graph cannot be assigned to a profile until it has been saved; a saved selected root triggers catalog refresh and dependency re-resolution.
+- Added the user-facing flow summary to Vapor Studio's README.
+- Source-reviewed only. Per Leslie's current instruction, no build, test, formatter, launch, deployment, or Steam action was run. This is not compiler-verified. No commit/push has been made for this tranche yet.
+
+## 2026-10-16 source-only continuation
+
+- Added Vapor Core's shared operation request, process-local identity, lifecycle
+  event, phase, progress, and stateless execution service. Hosts retain control
+  over scheduling and presentation; operation bodies report semantic phase and
+  progress through an owned context. Studio now reuses Core's identity/phase/
+  status/progress types directly and layers only profile and typed action data
+  onto its presentation event.
+- Routed every Studio background task through that service and connected its
+  lifecycle stream to the existing operation center/history. Workspace
+  development operations now report resolve/build phases and per-project
+  progress. Vapor CLI's workspace fmt/check/test/build/clean and content
+  lifecycle commands use the same runner. Other CLI command families still
+  need migration to the shared operation contract.
+- No build, test, formatting, deployment, launch, Steam action, or commit was
+  run for this continuation. Source is not compiler-verified; the last verified
+  checkpoint remains 2026-10-15.
+
+
+## 2026-10-16 Workspace adoption continuation
+
+- Added `remember_source` in Vapor Core: it canonicalizes and validates a Vapor Workspace, rejects roots overlapping the installation, registers it in the known-source list, and leaves the active source and superworkspace untouched.
+- Studio now validates `Workspace.vapor.toml` when opening a folder, so profile association cannot silently treat an arbitrary directory as a Vapor Workspace. Added a Studio Workspace action to register the currently open profile workspace with this Vapor installation. The operation runs in the background and reports through the shared operation center; the profile can use a workspace without globally registering or activating it.
+- Source-reviewed only. No compiler, tests, formatter, deployment, launch, or Steam action was run. No commit/push yet.
+
+### Current implementation checkpoint
+
+The current code changes across Vapor Core, Vapor CLI, and Vapor Studio are a large interdependent source-only tranche. There are substantial pre-existing dirty changes in these same repositories, and the exact boundary between prior owner work and this tranche has not yet been isolated for a safe partial commit. Preserve all work; do not commit/push until the current per-repository diffs are reviewed and staged deliberately.

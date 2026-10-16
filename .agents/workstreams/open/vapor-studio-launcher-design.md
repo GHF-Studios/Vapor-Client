@@ -32,42 +32,64 @@ selected composition, and recovery shell/installer.
 
 ## Current implementation facts
 
-- `Vapor-Entrypoint` and `Vapor-Shell` already provide Steam-facing Play, Shell,
-  and Installer entrypoints; the root Steam AppID is `2122620`.
-- `vapor client deploy local` performs a source-authoritative local deploy of
-  the Vapor application. `vapor client deploy steam` is a different operation
-  that stages and publishes the root through SteamPipe.
-- Vapor core already discovers local content, resolves a Packagepack into a
-  composition, generates a Cargo realization, builds it, and runs it.
-- Loo-Cast has a pinned `Workspace.vapor.toml` at
-  `/home/leslieghf/Vapor/Loo-Cast`. Vapor already exposes `fmt`, `check`,
-  `test`, `build`, `clean`, and `run` against the workspace discovered from the
-  current directory. These commands use the managed toolchain and
-  Vapor-managed caches.
-- Vapor-Shell has app-root content acquisition/install, Workshop, and root
-  distribution workflows. These are distinct authorities and storage domains.
-- `Vapor-Launcher` already owns install/select/validate/compose/launch in its
-  product boundary, but its current Rust crates are command-model stubs. It
-  depends on Vapor core; Vapor core must not depend on Launcher.
-- `vapor-devtools` is an eframe diagnostics UI. Loo-Cast's workbench is an
-  in-game Bevy/egui editor. A JSON-lines `vapor-ide-host` prototype currently
-  provides local content discovery and resolution, but is not yet included in
-  the deployed Vapor runtime or connected to the full operation lifecycle.
-- No single GUI currently owns the full player/creator flow. Existing CLI,
-  Steam, Workshop, content, diagnostics, and in-game editing surfaces remain
-  fragmented.
-- The current Studio shell now has a local composition loop, managed workspace
-  operations, per-profile workspace selection, and read-only Steam root package
-  preview. Its Workshop view is intentionally not wired to the legacy Shell
-  catalog: Shell uses role-specific manifests and app-root cache state, while
-  Studio's local resolver uses generic `Vapor.toml` identities. Connecting them
-  requires an explicit shared identity/provenance and install adapter; matching
-  names alone is not enough.
-- Steam's default launch option must pass `studio` to `vapor-entrypoint`; the
-  `play` argument opens sibling Studio with `--play` to run the selected
-  composition. Shell and Installer remain terminal recovery modes. Leslie
-  reports that the Steamworks launch options now match this matrix; the depot
-  has not been deployed or verified here.
+- The active repositories are `Vapor`, `Vapor-CLI`, `Vapor-GUI`,
+  `Vapor-Studio`, `Vapor-Steam-Entrypoint`, and `Vapor-Installer`. The root
+  Steam AppID is `2122620`; Vapor-GUI selects Studio, Play, or Installer modes
+  behind stable Steam entrypoints.
+- Vapor already owns managed workspace operations and application-local tool
+  providers. `vapor run` and related commands use the selected workspace's
+  pinned toolchain and Vapor-managed caches; this coding pass does not invoke
+  raw Cargo.
+- Vapor-CLI contains app-root content discovery, fingerprints, cache,
+  installation, verification, repair, Workshop, and SteamPipe workflows.
+  These authorities and storage domains are distinct.
+- Vapor-Studio has a GUI-owned profile list, local content catalog, workspace
+  file editor, managed development actions, Workshop search/subscription and
+  acquisition paths, composition preview/install/update/play, and a staged
+  Workshop review/publish path. These pieces work, but they are still
+  coordinated by a large `StudioApp`. Vapor Core now owns a shared lifecycle
+  runner used by all Studio background jobs and Vapor Shell commands. The Shell
+  wraps root, source, workspace, docs, IDE, content, provider, SDK, diagnostics,
+  launch, and direct Client deployment in the same lifecycle service; script
+  steps are recorded individually. Studio-specific operation names and result
+  reconciliation remain UI-owned. CLI phase is currently coarse and logged to
+  diagnostics; cooperative cancellation is not connected to a host handle.
+- Studio's local catalog now joins workspace, Vapor cache, and installed
+  records by exact `(id, version)` and reports observed metadata/fingerprint
+  disagreement. Resolved installed profile graphs retain each node's payload
+  fingerprint and Vapor-recorded install source class; their graph fingerprint
+  covers exact nodes and edges. These are foundations for a real lock/provenance
+  view; source workspace payloads do not yet have comparable deployed
+  fingerprints or precise descendant source roots.
+- Workshop search and subscription state come from SteamUGC. Steam's
+  subscription/download state is not yet a Vapor cache/install state, and
+  acquisition, cache installation, profile update decisions, and Workshop
+  compatibility display still need one coherent lifecycle.
+- Studio now has a first Compose surface for editing local Packagepack graphs.
+  The editor loads an exact manifest snapshot, adds/removes workspace edges,
+  and saves through Vapor Shell. Shell checks role cardinality, version
+  requirements, graph cycles, and local authored descendant closure before a
+  guarded manifest replacement. A saved graph can become the active profile
+  root and flow through the existing dependency preview. This source-only pass
+  has not been built or run; semantic editing for other content roles,
+  Workshop-backed graph composition, and review of the full descendant lock
+  remain future work.
+- Workspace editing is currently file-tree plus text editor and TOML syntax
+  diagnostics. Studio can register an already valid Vapor Workspace with the
+  installation without changing its active source; this is source-only and has
+  not been compiled. Project-level adoption/repair, semantic editing, Rust/Rhai
+  language services, documentation discovery, and the full IDE/workbench
+  connection remain absent.
+- Studio's Workshop staging/publishing and local root preview are separate
+  from full SteamPipe publication. The GUI does not yet offer a complete
+  root-app publish flow or a reviewed local-deploy-to-Steam launch chain.
+  Workshop upload now revalidates the reviewed payload fingerprint in the Shell
+  operation and uploads an operation-owned copy of those exact staged bytes.
+- Loo-Cast's in-game script workbench remains inside the game process and is
+  not yet connected to Studio's authoring or operation lifecycle.
+- Steamworks launch options were updated to the four stable entrypoint modes;
+  BuildID `25970591` was accepted for `vapor-dev`. Linux/Windows runtime
+  behavior remains owner-tested rather than established by this source review.
 
 ## Ownership and data flow
 
@@ -75,30 +97,32 @@ selected composition, and recovery shell/installer.
 Steam entrypoint
       │
       ▼
-Vapor Studio GUI ─── selected profile/composition ───► Launcher operations
-      │                                                   │
-      ├── authoring/editor                                  ├── Vapor core:
-      │       │                                             │   identity, discovery,
-      │       └── in-game workbench ◄── operation host ─────┤   resolution, build/run
-      │                                                     └── Vapor-Shell:
-      ├── publish review ───► Steam/Workshop providers          acquire/install/publish
-      └── diagnostics
+Vapor-GUI mode router
+      │
+      ├── Studio ─── profile/composition ───► Vapor operations
+      │     │                                  │
+      │     ├── authoring/editor                ├── identity, discovery,
+      │     ├── publish review                  │   resolution, build/run
+      │     └── diagnostics                     └── Vapor-CLI services:
+      │                                              acquire/install/publish
+      ├── direct Play ─────────────────────────► selected profile
+      └── Installer
+
+Loo-Cast in-game workbench ◄── shared bounded authoring/operation contracts
 ```
 
-- **Vapor core** owns stable content identity, local source discovery,
-  composition resolution, build/run operations, and typed operation requests.
-- **Vapor-Shell** owns app-root state, remote acquisition and installation,
+- **Vapor** owns stable content identity, local source discovery, composition
+  resolution, build/run operations, and managed tool providers.
+- **Vapor-CLI** owns app-root state, remote acquisition and installation,
   Steam/Workshop providers, root distribution staging, and platform entrypoint
   packaging.
-- **Vapor-Launcher** owns player/creator workflows: installed library,
-  composition selection, composition authoring, launch intent, and GUI-facing
-  operation coordination. It consumes core and Shell APIs; lower layers do not
-  depend on it.
-- **Vapor SDK** owns authoring, validation, publishing, and distribution
-  workflows. Studio may present and confirm publishing, but it delegates the
-  operation to SDK-owned workflows/providers; Launcher does not become the
-  publisher.
-- **Vapor Studio** owns presentation, navigation, progress, and confirmation.
+- **Vapor-Studio** owns player/creator workflows: library, composition
+  selection and authoring, workspace editing, launch intent, and GUI-facing
+  operation coordination. It consumes Vapor and Vapor-CLI capabilities;
+  lower layers do not depend on Studio.
+- **Vapor-GUI** owns desktop mode selection and platform integration for Studio,
+  direct Play, and Installer. It does not become a second content authority.
+- **Vapor-Studio** owns presentation, navigation, progress, and confirmation.
   The GUI must not duplicate content resolution or directly mutate Steam state.
 - **Loo-Cast's in-game workbench** remains inside the game process and closes
   when that process restarts. It edits the selected source workspace and invokes
@@ -111,12 +135,15 @@ Vapor Studio GUI ─── selected profile/composition ───► Launcher op
 
 ### One managed operation path
 
-The CLI and GUI are adapters over one typed operation service. An operation
-receives an explicit workspace/root and request (for example `BuildWorkspace`,
-`TestWorkspace`, or `RunConfiguration("default")`), resolves the workspace's
-toolchain pin, and uses Vapor-owned Cargo/Rustup/cache locations. The CLI
-discovers the root from its working directory; Studio passes the selected root
-explicitly. Both paths call the same handler and report the same result.
+The CLI and GUI are adapters over one typed operation lifecycle service. An
+operation has a process-local identity, domain/action request, phase, optional
+progress, and terminal outcome. The owning Vapor or Vapor-CLI handler still
+performs the domain work; the shared service coordinates lifecycle reporting,
+not a second business implementation. Studio supplies the selected workspace
+or app root explicitly. The CLI resolves its source context from Shell state.
+Both use the same lifecycle contract; neither relies on system Cargo for
+managed development operations. Cancellation remains unsupported until a host
+can retain and signal a safe operation handle.
 
 Routine authoring and run workflows never invoke system `cargo`, `rustc`, or
 `rustup` directly. `vapor run`, `vapor build`, and `vapor test` remain useful
@@ -210,10 +237,14 @@ share a generic ambiguous “Publish” handler.
 
 ## Delivery order
 
-1. **Operation contract:** finish the structured host, ship it with the runtime,
-   and expose discovery, resolve, format/check/test/build/clean/run, local
-   deploy, acquire, publish-preview, and launch requests through existing Vapor
-   implementations. The CLI and GUI must share handlers and managed state.
+1. **Identity and operation contract:** define exact cross-source content
+   identity, provenance, conflict handling, and a versioned resolved graph lock;
+   then finish the structured operation service and expose discovery, resolve,
+   format/check/test/build/clean/run, local deploy, acquire, publish-preview,
+   and launch through existing Vapor implementations. The CLI and GUI must
+   share handlers and managed state. Studio currently has the first catalog
+   conflict and installed-payload fingerprint slice, but not a source-complete
+   lock or shared operation service.
 2. **Studio shell and Steam handoff:** turn the current eframe diagnostics app
    into a navigable Studio shell, keep Diagnostics intact, route Steam's default
    entrypoint to Studio, and implement local deploy → Steam launch as a visible
