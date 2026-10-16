@@ -1005,7 +1005,7 @@ Implementation is source-only until Leslie requests managed verification again. 
 
 - Added `remember_source` in Vapor Core: it canonicalizes and validates a Vapor Workspace, rejects roots overlapping the installation, registers it in the known-source list, and leaves the active source and superworkspace untouched.
 - Studio now validates `Workspace.vapor.toml` when opening a folder, so profile association cannot silently treat an arbitrary directory as a Vapor Workspace. Added a Studio Workspace action to register the currently open profile workspace with this Vapor installation. The operation runs in the background and reports through the shared operation center; the profile can use a workspace without globally registering or activating it.
-- Source-reviewed only. `git diff --check` passed. No compiler, tests, formatter, deployment, launch, or Steam action was run. Workspace/Compose integration, source-root handoff, optional-descendant validation, explicit adoption, and candidate discovery have been committed and pushed. The current uncommitted slice exposes runtime outputs and per-project validation in Studio.
+- Source-reviewed only. `git diff --check` passed. No compiler, tests, formatter, deployment, launch, or Steam action was run. Workspace/Compose integration, source-root handoff, optional-descendant validation, explicit adoption, and candidate discovery have been committed and pushed. The per-project runtime-output and validation slice is committed/pushed in Vapor-Studio `f4b6799` and parent workspace `9915b29`. The worktree is source-only and clean apart from the unrelated pre-existing Vapor-GUI change.
 
 ### Current implementation checkpoint
 
@@ -1027,4 +1027,4 @@ The previous large source-only implementation tranche is committed and pushed ac
 ## 2026-10-16 per-project authoring actions
 
 - Studio's explicit project overview now surfaces declared runtime binary/library outputs and offers per-project Vapor validation, while preserving the whole-workspace validation action. This gives the creator a direct metadata-to-runtime check from the project row.
-- Source-only; no compiler, tests, formatter, deploy, launch, or Steam action was run. Not yet committed.
+- Source-only; no compiler, tests, formatter, deploy, launch, or Steam action was run. Committed/pushed in Vapor-Studio `f4b6799` and parent workspace `9915b29`.
