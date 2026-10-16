@@ -1201,3 +1201,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `12ce703` is pushed;
   this checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 role-valid content creation
+
+- Vapor Shell now exposes its exclusive dependency-choice groups to Studio.
+  The creator picker replaces a conflicting Engine/Enginepack or Game/Gamepack
+  choice in the same role slot, while ordinary supported dependencies remain
+  multi-selectable. Changing the content kind or workspace clears stale choices
+  so invisible selections cannot leak into a later creation request.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `4042e80` and Vapor-Studio
+  `cacdf17` are pushed; this checkpoint records both submodule pointers.
