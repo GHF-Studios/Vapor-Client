@@ -1517,3 +1517,27 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static stale-reference review and `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-Studio `23785c3` is
   pushed; this checkpoint records the matching submodule pointer.
+
+## 2026-10-16 Studio catalog and composition ownership
+
+- Moved catalog state/selectors/filtering into `catalog.rs`. Centralized the
+  installed-composition success, verification, and failure transitions under
+  the composition lifecycle owner instead of repeating profile mutations in
+  the generic result reducer.
+- Static source review and `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `3c888e7`
+  and `7506ee0` are pushed; this checkpoint records their current submodule
+  pointer.
+
+## 2026-10-16 Studio operation-result ownership
+
+- Kept `OperationResult` exhaustive in a small router and moved successful
+  result application beside the owning catalog, workspace, editor, content
+  creation, Workshop, authoring, and composition workflows. Routed manifest
+  synchronization through the workspace editor owner. Removed one duplicate
+  workspace transition reset already performed by `activate_workspace`.
+- Static route inventory confirmed all result variants remain represented,
+  all declared module files and handlers resolve, and the router no longer
+  mutates domain state directly. `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `a0d659e`
+  is pushed; this checkpoint records the current submodule pointer.
