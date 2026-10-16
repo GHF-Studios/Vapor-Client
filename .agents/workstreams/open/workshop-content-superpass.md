@@ -1660,3 +1660,11 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static string/action comparisons and `git diff --check` passed. No build,
   tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
   `9ee075a` is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Local catalog panels
+
+- Separated the local catalog list and selection actions from the selected
+  content detail panel. Discover now composes both beside the Workshop browser.
+- Static string/action comparisons and `git diff --check` passed. No build,
+  tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
+  `5329082` is pushed; this checkpoint records the current pointer.
