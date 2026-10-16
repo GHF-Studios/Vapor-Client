@@ -1691,3 +1691,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   scan passed. Per owner direction, no build, tests, formatter, deploy, launch,
   or Steam action was run. Vapor-Studio `8e8fa85` is pushed; parent pointer
   checkpoint is pending.
+
+## 2026-10-16 Multi-tab save operation
+
+- Added `Save all` for dirty Workspace tabs as one reported operation. It uses
+  the existing conflict-detecting, atomic per-file writer and preserves dirty
+  buffers for any files that could not be saved; successful files become clean
+  independently, so partial failure is explicit and recoverable.
+- Static diff and delimiter checks passed. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `f741beb` is pushed; parent
+  pointer checkpoint is pending.
