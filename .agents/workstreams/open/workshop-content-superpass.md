@@ -1272,3 +1272,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `3f23d6b` is pushed; this
   checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 complete Workshop review equality
+
+- Replaced a hand-maintained field list with equality on the whole review
+  snapshot. The stage output path, current files, metadata, target, and any
+  future preview fields now all participate in the pre-publish comparison.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `b1c32fe` is pushed;
+  this checkpoint records the matching submodule pointer.
