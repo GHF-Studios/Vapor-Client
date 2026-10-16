@@ -1485,3 +1485,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static nested-field/initializer checks and `git diff --check` only. No build,
   tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
   `1db41fd` is pushed; the parent checkpoint records the matching pointer.
+
+## 2026-10-16 Studio state ownership integration
+
+- Grouped local source/catalog data, query/filter/selection, source-authoring
+  drafts, and operation execution/progress state under explicit owners. Static
+  cross-module checks found every nested field declared and used, and all app
+  root fields initialized. Corrected stale profile-container lookups left in
+  the operation, composition, and workspace modules after the earlier profile
+  extraction.
+- `git diff --check` and source-only structural checks passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `27f3afc` is
+  pushed; this checkpoint records the matching submodule pointer.
