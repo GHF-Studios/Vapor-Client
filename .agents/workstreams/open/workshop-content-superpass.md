@@ -1456,3 +1456,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Source-only exact-body comparison, helper-scope checks, and `git diff --check`
   only. No build or tests were run. Vapor-Studio `a92b481` is pushed; this
   parent checkpoint records the corrective pointer.
+
+## 2026-10-16 Studio Workshop state ownership
+
+- Grouped Workshop preview/publish confirmation, pending acquisition, search
+  result/page state, and subscriptions into `WorkshopState`, replacing thirteen
+  unrelated fields on the root app object. The existing first-page default and
+  all current UI/action reads remain represented.
+- Static field-reference/initial-default checks and `git diff --check` only. No
+  build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-Studio `06856df` is pushed; the parent checkpoint records the pointer.
