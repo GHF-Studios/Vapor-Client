@@ -1564,3 +1564,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   string and action call; `git diff --check` passed. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `5a2bd3e` is pushed;
   this checkpoint records the current submodule pointer.
+
+## 2026-10-16 Studio async operation protocol
+
+- Separated the typed operation result protocol and its failure/refresh policy
+  from background execution. Moved catalog refresh/discovery under the catalog
+  owner. Profile switching now requests a transition without temporarily
+  mutating the active index and reports the running-operation guard.
+- Static inventories confirmed all 31 operation results remain in the protocol
+  and reducer, and content/subscription refresh triggers are preserved.
+  `git diff --check` passed. No build, tests, formatter, deploy, launch, or
+  Steam action was run. Vapor-Studio `3ef3191` is pushed; this checkpoint records
+  the current submodule pointer.
