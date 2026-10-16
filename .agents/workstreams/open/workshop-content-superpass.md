@@ -1374,5 +1374,16 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   removed through an inline confirmation. The last profile cannot be removed;
   workspace files and installed content are explicitly preserved.
 - Static review and `git diff --check` only. No build, tests, formatter,
-  deploy, launch, or Steam action was run. Vapor-Studio `775d620` is pushed;
-  the parent checkpoint is pending.
+  deploy, launch, or Steam action was run. Vapor-Studio `775d620` is pushed; Vapor-Client checkpoint `92598ba` records
+  the matching submodule pointer.
+
+
+## 2026-10-16 Studio operation orchestration boundary
+
+- Moved the background operation result vocabulary, polling/result application,
+  operation progress observation, and workspace/catalog discovery helpers out
+  of the central Studio app module into `vapor_studio_ui::operations`. The UI
+  app now retains screen/profile state and delegates operation lifecycle work.
+- Static review and `git diff --check` only. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `d7290ca` is pushed; the parent
+  checkpoint records the matching submodule pointer.
