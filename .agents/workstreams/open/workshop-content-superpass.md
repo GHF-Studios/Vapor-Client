@@ -1553,3 +1553,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static guard-routing checks and `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-Studio `de52d03`
   is pushed; this checkpoint records the current submodule pointer.
+
+## 2026-10-16 Studio workspace ownership boundaries
+
+- Split the workspace overview into registry, discovered content, authoring,
+  unregistered-project, and operation panels. Moved discovery, validation,
+  adoption, registration, and their result transitions into a workspace content
+  owner module; kept the page as a thin composition of panels.
+- Static comparisons confirmed the panel split retained every original UI
+  string and action call; `git diff --check` passed. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `5a2bd3e` is pushed;
+  this checkpoint records the current submodule pointer.
