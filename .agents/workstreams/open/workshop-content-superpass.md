@@ -1236,3 +1236,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `74f8c06` is pushed;
   this checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 shared role-cardinality contract
+
+- Consolidated bounded relationship slots in Vapor Shell and reused those same
+  slots in its source-graph cardinality validator. Studio's creation picker and
+  readiness gate now consume that Shell contract, avoiding separate UI rules
+  for the Engine/Enginepack and Game/Gamepack alternatives.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `9fa137c` is pushed; this
+  checkpoint records the matching submodule pointer.
