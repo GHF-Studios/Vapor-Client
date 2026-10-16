@@ -1421,3 +1421,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   only. No build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-Studio `be397a7` is pushed; the parent checkpoint records the matching
   submodule pointer.
+
+## 2026-10-16 Studio composition and Workshop feature boundaries
+
+- Separated composition preview/install/update/verify/repair/run behavior into
+  `composition_lifecycle` and Workshop search/subscriptions/stage/publish/acquire
+  plus review invalidation into `workshop`. The central `app.rs` now owns UI
+  state, navigation, rendering, and persistence instead of content workflows.
+- Static source review, moved-method visibility checks, and `git diff --check`
+  only. No build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-Studio `460c938` is pushed; the parent checkpoint records the matching
+  submodule pointer.
