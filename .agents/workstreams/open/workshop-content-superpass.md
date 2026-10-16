@@ -1466,3 +1466,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static field-reference/initial-default checks and `git diff --check` only. No
   build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-Studio `06856df` is pushed; the parent checkpoint records the pointer.
+
+## 2026-10-16 Studio workspace state ownership
+
+- Grouped workspace root/draft/fallback, editor buffers and file selection,
+  registered sources, unregistered-project review, and starter-workspace inputs
+  into `WorkspaceState`. All existing page/actions now access that state through
+  the workspace owner; starter defaults and initial path selection are retained.
+- Static nested-field/initializer checks and `git diff --check` only. No build,
+  tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
+  `15b3f07` is pushed; the parent checkpoint records the matching pointer.
