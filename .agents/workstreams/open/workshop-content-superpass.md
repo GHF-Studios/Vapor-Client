@@ -1616,5 +1616,9 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   cache acquisition path. Selection survives page/search changes, duplicate
   IDs are collapsed at the domain boundary, and each imported artifact gets
   its own follow-up action for profile roots or composition preview.
+- Added one-session Steamworks batch subscribe/unsubscribe with bounded batches,
+  per-item callback aggregation, and subscription-state refresh after both
+  success and failure. Importing into Vapor's cache remains an independent
+  action from subscribing in Steam.
 - Static API/route checks and `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run.
