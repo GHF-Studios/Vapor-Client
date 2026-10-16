@@ -1651,3 +1651,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   `git diff --check` passed. No build, tests, formatter, deploy, launch, or
   Steam action was run. Vapor-Studio `40e110e` is pushed; this checkpoint
   records the current pointer.
+
+## 2026-10-16 Workshop browser panel boundaries
+
+- Split the Workshop browser into subscription management, search/selection,
+  and acquisition panels under a small page coordinator. This keeps cache
+  import, Steam subscription, and search state in separate render boundaries.
+- Static string/action comparisons and `git diff --check` passed. No build,
+  tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
+  `9ee075a` is pushed; this checkpoint records the current pointer.
