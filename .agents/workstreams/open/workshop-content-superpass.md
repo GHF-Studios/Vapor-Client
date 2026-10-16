@@ -1632,3 +1632,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static route checks and `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-Studio `bab22c6`
   is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Subscription-to-cache workflow
+
+- Subscription rows now join the same cross-page selection queue as search
+  results, with batch cache import, local-copy refresh, and profile-root actions.
+  Studio distinguishes subscriptions not yet loaded from a confirmed empty list.
+- Static UI-route checks and `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `a21201a`
+  is pushed; this checkpoint records the current pointer.
