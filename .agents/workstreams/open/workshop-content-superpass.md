@@ -1677,3 +1677,17 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static lifecycle checks and `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-Studio `3f27cda`
   is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Multi-file Workspace editor
+
+- Replaced the single editor buffer with a bounded set of 16 open file tabs.
+  Each document keeps an independent baseline/current buffer, so switching tabs
+  preserves drafts; builds, validation, and workspace changes remain blocked
+  while any tab is dirty. Clean tabs close independently.
+- Studio storage now checkpoints open buffers with their workspace root and
+  restores them only when reopening that same canonical workspace. Draft writes
+  continue using the existing on-disk conflict check and atomic replace path.
+- `git diff --check`, delimiter-balance checks, and a stale-single-buffer-field
+  scan passed. Per owner direction, no build, tests, formatter, deploy, launch,
+  or Steam action was run. Vapor-Studio `8e8fa85` is pushed; parent pointer
+  checkpoint is pending.
