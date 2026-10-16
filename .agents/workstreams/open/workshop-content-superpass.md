@@ -1163,3 +1163,17 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static review and `git diff --check` only. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `04929d7` is pushed; the parent
   pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 recoverable content creation
+
+- Content creation now uses the guarded same-directory replacement path for
+  Cargo membership and Workspace registration instead of truncating manifests
+  in place. It validates after each step, rolls back the Workspace registration
+  and Cargo membership on reported failure when snapshots still match, and
+  leaves concurrently changed files untouched with explicit recovery details.
+  If the process stops between the two manifest updates, the content folder
+  remains discoverable for explicit adoption.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `fd9055a` is pushed; the
+  parent pointer update is recorded in this checkpoint.
