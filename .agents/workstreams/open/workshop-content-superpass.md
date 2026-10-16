@@ -1597,3 +1597,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static delimiter/reference checks and `git diff --check` passed. No build,
   tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
   `7d1ef98` is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Studio Publish surface
+
+- Added a dedicated Publish screen. Workshop staging remains in Discover, while
+  exact package review, dependencies, account, change note, and typed upload
+  confirmation now live in one publication flow. Discover links a staged item
+  to that review. Moved the root package preview out of Diagnostics and labeled
+  it preview-only; the SDK cannot yet bind an upload to the exact reviewed
+  staged bytes, so no unsafe root publish button was added.
+- Static delimiter/routing checks and `git diff --check` passed. No build,
+  tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
+  `5ffb2a8` is pushed; this checkpoint records the current pointer.
