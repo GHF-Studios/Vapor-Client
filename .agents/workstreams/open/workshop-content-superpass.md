@@ -1710,3 +1710,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static diff and delimiter checks passed. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `61959b8` is pushed; parent
   pointer checkpoint is pending.
+
+## 2026-10-16 Per-document editor identity
+
+- Keyed the editor widget to its selected workspace-relative file path. This
+  isolates egui cursor, scroll, and undo state per tab instead of sharing one
+  widget identity across unrelated files.
+- Static diff and delimiter checks passed. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `c711925` is pushed; parent
+  pointer checkpoint is pending.
