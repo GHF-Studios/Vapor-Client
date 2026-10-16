@@ -1293,3 +1293,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `907f215` is pushed; this
   checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 clarify project registries
+
+- Documented the two Workspace lists explicitly: top-level `[[project]]` names
+  Cargo roots for managed development/run configuration; nested
+  `[workspace].projects` registers Vapor content. This makes clear that a code
+  content member can live inside a Cargo root, while metadata-only packs exist
+  only in the Vapor content registry.
+- Source-only documentation update; `git diff --check` only. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-CLI `f03d3ae` is
+  pushed; this checkpoint records the matching submodule pointer.
