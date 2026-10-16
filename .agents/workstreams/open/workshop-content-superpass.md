@@ -1071,3 +1071,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Source-reviewed and `git diff --check` passed. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `f86c70a` is pushed; the
   parent pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 Workspace editor save reliability
+
+- Replaced direct in-place Workspace file writes with a serialized same-directory
+  save: preserve permissions, write and sync a temporary, recheck the opened
+  snapshot, preserve the original during replacement, and restore it if the new
+  file cannot be installed. This applies to authored Rhai, Rust, TOML, and other
+  text files in the existing editor.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `08ff3e7` is pushed; the
+  parent pointer update is recorded in this checkpoint.
