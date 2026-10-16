@@ -1576,3 +1576,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   `git diff --check` passed. No build, tests, formatter, deploy, launch, or
   Steam action was run. Vapor-Studio `3ef3191` is pushed; this checkpoint records
   the current submodule pointer.
+
+## 2026-10-16 Studio composition screen boundaries
+
+- Split the Compositions screen into profile selection, profile management,
+  composition preview/graph, launch arguments, and installation actions/status.
+  The screen now coordinates these named panels; identity formatting reuses
+  the catalog's selector instead of a duplicate helper.
+- Static inventories confirmed every prior UI string and action call was
+  retained; all touched Rust delimiters balance and `git diff --check` passed.
+  No build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-Studio `b34e5f1` is pushed; this checkpoint records the current pointer.
