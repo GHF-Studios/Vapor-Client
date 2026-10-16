@@ -1432,3 +1432,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   only. No build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-Studio `460c938` is pushed; the parent checkpoint records the matching
   submodule pointer.
+
+## 2026-10-16 Studio operation result reducer boundary
+
+- Split UI-thread operation completion handling from background scheduling.
+  `operations` now owns result production, lifecycle polling, progress events,
+  and worker threads; `operation_results` owns the UI-state reducer. The reducer
+  was compared to its pre-extraction Git body and is unchanged aside from
+  indentation; all 31 result variants remain represented.
+- Static source comparison, result-variant presence check, and `git diff --check`
+  only. No build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-Studio `149be67` is pushed; the parent checkpoint records the matching
+  submodule pointer.
