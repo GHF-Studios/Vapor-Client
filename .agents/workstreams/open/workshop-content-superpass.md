@@ -927,11 +927,11 @@
 
 ## Smallest resume action
 
-Continue source-only review of the Packagepack Compose API and Studio operation
-wiring, then advance the next lifecycle gap. Preserve the owner's request not to
-build or test; the 2026-10-15 managed validation and Steam release remain the
-last verified state. Neither the catalog/provenance tranche nor the Compose and
-operation changes are compiler-verified.
+Continue source-only review of the unregistered-content scanner and adoption flow,
+then connect accepted projects to semantic manifest editing. Preserve the
+owner's request not to build or test; the 2026-10-15 managed validation and
+Steam release remain the last verified state. The current source-only Studio,
+Shell, and adoption changes are not compiler-verified.
 
 ## Release checkpoint
 
@@ -1005,15 +1005,20 @@ Implementation is source-only until Leslie requests managed verification again. 
 
 - Added `remember_source` in Vapor Core: it canonicalizes and validates a Vapor Workspace, rejects roots overlapping the installation, registers it in the known-source list, and leaves the active source and superworkspace untouched.
 - Studio now validates `Workspace.vapor.toml` when opening a folder, so profile association cannot silently treat an arbitrary directory as a Vapor Workspace. Added a Studio Workspace action to register the currently open profile workspace with this Vapor installation. The operation runs in the background and reports through the shared operation center; the profile can use a workspace without globally registering or activating it.
-- Source-reviewed only. `git diff --check` passed. No compiler, tests, formatter, deployment, launch, or Steam action was run. The initial lifecycle checkpoint is committed and pushed; semantic Workspace/Compose integration, root-handoff fix, and optional-descendant validation are the next source-only checkpoint.
+- Source-reviewed only. `git diff --check` passed. No compiler, tests, formatter, deployment, launch, or Steam action was run. Workspace/Compose integration, source-root handoff, optional-descendant validation, and explicit adoption have been committed and pushed. Candidate discovery is the current uncommitted source-only tranche.
 
 ### Current implementation checkpoint
 
-The current code changes across Vapor Core, Vapor CLI, and Vapor Studio are a large interdependent source-only tranche. There are substantial pre-existing dirty changes in these same repositories, and the exact boundary between prior owner work and this tranche has not yet been isolated for a safe partial commit. Preserve all work; do not commit/push until the current per-repository diffs are reviewed and staged deliberately.
+The previous large source-only implementation tranche is committed and pushed across Vapor Core, Vapor CLI, Vapor Studio, and the parent workspace. The only unrelated dirty file remains Vapor-GUI's pre-existing `build.rs` edit. Current uncommitted work is the bounded candidate-discovery layer for explicit project adoption; preserve the unrelated GUI change.
 
 
 ## 2026-10-16 explicit content-project adoption
 
 - Added a Vapor Shell operation to adopt one caller-selected relative folder into a valid Vapor Workspace's explicit content registry. It rejects traversal, outside-root resolution, symlinked target/manifest files, unrecognized roles, duplicate paths/IDs, and invalid workspace graph results. It preserves unrelated TOML through `toml_edit`, uses a workspace edit lock, writes a recoverable same-directory replacement, and validates/reverts if discovery fails. Project files remain where they are; Cargo membership is unchanged.
-- Exposed adoption through Vapor Studio Core and the Workspace page as one typed background operation. Success refreshes source content and the catalog; the selected project becomes immediately discoverable, and Packagepacks can continue into Compose/profile selection.
-- Static diff checks only. No build, tests, formatter, deploy, launch, Steam action, commit, or push was run for this tranche.
+- Exposed adoption through Vapor Studio Core and the Workspace page as one typed background operation. Success refreshes source content and the catalog; the selected project becomes immediately discoverable, and Packagepacks can continue into Compose/profile selection. This initial adoption path is committed and pushed.
+- Static diff checks only. No build, tests, formatter, deploy, launch, or Steam action was run.
+
+## 2026-10-16 candidate discovery continuation
+
+- Replaced the required path knowledge with a non-mutating bounded scan for role-specific manifests in non-hidden workspace folders. The scan returns only valid unregistered content candidates, with diagnostics for invalid manifests, duplicate identities, inaccessible paths, and traversal limits. It does not register discovered folders. Studio presents candidates and requires an explicit Adopt action; Shell validates again before writing.
+- This scan-and-select layer is source-only and uncommitted. No build, tests, formatter, deploy, launch, or Steam action was run.
