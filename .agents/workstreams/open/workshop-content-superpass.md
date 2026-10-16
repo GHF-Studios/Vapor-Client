@@ -1410,3 +1410,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   only. No build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-Studio `76a2b23` is pushed; the parent checkpoint records the matching
   submodule pointer.
+
+## 2026-10-16 Studio source-authoring boundary
+
+- Moved source composition load/save, Workshop metadata editing, runtime output
+  declarations, source-change profile invalidation, and applying a source
+  Packagepack to a profile into `vapor_studio_ui::source_authoring`. The central
+  UI module is now under 900 lines.
+- Static source review, moved-method visibility checks, and `git diff --check`
+  only. No build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-Studio `be397a7` is pushed; the parent checkpoint records the matching
+  submodule pointer.
