@@ -1398,3 +1398,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   `git diff --check` only. No build, tests, formatter, deploy, launch, or Steam
   action was run. Vapor-Studio `0dbcef2` is pushed; the parent checkpoint
   records the matching submodule pointer.
+
+## 2026-10-16 Studio workspace lifecycle boundary
+
+- Consolidated workspace discovery/open/activation, saved-state guards,
+  source validation, workspace file editing, starter and content creation,
+  project adoption/unregistration, and registered-source management in
+  `vapor_studio_ui::workspace_ops`. Existing UI pages retain their calls through
+  `StudioApp`; the main app module is now roughly half its previous size.
+- Static source review, moved-method visibility checks, and `git diff --check`
+  only. No build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-Studio `76a2b23` is pushed; the parent checkpoint records the matching
+  submodule pointer.
