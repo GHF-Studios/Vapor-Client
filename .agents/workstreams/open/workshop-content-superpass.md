@@ -1177,3 +1177,16 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `fd9055a` is pushed; the
   parent pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 Workshop review integrity
+
+- Publishing now compares the complete staged review (identity, version,
+  publication metadata, dependencies, target, payload fingerprint, file count,
+  size, and file list) with the fresh source stage immediately before upload.
+  A changed title or visibility can no longer be silently published under a
+  preview that showed different values. The reviewed payload fingerprint is
+  still passed to Vapor Shell's final upload guard.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `b305218` is pushed;
+  this checkpoint records the matching submodule pointer.
