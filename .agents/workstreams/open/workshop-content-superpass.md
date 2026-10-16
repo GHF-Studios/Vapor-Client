@@ -1541,3 +1541,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   mutates domain state directly. `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-Studio `a0d659e`
   is pushed; this checkpoint records the current submodule pointer.
+
+## 2026-10-16 Studio workspace draft save gates
+
+- Found that the generic “workspace must be clean” guard also rejected the
+  editor Save/Reload actions and the structured Workshop/runtime-output Save
+  actions while their own drafts were dirty. Added separate guards that allow
+  each action to consume its own draft while blocking conflicting edits in the
+  other editor. Unified the pending-edit predicate across source-dependent
+  actions and their UI enablement.
+- Static guard-routing checks and `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `de52d03`
+  is pushed; this checkpoint records the current submodule pointer.
