@@ -1340,3 +1340,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   deploy, launch, or Steam action was run. Vapor-Studio commit and matching
   parent checkpoint are recorded in Vapor-Studio `6a8770b`; the parent
   checkpoint is pending.
+
+## 2026-10-16 Workshop search result context
+
+- Workshop result state now carries the successful search query. Starting a
+  new query/page clears the previous list and count; successful empty results
+  are identified as empty for that exact query, while failures cannot leave an
+  older result list looking current.
+- Static review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `d06dde7` is pushed;
+  the parent checkpoint is pending.
