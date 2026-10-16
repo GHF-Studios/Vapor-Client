@@ -1622,3 +1622,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   action from subscribing in Steam.
 - Static API/route checks and `git diff --check` passed. No build, tests,
   formatter, deploy, launch, or Steam action was run.
+
+## 2026-10-16 Composition acquisition loop
+
+- Install-plan previews now collect all missing Workshop IDs and import them
+  through one acquisition. Library profiles re-resolve after catalog refresh;
+  source compositions retain their exact selector and workspace for their own
+  re-preview. Failed/partial acquisitions also refresh the cache catalog.
+- Static route checks and `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `bab22c6`
+  is pushed; this checkpoint records the current pointer.
