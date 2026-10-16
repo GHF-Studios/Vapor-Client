@@ -1261,3 +1261,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   no build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-CLI `59f8cfc` and Vapor-Studio `3e9d1e4` are pushed; this checkpoint
   records both submodule pointers.
+
+
+## 2026-10-16 metadata-only starter composition
+
+- The complete Engine/Game/Packagepack starter now follows the same role split:
+  Engine and Game remain Rust Cargo projects, while Packagepack is a registered
+  manifest-only project. Removed its empty crate, Cargo lock entry, and generated
+  Rust composition stub; the starter README states this source structure.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `3f23d6b` is pushed; this
+  checkpoint records the matching submodule pointer.
