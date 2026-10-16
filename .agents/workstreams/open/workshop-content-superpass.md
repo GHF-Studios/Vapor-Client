@@ -927,11 +927,12 @@
 
 ## Smallest resume action
 
-Continue source-only review of the unregistered-content scanner and adoption flow,
-then connect accepted projects to semantic manifest editing. Preserve the
-owner's request not to build or test; the 2026-10-15 managed validation and
-Steam release remain the last verified state. The current source-only Studio,
-Shell, and adoption changes are not compiler-verified.
+Continue source-only work on Workspace authoring and creator documentation:
+close the remaining creation-to-local-run gaps, connect the game-side script
+workbench to bounded shared operations, and improve discovery of supported
+content APIs. Preserve the owner's request not to build or test; 2026-10-15
+managed validation and Steam release remain the last verified state. Current
+source-only edits are not compiler-verified.
 
 ## Release checkpoint
 
@@ -1009,7 +1010,7 @@ Implementation is source-only until Leslie requests managed verification again. 
 
 ### Current implementation checkpoint
 
-The previous large source-only implementation tranche is committed and pushed across Vapor Core, Vapor CLI, Vapor Studio, and the parent workspace. The only unrelated dirty file remains Vapor-GUI's pre-existing `build.rs` edit. Current uncommitted work is the bounded candidate-discovery layer for explicit project adoption; preserve the unrelated GUI change.
+The source-only content-authoring checkpoint is pushed across Vapor-CLI (`ea57d43`) and Vapor-Studio (`3bb7d9f`); the parent pointer checkpoint is pending. Vapor-GUI has a pre-existing user change in `build.rs`; preserve it. The current editor slice remains uncompiled and untested by owner request.
 
 
 ## 2026-10-16 explicit content-project adoption
@@ -1028,3 +1029,18 @@ The previous large source-only implementation tranche is committed and pushed ac
 
 - Studio's explicit project overview now surfaces declared runtime binary/library outputs and offers per-project Vapor validation, while preserving the whole-workspace validation action. This gives the creator a direct metadata-to-runtime check from the project row.
 - Source-only; no compiler, tests, formatter, deploy, launch, or Steam action was run. Committed/pushed in Vapor-Studio `f4b6799` and parent workspace `9915b29`.
+
+## 2026-10-16 structured runtime-output editing
+
+- Added a typed Vapor Shell snapshot and save API for content `binaries` and
+  `libraries`. Composition, Workshop metadata, and runtime-output edits now
+  share one exact-source guard, per-manifest lock, atomic replacement, and
+  validated read-back/recovery path. All three keep unrelated TOML fields.
+- Studio exposes a contextual runtime-output editor in each discovered source
+  project. It validates file names in Shell, protects dirty drafts across
+  workspace/profile navigation, refreshes the source catalog, and invalidates
+  every profile pinned to the exact edited content version. Affected profiles
+  must be resolved and installed again before Play.
+- Static review and `git diff --check` only. No build, test, formatter,
+  deployment, launch, or Steam action was run; this pass is not
+  compiler-verified.
