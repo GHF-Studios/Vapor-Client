@@ -1337,9 +1337,8 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   state; reopening the same workspace refreshes it without dropping its profile
   composition.
 - Static review and `git diff --check` only. No build, tests, formatter,
-  deploy, launch, or Steam action was run. Vapor-Studio commit and matching
-  parent checkpoint are recorded in Vapor-Studio `6a8770b`; the parent
-  checkpoint is pending.
+  deploy, launch, or Steam action was run. Vapor-Studio `6a8770b` is pushed;
+  Vapor-Client checkpoint `4bc39db` records the matching submodule pointer.
 
 ## 2026-10-16 Workshop search result context
 
@@ -1358,4 +1357,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   to inspect the app-owned installation again before presenting it as ready.
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `92d6f9f` is pushed;
+  Vapor-Client checkpoint `7fee4a9` records the matching submodule pointer.
+
+## 2026-10-16 Workshop operation identity
+
+- Workshop search, subscription refresh, and subscribe/unsubscribe now have
+  distinct operation identities and operation-center labels instead of being
+  reported as generic catalog refreshes.
+- Static review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `30c3dbb` is pushed;
   the parent checkpoint is pending.
