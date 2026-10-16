@@ -1108,3 +1108,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `876e1fe` is pushed; the
   parent pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 Compose-to-publish handoff
+
+- Added a staged Workshop-review handoff for any saved source content project
+  directly from Compose. It enters the existing review surface and keeps the
+  current explicit confirmation gate before publication.
+- Static review and `git diff --check` only. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `6d8ffb0` is pushed; the parent
+  pointer update is recorded in this checkpoint.
