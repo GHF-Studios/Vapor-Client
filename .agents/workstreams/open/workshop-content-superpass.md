@@ -1609,3 +1609,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static delimiter/routing checks and `git diff --check` passed. No build,
   tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
   `5ffb2a8` is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Studio Workshop batch import
+
+- Connected Workshop multi-selection in Discover to Vapor's existing batch
+  cache acquisition path. Selection survives page/search changes, duplicate
+  IDs are collapsed at the domain boundary, and each imported artifact gets
+  its own follow-up action for profile roots or composition preview.
+- Static API/route checks and `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run.
