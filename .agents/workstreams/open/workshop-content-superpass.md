@@ -1153,3 +1153,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static review and `git diff --check` only. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `87833a6` is pushed; the parent
   pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 stable editor lock correction
+
+- A source review caught that the extracted editor lock path included a unique
+  timestamp, preventing concurrent writers from contending. Lock paths now use a
+  stable per-file sibling name; only temporary and recovery files are unique.
+- Static review and `git diff --check` only. No build, tests, formatter, deploy,
+  launch, or Steam action was run. Vapor-Studio `04929d7` is pushed; the parent
+  pointer update is recorded in this checkpoint.
