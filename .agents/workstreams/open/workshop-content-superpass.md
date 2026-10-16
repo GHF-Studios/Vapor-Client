@@ -1247,3 +1247,17 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `9fa137c` is pushed; this
   checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 metadata-only composition projects
+
+- Packagepack, Enginepack, Gamepack, and Modpack creation now produces only the
+  role manifest and registers it in the Vapor workspace. It no longer creates
+  an empty Cargo crate, `src/` placeholder, README boilerplate, or Cargo member.
+  Engine, Game, and mod roles retain their existing Rust scaffolds, runtime
+  output declarations, and recoverable Cargo registration transaction.
+- Updated the Studio creation form and Shell manifest/topology docs to show the
+  role-specific source footprint. Static review and `git diff --check` only;
+  no build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-CLI `59f8cfc` and Vapor-Studio `3e9d1e4` are pushed; this checkpoint
+  records both submodule pointers.
