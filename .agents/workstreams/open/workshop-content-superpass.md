@@ -1668,3 +1668,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static string/action comparisons and `git diff --check` passed. No build,
   tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
   `5329082` is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Live Workshop progress
+
+- Active Steam downloads now refresh their UGC state in the background. Steam
+  subscription reads back off from 2 seconds to a 30-second cap on failures;
+  inactive subscriptions stop polling, and the frame loop only schedules wakeups.
+- Static lifecycle checks and `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `3f27cda`
+  is pushed; this checkpoint records the current pointer.
