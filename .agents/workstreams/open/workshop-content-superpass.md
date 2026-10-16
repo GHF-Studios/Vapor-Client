@@ -1444,3 +1444,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   only. No build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-Studio `149be67` is pushed; the parent checkpoint records the matching
   submodule pointer.
+
+## 2026-10-16 Studio shell/helper boundary correction
+
+- Static cross-module review found the workspace extraction had left the
+  `eframe::App` trait implementation empty and put shared catalog selectors in
+  the workspace module. Moved the unchanged UI/save methods together into
+  `app_shell` and restored shared selectors/filter helpers to the app boundary.
+  The immediate source bodies compare exactly; one trait implementation now
+  owns `ui` and `save`.
+- Source-only exact-body comparison, helper-scope checks, and `git diff --check`
+  only. No build or tests were run. Vapor-Studio `a92b481` is pushed; this
+  parent checkpoint records the corrective pointer.
