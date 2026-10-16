@@ -1497,3 +1497,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - `git diff --check` and source-only structural checks passed. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-Studio `27f3afc` is
   pushed; this checkpoint records the matching submodule pointer.
+
+## 2026-10-16 Studio lifecycle and panel boundaries
+
+- Added state-owned context reset operations for catalog, authoring, profile
+  composition, and workspace file state. Split the Workspace file-browser and
+  editor panel into its own UI module, and moved content/starter creation out
+  of workspace lifecycle operations into `content_creation`.
+- Static cross-module field and stale-reference checks plus `git diff --check`
+  passed. No build, tests, formatter, deploy, launch, or Steam action was run.
+  Vapor-Studio `176ec57` is pushed; this checkpoint records the matching
+  submodule pointer.
