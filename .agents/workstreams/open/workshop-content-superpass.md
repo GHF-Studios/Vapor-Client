@@ -1190,3 +1190,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `b305218` is pushed;
   this checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 invalidate stale Workshop reviews
+
+- Studio now drops the staged review and typed publish confirmation when source
+  files, manifests, composition links, runtime outputs, or new files change. A
+  failed re-stage also clears the previous preview, so the screen cannot imply
+  that an older package is the current review.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `12ce703` is pushed;
+  this checkpoint records the matching submodule pointer.
