@@ -1213,3 +1213,15 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `4042e80` and Vapor-Studio
   `cacdf17` are pushed; this checkpoint records both submodule pointers.
+
+
+## 2026-10-16 required-role creation readiness
+
+- The create form now gets required dependency slots from Vapor Shell and keeps
+  Create disabled until the required role is selected and a Workspace is open.
+  The role picker uses Shell's exclusive-slot API to replace conflicting choices;
+  changing content kind or workspace clears stale selections. General
+  dependencies remain multi-selectable.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `d59914a` and Vapor-Studio
+  `81261af` are pushed; this checkpoint records both submodule pointers.
