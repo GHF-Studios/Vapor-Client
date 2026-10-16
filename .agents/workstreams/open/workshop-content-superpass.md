@@ -1719,3 +1719,57 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static diff and delimiter checks passed. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `c711925` is pushed; parent
   pointer checkpoint is pending.
+
+## 2026-10-17 Studio product-flow and shell UX pass
+
+- Reframed primary navigation around Play, Content, Authoring, and Share; moved
+  profile switching into play-related screens and separated on-device discovery
+  from Steam Workshop browsing. Local content search now appears only where it
+  actually filters.
+- Rebuilt Home as a resume dashboard for the active play profile and workspace,
+  with install health, guarded next actions, and recent operation outcomes that
+  persist across restarts. Operation progress/history now has its own fixed
+  bottom panel; long non-editor pages scroll independently, while the file
+  editor retains its split-pane workspace.
+- Changed Create into a workspace-first template flow, then a focused identity,
+  dependency, and optional Workshop metadata step. Split Workspace overview into
+  Sources, Content, and Build destinations. Moved profile-root selection from
+  every catalog row into the selected content detail, and exposed an explicit
+  target profile in Discover where profile-root actions are available. Replaced
+  the template dropdown with grouped, explanatory role cards.
+- Applied a restrained dark-blue/cyan Studio palette and clarified the Play vs
+  local content-cache terminology.
+- `git diff --check` passed. Vapor-managed `client deploy local` compiled and
+  deployed the updated Linux client to the local Loo-Cast app root. No tests,
+  UI launch, Windows run, Steam publication, or Steam launch were performed.
+  The previously observed `reviewed_stage` warning was removed by keeping the
+  reviewed temporary stage alive directly in the upload tuple.
+
+## 2026-10-17 Launcher and content discovery integration
+
+- Opening or refreshing a workspace now scans for valid, unregistered content
+  manifests alongside registered source content and the local cache/install
+  catalog. The scan is read-only. Loo-Cast's Engine, Game, and Packagepack now
+  appear directly in Workspace and Discover with explicit adoption actions;
+  adoption remains separate from moving files, changing Cargo membership, or
+  publishing.
+- Discover includes unregistered workspace projects in its local search,
+  source/type filters, and result counts. Empty results now lead to a relevant
+  next step or clear filters. Home can jump directly to workspace content.
+- Workspace Sources now separates the profile's current authoring workspace
+  from Vapor's registered source list. Startup workspace resolution now keeps
+  the documented Studio Home landing; explicit workspace navigation still
+  opens Workspace.
+- Inspected Linux screenshots of Home, Workspace Sources/Content, Create,
+  Discover, Play, and Workshop. The content scan found three Loo-Cast projects
+  on first open without an extra scan click. No project was adopted and no
+  Loo-Cast files were changed.
+- `git diff --check` passed. Vapor-managed workspace builds passed for Vapor,
+  Vapor-CLI, and Vapor-Studio; `vapor client deploy local` built and deployed
+  the Linux client successfully. The deployed app was launched locally through
+  `vapor client launch studio -- --workspace ...`; Home and Discover were
+  visually confirmed. Tests, Windows, Steam launch, and Steam publication were
+  not run.
+- Vapor `d8774cb`, Vapor-CLI `4d6ab17`, and Vapor-Studio `9ee09b5` are
+  committed and pushed. The parent checkpoint is pending. Preserve the
+  unrelated dirty `Vapor-GUI/build.rs`.

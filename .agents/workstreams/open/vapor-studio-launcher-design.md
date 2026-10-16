@@ -91,6 +91,35 @@ selected composition, and recovery shell/installer.
   BuildID `25970591` was accepted for `vapor-dev`. Linux/Windows runtime
   behavior remains owner-tested rather than established by this source review.
 
+## Current verification — 2026-10-16
+
+- `vapor client launch [studio|play|shell|installer]` launches the locally
+  deployed Steam entrypoint without Steam; Studio is the default, and arguments
+  pass through to the selected mode. The managed CLI build/help, CLI parser, and
+  five entrypoint routing tests passed. Linux Studio and Installer entrypoint
+  smoke launches stayed open for the 8-second check window. Nothing was
+  deployed or launched through Steam during this pass; Windows remains untested.
+- Studio now treats the saved resolved graph as a profile lock. Installed Play
+  refuses to replace a missing locked root implicitly; Verify, Repair, and Play
+  preserve mismatches as Out of Date; the review shows saved-versus-installed
+  differences, and explicit graph adoption requires successful installed-file
+  verification, whose proof is session-local and expires on restart. Malformed
+  locks with duplicate bindings or dangling nodes cannot compare as valid.
+  Studio's managed tests passed (3 core tests and 1 UI comparison test), and the
+  Vapor-GUI managed build passed. An existing unused-assignment
+  warning remains in `vapor_shell/src/content.rs`.
+
+## Current verification — 2026-10-17
+
+- Studio startup now retains Home as the launcher landing while loading the
+  saved or explicitly supplied workspace. Workspace opening also scans for
+  unregistered authored content, which is surfaced in Discover without
+  changing the workspace. Linux screenshot review confirmed Home and Discover
+  against the Loo-Cast source tree (three candidates; none adopted).
+- Managed `vapor sdk build --workspace` passed for Vapor, Vapor-CLI, and
+  Vapor-Studio; `vapor client deploy local` passed. Local entrypoint launch
+  worked. Tests, Windows, and Steam were not run during this checkpoint.
+
 ## Ownership and data flow
 
 ```text
