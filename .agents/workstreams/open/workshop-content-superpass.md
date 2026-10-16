@@ -1508,3 +1508,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   passed. No build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-Studio `176ec57` is pushed; this checkpoint records the matching
   submodule pointer.
+
+## 2026-10-16 Studio workspace editor boundary
+
+- Moved guarded file listing, opening, saving, reloading, creation, and TOML
+  diagnostics into `workspace_editor`. Corrected a stale lookup of
+  `selected_workspace_file` to use the current `WorkspaceState.selected_file`.
+- Static stale-reference review and `git diff --check` passed. No build, tests,
+  formatter, deploy, launch, or Steam action was run. Vapor-Studio `23785c3` is
+  pushed; this checkpoint records the matching submodule pointer.
