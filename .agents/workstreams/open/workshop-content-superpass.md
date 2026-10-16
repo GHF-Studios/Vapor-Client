@@ -1366,4 +1366,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   reported as generic catalog refreshes.
 - Static review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `30c3dbb` is pushed;
+  Vapor-Client checkpoint `b4fa482` records the matching submodule pointer.
+
+## 2026-10-16 profile lifecycle
+
+- Profiles can now be renamed with case-insensitive uniqueness checks or
+  removed through an inline confirmation. The last profile cannot be removed;
+  workspace files and installed content are explicitly preserved.
+- Static review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `775d620` is pushed;
   the parent checkpoint is pending.
