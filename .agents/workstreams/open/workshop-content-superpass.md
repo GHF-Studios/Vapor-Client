@@ -1010,7 +1010,7 @@ Implementation is source-only until Leslie requests managed verification again. 
 
 ### Current implementation checkpoint
 
-The source-only content-authoring checkpoint is pushed across Vapor-CLI (`ea57d43`) and Vapor-Studio (`3bb7d9f`); the parent pointer checkpoint is pending. Vapor-GUI has a pre-existing user change in `build.rs`; preserve it. The current editor slice remains uncompiled and untested by owner request.
+The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b663`) and Vapor-Studio (`424121a`); the parent pointer checkpoint is pending. Vapor-GUI has a pre-existing user change in `build.rs`; preserve it. Current editor slices remain uncompiled and untested by owner request.
 
 
 ## 2026-10-16 explicit content-project adoption
@@ -1044,3 +1044,19 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`ea57d4
 - Static review and `git diff --check` only. No build, test, formatter,
   deployment, launch, or Steam action was run; this pass is not
   compiler-verified.
+
+
+## 2026-10-16 reversible content-project registration
+
+- Added explicit unregistration from the Workspace registry through the same
+  locked, stale-source-checked, recoverable Shell transaction used by adoption.
+  It validates the saved Workspace and refreshed discovery before accepting the
+  edit; a validation error restores the original manifest. It leaves content
+  files and Cargo workspace membership untouched, so Find projects / Adopt can
+  re-register it.
+- Studio exposes Unregister on each registered project with a clear confirmation,
+  performs the operation in the background, refreshes discovery, and invalidates
+  profiles pinned to the exact removed content version.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `768b663` and Vapor-Studio
+  `424121a` are pushed; the parent pointer checkpoint is being recorded.
