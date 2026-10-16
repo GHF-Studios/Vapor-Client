@@ -1083,3 +1083,16 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `08ff3e7` is pushed; the
   parent pointer update is recorded in this checkpoint.
+
+
+## 2026-10-16 Compose lifecycle handoff
+
+- Added a source-graph availability preview to Compose for saved Packagepacks.
+  It resolves against the active Workspace, Vapor cache, and installed content,
+  then shows source provenance, blockers, warnings, and direct Workshop download
+  actions. Unsaved graph drafts cannot show a stale plan.
+- Extracted the same plan presentation for both Compose and Library, so both
+  entrypoints render identical source and acquisition semantics.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `6c68a5e` is pushed; the
+  parent pointer update is recorded in this checkpoint.
