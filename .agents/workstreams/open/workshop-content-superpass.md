@@ -1060,3 +1060,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-CLI `768b663` and Vapor-Studio
   `424121a` are pushed; the parent pointer checkpoint is being recorded.
+
+
+## 2026-10-16 serialized content registration
+
+- Closed a registry lost-update path: content creation now acquires the same
+  Workspace project edit lock as adoption and unregistration, and verifies its
+  Workspace and Cargo manifest snapshots before writing. This keeps overlapping
+  Vapor-managed registry edits from silently overwriting one another.
+- Source-reviewed and `git diff --check` passed. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `f86c70a` is pushed; the
+  parent pointer update is recorded in this checkpoint.
