@@ -1476,3 +1476,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static nested-field/initializer checks and `git diff --check` only. No build,
   tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
   `15b3f07` is pushed; the parent checkpoint records the matching pointer.
+
+## 2026-10-16 Studio profile state ownership
+
+- Grouped the profile collection, active profile, recovery text/backup, and
+  profile add/rename/removal form state into `ProfileState`. Every page,
+  operation handler, and persistence access now addresses the profile owner.
+- Static nested-field/initializer checks and `git diff --check` only. No build,
+  tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
+  `1db41fd` is pushed; the parent checkpoint records the matching pointer.
