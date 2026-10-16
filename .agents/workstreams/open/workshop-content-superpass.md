@@ -1324,3 +1324,19 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Source-only UI polish; `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `5dd1d54` is pushed;
   this checkpoint records the matching submodule pointer.
+
+## 2026-10-16 explicit workspace ownership
+
+- The active profile association now decides whether a Workspace is open.
+  Current-directory fallback is only a suggested path; explicit/remembered
+  paths and a current directory containing `Workspace.vapor.toml` pass through
+  the validated open flow.
+- Workspace-only creation, editing, validation, staging, and development
+  operations now guard against operating on an arbitrary launch directory.
+  Switching profiles or detaching to cache-only content clears source-editor
+  state; reopening the same workspace refreshes it without dropping its profile
+  composition.
+- Static review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio commit and matching
+  parent checkpoint are recorded in Vapor-Studio `6a8770b`; the parent
+  checkpoint is pending.
