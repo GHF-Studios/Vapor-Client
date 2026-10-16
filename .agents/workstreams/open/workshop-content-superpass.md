@@ -1587,3 +1587,13 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   retained; all touched Rust delimiters balance and `git diff --check` passed.
   No build, tests, formatter, deploy, launch, or Steam action was run.
   Vapor-Studio `b34e5f1` is pushed; this checkpoint records the current pointer.
+
+## 2026-10-16 Studio workspace-open contract
+
+- Replaced the positional four-field workspace-open result tuple with a named
+  `WorkspaceOpenSnapshot` carrying root, source content, local catalog, and
+  workspace files. The workspace activation owner now consumes that typed
+  snapshot directly.
+- Static delimiter/reference checks and `git diff --check` passed. No build,
+  tests, formatter, deploy, launch, or Steam action was run. Vapor-Studio
+  `7d1ef98` is pushed; this checkpoint records the current pointer.
