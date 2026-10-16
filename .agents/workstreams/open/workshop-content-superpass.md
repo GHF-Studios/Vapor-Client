@@ -1387,3 +1387,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static review and `git diff --check` only. No build, tests, formatter, deploy,
   launch, or Steam action was run. Vapor-Studio `d7290ca` is pushed; the parent
   checkpoint records the matching submodule pointer.
+
+## 2026-10-16 Studio profile lifecycle boundary
+
+- Moved profile switching, root assignment from catalog/Workshop, profile
+  creation, duplication, rename/removal, and the associated editor/catalog state
+  reset into `vapor_studio_ui::profiles`. The screen code retains its existing
+  calls through `StudioApp`.
+- Static source review, a source-only visibility/method-presence check, and
+  `git diff --check` only. No build, tests, formatter, deploy, launch, or Steam
+  action was run. Vapor-Studio `0dbcef2` is pushed; the parent checkpoint
+  records the matching submodule pointer.
