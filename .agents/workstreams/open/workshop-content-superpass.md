@@ -1282,3 +1282,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Static source review and `git diff --check` only. No build, tests, formatter,
   deploy, launch, or Steam action was run. Vapor-Studio `b1c32fe` is pushed;
   this checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 managed starter-workspace contract
+
+- The generated starter now includes Vapor Core's top-level code-project entries
+  and the active managed toolchain pin, so it satisfies the same workspace
+  contract used by managed development operations. The nested Vapor content
+  registry remains separate and still includes the metadata-only Packagepack.
+- Static source review and `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-CLI `907f215` is pushed; this
+  checkpoint records the matching submodule pointer.
