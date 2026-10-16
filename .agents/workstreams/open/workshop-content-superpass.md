@@ -1315,3 +1315,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Source-only documentation update; `git diff --check` only. No build, tests,
   formatter, deploy, launch, or Steam action was run. Vapor-CLI `2551800` is
   pushed; this checkpoint records the matching submodule pointer.
+
+
+## 2026-10-16 creation readiness guidance
+
+- The disabled Create action now tells creators to open a Workspace before
+  choosing a required Engine/Game role when both prerequisites are absent.
+- Source-only UI polish; `git diff --check` only. No build, tests, formatter,
+  deploy, launch, or Steam action was run. Vapor-Studio `5dd1d54` is pushed;
+  this checkpoint records the matching submodule pointer.
