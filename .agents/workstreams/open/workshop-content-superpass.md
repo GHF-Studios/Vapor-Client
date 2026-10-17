@@ -1773,3 +1773,163 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Vapor `d8774cb`, Vapor-CLI `4d6ab17`, and Vapor-Studio `9ee09b5` are
   committed and pushed. The parent checkpoint is pending. Preserve the
   unrelated dirty `Vapor-GUI/build.rs`.
+
+## 2026-10-17 Studio reliability and authoring continuation
+
+- Refresh failures now preserve last-known source, catalog, project-scan, file,
+  and Workshop subscription data with explicit stale-state messaging. Actions
+  that depend on current source/catalog snapshots are disabled until refresh
+  succeeds; failed Workshop batches retain their selection for retry. Recent
+  imports keep the latest 50 exact content versions for the current session.
+- Workspace file discovery now includes dotfiles and configuration folders,
+  while skipping repository history and generated/dependency directories.
+- Opening a valid workspace no longer depends on every content manifest or the
+  entire file listing succeeding. Workspace validation is advisory on open, so
+  an invalid manifest or project reference can be repaired in the editor;
+  workspace actions remain subject to Vapor's validation. Studio reports each
+  subsystem failure in place and retains saved editor recovery data until a
+  file list can be read. Content actions now require a successful current
+  snapshot; adoption waits for fresh source discovery; Discover distinguishes
+  failed discovery from a confirmed empty catalog; and Workshop staging,
+  publishing, and profile assignment wait for fresh source/local-conflict data.
+  Workspace validation re-runs during discovery, so a saved repair clears the
+  warning without switching away and reopening the folder. Reopening the same
+  workspace after a transient scan failure preserves its last successful lists.
+- The Vapor source registry now marks failed refreshes as stale and prevents
+  duplicate-registration actions until the current list is confirmed.
+- `git diff --check` passed. No build, tests, formatter, deploy, launch, or
+  Steam action was run, per owner direction. Studio changes remain uncommitted;
+  unrelated dirty parent submodules `Vapor` and `Vapor-GUI` were preserved.
+
+## 2026-10-17 First-run clarity and Steam launch failure trace
+
+- Reworded Studio's primary destinations and page introductions around user
+  goals (Start, Play, Find content, Set up a game, My projects, Share content,
+  App status). Added short hover explanations, clarified profiles, and moved
+  the profile's raw content identifier behind an optional details disclosure.
+  Replaced exposed workflow terms such as "adopt", "workspace", "composition",
+  and "Vapor cache" in first-run paths with plain-language project and download
+  actions. Updated profile setup and operation labels, and added direct local
+  and Steam Workshop routes from the Start screen.
+- Traced the reported Workshop failure: the local entrypoint log records the
+  latest request as `play`; Studio play mode loads the root `default`
+  packagepack and installs it if missing. `App.vapor.toml` maps that packagepack
+  to App ID `2122620` and PublishedFileId `3762162548`. The install path passes
+  no account, and Vapor's downloader converts that to SteamCMD `anonymous`.
+  This matches the failing item and confirms that the user's logged-in Steam
+  client session is not used by this path. The local logs do not establish
+  whether the item is public/available to anonymous downloads, so that part
+  remains unverified. The exact item is also absent from the local Steam
+  Workshop content directory for App ID `2122620`.
+- Static diff whitespace check passed. No build, tests, formatter, deployment,
+  launch, or Steam action was run. Studio edits remain uncommitted.
+
+## 2026-10-17 Signed-in Workshop acquisition and approachability pass
+
+- Missing root-seed content in a play profile now uses Steamworks UGC from the
+  signed-in client, copies each item into Vapor's managed content cache before
+  Steam closes the download session, then resolves the newly available
+  manifests and dependencies. This does not subscribe the user. The existing
+  SteamCMD path remains available when Steamworks cannot initialize outside a
+  Steam-launched session. Generic Steam failures now explain the likely access
+  checks instead of showing only `Failure`.
+- Workshop search now distinguishes Download (keep a copy here) from Subscribe
+  (let Steam keep it updated) and explains that neither action modifies the
+  current game setup. Temporary Steam download paths are only passed to a
+  synchronous import callback; the Steam provider no longer exposes them as
+  long-lived paths.
+- Navigation now groups game setup with Play and app status separately from
+  Publish. The creation screen presents descriptive project choices while
+  retaining the existing Rust-defined content types and validation rules.
+  Recent-download and setup requirement panels use plain-language actions and
+  keep technical details behind disclosures.
+- Steam's official `ISteamUGC::DownloadItem` documentation confirms that an
+  unsubscribed item's download is temporarily cached, and instructs callers
+  to wait for `DownloadItemResult_t` before reading its install folder. This
+  validates the chosen signed-in-client acquisition lifecycle, but does not
+  establish the availability/permissions of PublishedFileId `3762162548`.
+- `git diff --check` passed across the parent and modified submodules. No build,
+  tests, formatter, deployment, launch, or Steam action was run. Changes remain
+  uncommitted; user must verify with the requested Vapor-managed build and
+  Steam launch before the workaround can be called confirmed.
+
+## 2026-10-17 First-time user language pass
+
+- Continued the newcomer-facing pass across Play, Create, and project-folder
+  screens. Key actions now say “project folder,” “game setup,” “included
+  content,” and “add to Studio,” while IDs and technical filenames stay in
+  optional detail areas. Internal content kinds remain unchanged.
+- Changed the Steam download path to use the signed-in Steam client for
+  unsubscribed Workshop downloads. This is still a code-level proposal until
+  the user's managed build and Steam launch confirm it against item
+  `3762162548`.
+- Whitespace checks passed for Vapor, Vapor-CLI, and Vapor-Studio. No build,
+  tests, formatting, deployment, launch, or Steam action was run. All changes
+  remain uncommitted; unrelated dirty files and submodules were preserved.
+
+## 2026-10-17 Typed dependency enforcement
+
+- Connected Vapor Core's pack-child vocabulary to semantic graph validation,
+  so resolved packs reject child kinds outside their declared role set.
+- Vapor Shell now checks dependency target kinds and reserved role labels in
+  source validation, structured graph saves, install previews, actual installs,
+  and installed launch-closure verification. Packagepacks require one Engine
+  or Enginepack and one Game or Gamepack.
+- Studio now obtains all required role slots from the shared Shell contract.
+  Create and composition screens require a Game and describe that rule
+  consistently. Launch graph/result types carry the resolved Game as required.
+- `git diff --check` passed in Vapor, Vapor-CLI, and Vapor-Studio. No build,
+  tests, formatter, deployment, launch, or Steam action was run. Existing dirty
+  changes remain uncommitted and preserved.
+
+## 2026-10-17 Play handoff and page-height regression
+
+- After the owner tested the local deployment, the latest Steam entrypoint log
+  confirmed `play` launched `vapor-gui`, and the content index showed the
+  default Packagepack, Engine, and Game installed successfully. The installed
+  Engine's `src/main.rs` is still the old placeholder that prints that its
+  runtime is unavailable and exits successfully; the current Loo-Cast source
+  Engine has a Bevy game entrypoint. Local client deployment does not update
+  Workshop content, so the Steam Play path cannot open the game until the
+  current Engine content is staged and published.
+- Removed the new page-centering wrapper around Studio's full-height scroll
+  area, restoring the previous direct CentralPanel scroll layout after the
+  owner reported page content collapsed into a thin top strip. This needs the
+  owner's visual recheck.
+- `git diff --check` passed in Vapor-Studio. Vapor-managed `vapor client deploy
+  local` compiled and deployed the layout change to the local Loo-Cast app root.
+  No tests or app launch were performed. Steam content was not published; the
+  owner should recheck the layout and decide when to stage/publish the updated
+  Loo-Cast Engine item.
+
+## 2026-10-17 Packagepack launch artifact
+
+- Confirmed the installed Spacetime Engine binary was the success-exiting
+  placeholder. Play ran it, so the launcher reported success without opening a
+  game. Moved the runnable Loo-Cast composition to a Packagepack executable;
+  Packagepack launch now resolves that executable from its target-specific
+  runtime payload. The Game integration now installs the actual game and
+  developer adapter plugins. Engine is library-only for this composition, and
+  the unused Game shared library was removed from its Workshop payload.
+- Updated the tracked Loo-Cast Cargo lock entry for the Packagepack's Engine
+  and Game dependencies. Disabled third-party dependency debug symbols in the
+  developer profile to reduce the host Packagepack from 2.5 GB to 589 MB.
+- Vapor-managed `vapor client deploy local` succeeded, followed by
+  `vapor content deploy ghf-studios/loo-cast/loo-cast-packagepack --select
+  --host-only`. The default Packagepack is selected and contains an executable
+  at `bin/x86_64-unknown-linux-gnu/loo-cast-packagepack`. Active source was
+  restored to Vapor-Client. No tests or game launch were run; Steam Workshop
+  was not uploaded or changed. The installed developer binary still carries
+  debug info and is not the release-sized cross-platform Workshop publication.
+  Next: owner tests Play through Steam; then address release-profile and full
+  target-matrix Workshop packaging before any upload.
+
+## 2026-10-17 Studio service-boundary design
+
+- Wrote and committed the proposed Studio service architecture at
+  `Vapor-Studio/docs/superpowers/specs/2026-10-17-studio-service-boundary-design.md`.
+  It gives the GUI and terminal simulator one short-lived service process,
+  shared typed actions/state, explicit host bootstrap, and deterministic
+  providers for workflow scenarios.
+- The spec is pushed and awaiting the owner's brief review. No service code,
+  build, tests, deployment, or Steam action was performed for this design step.
