@@ -1926,10 +1926,24 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 
 ## 2026-10-17 Studio service-boundary design
 
-- Wrote and committed the proposed Studio service architecture at
-  `Vapor-Studio/docs/superpowers/specs/2026-10-17-studio-service-boundary-design.md`.
-  It gives the GUI and terminal simulator one short-lived service process,
-  shared typed actions/state, explicit host bootstrap, and deterministic
-  providers for workflow scenarios.
-- The spec is pushed and awaiting the owner's brief review. No service code,
-  build, tests, deployment, or Steam action was performed for this design step.
+- The approved architecture and implementation sequence are in
+  `Vapor-Studio/docs/superpowers/specs/2026-10-17-studio-service-boundary-design.md`
+  and `Vapor-Studio/docs/superpowers/plans/2026-10-17-vapor-studio-service.md`.
+- Implemented the typed protocol, bounded stdio process client/server, fixture
+  simulator and scenarios. The GUI now sends local catalog refresh, search,
+  exact-version selection, workspace activation, and active-profile selection
+  through the child service. Production Workshop publication is unreachable
+  from fixtures.
+- Vapor-managed Studio `validate` passes formatting, compilation, tests,
+  Clippy, and Rustdoc. The compiled service simulator also passed the
+  `fixture-profile-selection` scenario over a real child process. Tests exercise
+  protocol round trips, stale revisions, frame caps, malformed input recovery,
+  child-process lifecycle, fixture scenarios, and the publication boundary.
+- `vapor root build --host-only` built Vapor core, then stopped at `vapor-gui`
+  because its ignored local `Cargo.lock` needs regeneration while the managed
+  workflow passes `--locked`. Consequently, promotion of the service beside
+  `vapor-gui` is not yet verified. No deployment or Steam action was run.
+- This is a foundation slice, not the finished service migration: other action
+  families still report unavailable; profile persistence, provider ports,
+  operation ownership, most workspace/editor flows, and the remaining GUI
+  workflows are still in the plan.
