@@ -149,9 +149,22 @@
 - Added a separate profile revision so catalog snapshots do not overwrite
   profile operation results; runtime installation proof is available in live
   protocol snapshots and cleared when saved or reloaded.
-- Vapor-managed Studio validation passes with 45 tests, Clippy, and Rustdoc.
-- Next service tranche: composition execution, then workspace/editor and
-  authoring, Workshop, publishing, and shared operation lifecycle ownership.
+- Moved composition preview, install, verify, repair, update, source run, and
+  Play into the service's asynchronous operation lifecycle. The service now
+  owns resolved profile graphs, installation proof, and post-operation saves.
+- Added typed composition preview data and profile-scoped operation events to
+  the protocol. Fixture-mode preview and install exercise the same service
+  route without Steam or game-process effects.
+- Removed the client action that could submit a fabricated installed graph;
+  only service execution can establish that state. Default Packagepack
+  selection is now resolved and persisted by the service as well.
+- Terminal operation success is emitted only after the service applies and
+  saves the profile result; tests cover one terminal event and verification
+  failure reconciliation.
+- Vapor-managed Studio validation passes: 49 tests, Clippy, and Rustdoc.
+- Next service tranche: workspace/editor file operations and authoring, then
+  Workshop and publishing. Workspace text-file access and most authoring and
+  Workshop actions still run from the GUI today.
 - Cancelled the first real `root publish` attempt after SteamPipe scanned about
   2.6 GiB. The staged root depot was runtime plus `packages/setup`; the setup
   payload alone contained the Rust toolchain, Cargo home, Git, and SteamCMD.
