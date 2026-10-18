@@ -1947,3 +1947,26 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   families still report unavailable; profile persistence, provider ports,
   operation ownership, most workspace/editor flows, and the remaining GUI
   workflows are still in the plan.
+
+
+## 2026-10-18 Studio service Part 1 complete
+
+- Service-owned workspace discovery is implemented. `StudioSnapshot` now
+  carries registered source projects, unregistered adoption candidates, scan
+  diagnostics, independent partial errors, and workspace validation state.
+  The session bounds project/diagnostic counts, preserves last good scan data on
+  same-workspace failures, resets on workspace changes, and gates explicit scans
+  on an open workspace.
+- Catalog refresh, workspace activation, and the explicit project-scan control
+  now consume the child service snapshot. GUI workers no longer call source or
+  candidate discovery directly. Editor file enumeration remains in the UI and
+  is part of the later editor migration.
+- Added conversion and backwards-decoding coverage, a fixture-only child-process
+  scenario, and interactive simulator `open`/`discover` commands. Large protocol
+  snapshot/response payloads are boxed in memory; JSON shape is unchanged.
+- Vapor-managed `fmt --project vapor-studio` and
+  `validate --project vapor-studio` pass (33 tests, check, Clippy, Rustdoc). No
+  deploy, publication, or game launch was run.
+- Next active slice: host-owned durable state and one-time import of existing
+  profile data. The service foundation has not yet taken over profile CRUD,
+  drafts, or operation history.
