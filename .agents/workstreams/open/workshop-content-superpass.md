@@ -138,6 +138,20 @@
   dependency recursion, selected it, verified, updated, disabled/enabled,
   repaired, and explicitly uninstalled packagepack, game, and engine. Installed
   state ended empty; cache/index state remained available.
+
+## Vapor Studio service boundary
+
+- Added a child service with typed profile state, explicit host context,
+  one-time migration from egui storage, and atomic durable profile/draft/history
+  persistence.
+- Routed profile CRUD, root assignment, launch arguments, content invalidation,
+  default-root recovery, and workspace activation through service actions.
+- Added a separate profile revision so catalog snapshots do not overwrite
+  profile operation results; runtime installation proof is available in live
+  protocol snapshots and cleared when saved or reloaded.
+- Vapor-managed Studio validation passes with 45 tests, Clippy, and Rustdoc.
+- Next service tranche: composition execution, then workspace/editor and
+  authoring, Workshop, publishing, and shared operation lifecycle ownership.
 - Cancelled the first real `root publish` attempt after SteamPipe scanned about
   2.6 GiB. The staged root depot was runtime plus `packages/setup`; the setup
   payload alone contained the Rust toolchain, Cargo home, Git, and SteamCMD.
