@@ -29,6 +29,70 @@
 
 ## Completed
 
+## Current checkpoint
+
+Pass 1's ownership review is complete. `vapor_client_domain` owns shared
+application policy and install planning; `vapor_client_provider` in Vapor owns
+filesystem/content/Workshop provider operations; Vapor CLI re-exports those
+operations; the Vapor-owned application crate consumes the provider directly.
+This removes the Studio Core -> CLI dependency inversion. Pass 2 is underway:
+the application and service-host crates now live in Vapor, the managed service
+binary is `vapor-client-service`, and its distribution validation uses the same
+name. Current service startup still launches one private stdio child per
+frontend; singleton bootstrap and multi-client IPC remain. The CLI also still
+calls provider operations directly. Auto-Install's agreed behavior is latest
+version compatible with all dependent compositions plus automatic local
+collection at zero dependents; only the domain policy and durable preference
+exist so far, not lifecycle execution. No build, test, deploy, commit, or push
+was performed in this continuation.
+
+
+- Added Vapor-owned `vapor_client_domain` and exposed its application-domain
+  contract through `vapor_client`. The first shared policy covers the user's
+  Library Auto-Install toggle: select the newest version satisfying every
+  dependent composition, retain a manually managed version, and collect only
+  auto-managed content with zero composition dependents. This policy is not
+  authored content or a Workshop subscription. The preference and typed action
+  are durable in shared client state; automatic update/collection execution
+  remains future lifecycle work.
+- Moved provider-neutral exact candidates, recursive graph resolution, and
+  resolved node/composition types into `vapor_content`. `vapor_core` now adapts
+  its generic local catalog into that shared candidate model and delegates
+  graph traversal. The shared domain owns availability-aware install planning;
+  the Vapor-owned local provider supplies workspace/cache/installed/Workshop
+  candidates and provenance.
+- Replaced the protocol's duplicate `ContentIdentity` with shared validated
+  `ContentReference`, and moved composition/install persistence records plus
+  composition naming/duplication/removal and installed-graph comparison into
+  `vapor_client_domain`; composition and Library actions are domain-owned
+  intents, and all former protocol action families now live in the same
+  domain crate; protocol/client crates re-export those shared types. Added
+  checked projection conversion between durable graph snapshots
+  and the canonical `vapor_content::ResolvedComposition` without changing the
+  JSON field layout.
+- Tightened the shared authored role-manifest parser: content references now
+  deserialize through `VaporId`, dependency constraints through `VersionReq`,
+  and exact authored versions through `semver::Version`; workspace-inherited
+  versions are parsed as semantic versions before source discovery consumes
+  them. Source discovery/editing and deployed cache/installed artifact reads
+  now use that parser. Existing editor/provider projections keep their string
+  wire fields; the generic `LocalCatalog` and Workspace catalog adapt to
+  shared exact candidates, with one shared install planner and separate local
+  provider observations.
+- Updated the implementation plan and service contract with the corrected
+  Auto-Install meaning and a canonical ownership map. The protocol graph is a
+  projection of the shared graph; the Library preference is durable and has a
+  typed service action. No build or tests were run; user handles compilation
+  and testing. Pass 1's ownership review is now complete: the dependency
+  traversal is shared, and Studio Core no longer depends on CLI.
+
+- Added a shared `vapor_core::authored_manifest` parser for role-specific
+  source declarations and composition edges. Vapor Shell discovery and
+  source-edit validation now use it; Workshop policy also has one shared
+  representation. Both generic and role-specific catalogs feed shared exact
+  candidates; the local provider and planner are separate. No build, tests, or
+  deployment were run in this continuation.
+
 - Preserved the current parent and submodule HEADs, tracked diffs, status, and
   untracked files in `/tmp/vapor-repo-boundary-preserve-20261014T123835Z`.
 - Mapped the owner-approved repository direction: dissolve Vapor-SDK, rename
@@ -2021,3 +2085,406 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Next active slice: host-owned durable state and one-time import of existing
   profile data. The service foundation has not yet taken over profile CRUD,
   drafts, or operation history.
+
+## 2026-10-18 Studio coherence and profiling pass
+
+- Root Steam publishing now runs in the Studio service. The service owns the
+  review token, rechecks the exact confirmation phrase, and executes staging or
+  upload as a background operation; fixture mode rejects this authority.
+- The Studio protocol carries the first-party release review/result. The UI
+  submits typed actions and renders service snapshots; it no longer invokes the
+  SDK root publisher directly. Protocol version is 6.
+- Registered project roots now include repositories discovered through the
+  active Vapor Superworkspace, so first-party container and workspace repos can
+  be opened from Studio without treating them as content.
+- Browse and Profiles share a framed contextual panel; the details pane has
+  more room. Create exposes one template family at a time and keeps sample
+  workspace setup collapsed. Projects separates registered projects, adding
+  existing folders, and project settings into focused views. The setup composer
+  has a clearer name, and primary actions no longer stretch across the page.
+- Restored the shipped shell routes `toolchain tracy` and
+  `launch --current-workspace --profiling`. Devtools now explains that a Steam
+  launch argument does not create a Vapor Development Session.
+- `git diff --check` passed. The user will run compilation and tests. The
+  Vapor-managed formatter could not write into the mounted submodule checkout,
+  so formatting and compilation remain unverified; no build, test, deployment,
+  or Steam publication was run.
+
+## 2026-10-18 Shared Vapor Client Service direction
+
+- The owner approved one local service process with one shared Rust API for
+  Studio, CLI, Installer, Steam launch modes, and future language tooling.
+  Frontends connect to that process; they do not own alternate implementations
+  of workflow policy.
+- Steam Entrypoint remains a narrow handoff adapter: app-root discovery,
+  launch-mode selection, logging, and facade handoff. Shared frontend
+  connection code owns service discovery/startup/lifetime.
+- Added `Vapor/docs/vapor-client-service.md` as the concise architecture
+  contract. The prior Studio-only stdio child design is marked historical.
+- Existing content/Studio edits remain uncommitted and preserved. No build,
+  tests, deployment, launch, or publishing was run during this design shift.
+- Next: relocate the current protocol/client API into Vapor shared code, then
+  evolve the per-GUI child process into the single local IPC service and route
+  frontends through it. Preserve one service instance and eliminate duplicated
+  workflow semantics as each action family migrates.
+
+## 2026-10-18 Shared service architecture correction
+
+- The owner clarified that the implementation must use the intended shared
+  service and domain model from the outset; this is not a provisional API to
+  clean up after migration.
+- Steam Entrypoint invokes the shared bootstrap manager before frontend
+  handoff. The manager owns process discovery, startup, connection, recovery,
+  and shutdown policy; the entrypoint does not duplicate that machinery.
+- Moved the client and protocol Rust sources into `Vapor/crates/` and replaced
+  the public `Studio*` message names with client/service names. Removed the
+  `Client* = Studio*` aliases. This is source/API cleanup only; it does not
+  make the process model complete.
+- Reworked the lifecycle plan to put semantic ownership and domain mapping
+  before moving the service host. In particular, it records the current split
+  between ProfileAction and CompositionAction and the reuse of profile storage
+  structures in protocol snapshots as design work, not settled domain shape.
+- Current evidence: the host is still a Studio-owned stdio child, still depends
+  on Studio workflow code and CLI code, and still starts one process per
+  frontend. Vapor-managed format and compile checks now pass for `vapor` and
+  `vapor-studio`; the elevated managed shell was required to use the existing
+  app-local build cache. Tests were not run per owner preference.
+- Next: settle the canonical composition/application domain and untangle the
+  `Studio service -> Studio core -> CLI` dependency before selecting or
+  implementing the multi-client IPC host. Do not treat the current child
+  process as the accepted service architecture.
+
+
+## 2026-10-18 Canonical content-kind slice
+
+- Removed `vapor_shell::manifest::ContentKind`; Vapor CLI now consumes
+  `vapor_core::ContentKind` directly. Manifest filenames and kind spellings
+  derive from that shared enum, and SDK/CLI manifest discovery iterate its
+  canonical kind list.
+- Routed CLI dependency-kind validation through the shared Vapor rule instead
+  of a second pack/member policy table.
+- Added `Library.vapor.toml` recognition and carried that existing core kind
+  through CLI authoring and deployed-manifest parsing. Whether Studio exposes
+  Library as a creator artifact remains a product/domain classification point.
+- Vapor-managed format and compile checks pass for `vapor`, `vapor-cli`, and
+  `vapor-studio`. No tests were run per owner preference. No runtime deploy,
+  launch, publication, or commit was performed.
+- The remaining domain mismatch is concrete: protocol `ContentIdentity` and
+  `ResolvedCompositionGraph` duplicate Vapor's `VaporId`, `ContentVersionId`,
+  and `ResolvedComposition`; the API also still exposes separate profile and
+  composition action families and profile storage structures.
+
+
+## 2026-10-18 Crate content semantics
+
+- The owner decided to rename the Rust-only content kind from `Library` to
+  `Crate`. Its canonical enum, manifest section and filename, CLI command, and
+  reconciliation API now use `Crate`, `crate`, and `Crate.vapor.toml`.
+- A Crate is build-time Rust code, not runtime-loaded content. It emits Rust
+  `rlib` and `staticlib` outputs, may depend on other Crates, and is excluded
+  from pack membership. Game and add-on code roles may depend on Crates.
+- Studio's separate acquired-content `Library` remains the collection of
+  locally available non-Packagepack content; Packagepacks remain compositions.
+  The shared Library availability aggregate is still a known gap.
+- Fixed the stale Studio workspace error that claimed a supported Crate kind
+  had no manifest role. Vapor-managed `sdk check` passes for Vapor, Vapor-CLI,
+  and Vapor-Studio. No tests, deployment, publication, launch, or commit was
+  performed.
+
+
+## 2026-10-18 Shared-domain ownership audit
+
+- Continued the approved plan past composition naming and checked the live
+  ownership graph instead of moving the current Studio core wholesale.
+- Found that `vapor_core` is a broad application/infrastructure crate as well
+  as a semantic model: its public modules include CLI dispatch, Cargo,
+  installation, Steam deployment, profiling, and developer-environment
+  orchestration.
+- Found the resolution blocker: `vapor_core::LocalCatalog` still consumes the
+  provisional generic `Vapor.toml`, while current content uses role manifests
+  such as `Engine.vapor.toml` and `Packagepack.vapor.toml`. The Shell
+  `preview_install` path independently resolves across source, cache,
+  installed content, and Workshop seeds, while also carrying source
+  provenance. Those concerns need one shared resolver and a separate
+  availability/install projection before either implementation is removed.
+- Updated the Vapor Client architecture contract and Studio implementation
+  plan with the verified ownership matrix and prerequisites for service
+  extraction. The plan now separates the active authoring folder, canonical
+  Superworkspace (default `~/Vapor`), and optional per-composition source
+  binding. The existing regression test proves folder changes preserve
+  composition selection, source association, and launch arguments; explicit
+  Superworkspace state/actions remain unimplemented.
+- No product code, deployment, userdata, or Steam state was changed during
+  this audit. No tests were rerun because only architecture documentation
+  changed; validation from the composition pass remains green. Run
+  `git diff --check` before continuing.
+
+
+## 2026-10-18 Separate player Library from Compositions
+
+- Renamed the old `Section::Library` route to `Compositions`, including its
+  page and composition-only helper modules. The navigation now has distinct
+  Compositions, Library, and Browse destinations.
+- Added a player Library view backed by downloaded and installed catalog entries,
+  excluding Packagepacks and creator-only static Crates. Search and type filters
+  are independent from Browse; cache records are presented as “Downloaded.”
+- Successful Workshop acquisition now refreshes shared service catalog state
+  and lands in Library. Partial acquisition stays in Workshop Imports for retry.
+- Vapor-managed Studio compilation passes after these changes. No tests were
+  run per owner preference. The Library is still a Studio projection over the
+  existing catalog contract; canonical identity/availability/action semantics
+  must still move into shared Vapor code. The standalone Add-to-compatible-
+  composition workflow and actual static linking of Crates also remain gaps.
+
+
+## 2026-10-18 Composition-facing player language
+
+- Play, Compose, the composition selector, and player actions now use the
+  approved Composition language instead of exposing “profile” as a second
+  player concept. The Play screen no longer reveals a raw content selector.
+- Legacy saved keys and protocol/profile identifiers remain intact for data
+  compatibility. The actual DTO/action migration and shared Library availability
+  model are still required; this wording pass does not resolve those boundaries.
+- `vapor sdk check` passes for Vapor, Vapor-CLI, and Vapor-Studio after correcting
+  the root UI module path to its still-existing `profiles.rs`. No tests, deployment,
+  publication, launch, or commit were performed.
+
+
+## 2026-10-18 Player-facing composition cleanup
+
+- Replaced player-visible “profile” and “game setup” wording with the approved
+  Composition concept across Play, Compose, Workshop, and composition actions.
+  Legacy local-storage keys remain unchanged for migration compatibility.
+- Removed raw Packagepack ID/version selectors, install paths, fingerprints,
+  cache/record terminology, and payload fingerprints from ordinary player panels.
+- Vapor-managed `sdk check` passes for Vapor, Vapor-CLI, and Vapor-Studio; the
+  Studio check is warning-free. `git diff --check` passes. No tests, deployment,
+  publication, launch, or commit were performed.
+- The next protocol step is blocked by automatic review: unifying the `Profile`
+  and `Composition` action families and renaming serialized composition state
+  could alter IPC and persisted data. The intended migration needs explicit
+  approval for that exact contract change before implementation.
+
+
+## 2026-10-18 Studio navigation enclosure
+
+- Reworked the desktop rail so every destination, search, and project-folder
+  action sits inside one amber outlined Creator Tools group. Routes are grouped
+  by Play, Discover & Library, Make & Manage, and Share & App; Compose now sits
+  with authoring rather than player launch. Both desktop and compact navigation
+  render from one canonical route-group definition. The duplicate project-folder
+  action was removed from the desktop header.
+- Reduced the fixed desktop rail from 220 px to 194 px and navigation rows from
+  32 px to 28 px, tightened row spacing/padding, and removed a duplicate brand
+  wordmark. The project action is compact and remains in the same group. The
+  compact-navigation breakpoint now sits just below the 980 px minimum window
+  width, so the vertical rail remains available at the supported minimum.
+- `vapor client deploy local` built and deployed the updated Vapor GUI
+  successfully after correcting an unsupported egui `Panel::width_range` call
+  and the nested UI module import for shared route groups. A final deployment
+  passed after removing the duplicate header control and centralizing the group
+  list for both desktop and compact navigation.
+  `git diff --check` passes. No tests, userdata deletion, publication, launch,
+  or commit were done.
+- Dedicated Studio state locations (`~/.local/share/vapor/studio` and the eframe
+  `~/.local/share/vaporstudio` path) do not currently exist, so there was no
+  Studio userdata to clear. The similarly named `com.ghf-studios.vapor.sdk`
+  directory is unrelated and was left untouched.
+
+
+## 2026-10-18 Catalog authority and stale completion pass
+
+- Applied the prepared catalog contract in the live dirty checkout: complete
+  catalog facts are retained separately from query identities, freshness/error
+  status, and explicit truncation. Shared search now matches ID, kind, version,
+  and Workshop ID. Browse and Library keep independent local filters.
+- Catalog refresh preserves the query and last-good facts on failure; unrelated
+  request results cannot clear catalog errors. Workspace opening remains
+  applied when its follow-up catalog refresh fails. Workshop staging refuses
+  to treat a truncated catalog as complete conflict evidence. The wire protocol
+  is now version 7; persisted profile data was not changed.
+- Composition operations capture the profile inputs they use. If the selected
+  root, workspace, or resolved graph changes before completion, the result is
+  not applied to the changed profile. A successful old install still refreshes
+  the catalog and reports that it completed for the previous selection.
+- Added service, protocol, and process regression coverage. Updated the
+  protocol action round-trip inventory for the current action set. Strict lint
+  findings in the active migration were fixed (boxed large operation results,
+  borrowed path comparison, collapsed nested conditionals, boxed the large
+  resolution error payload).
+- Vapor-managed `validate --project vapor-studio` passes formatting, check,
+  56 tests, Clippy, and Rustdoc. `validate --project vapor` passes formatting,
+  check, 39 tests, Clippy, and Rustdoc. Total: 95 passing tests across the two
+  affected workspaces. No deployment, Steam action, commit, or push was made.
+- The authoring-folder versus playable-composition association remains an
+  explicit owner decision; the question is pending. The full shared-service
+  host, operation availability contract, async responsiveness, provider
+  isolation, multi-session persistence policy, and rendered UX review remain
+  open passes. This checkpoint is not a full-stack completion claim.
+
+
+## 2026-10-18 Fixture isolation, scenario outcomes, and navigation correction
+
+- Fixture mode now rejects real workspace paths before inspecting them. It
+  accepts only isolated temporary workspace folders for file scenarios, and
+  rechecks that boundary in the worker before file access. Remembering a
+  workspace, running production validation, changing the installed source
+  registry, and all authoring/toolchain actions are unavailable in fixtures.
+- Scenario paths use the explicit `fixture://workspace` namespace. The runner
+  maps it to a temporary directory and removes that directory when the scenario
+  ends. It now waits for accepted asynchronous operations to emit a terminal
+  event and updated snapshot, with expectations for action, status, and result
+  text. A checked-in child-process scenario proves this path.
+- Corrected the sidebar enclosure based on review: Play and Find Content remain
+  player areas; only Create, Compose, Projects, and Share sit inside the amber
+  Creator group; App Status has its own Application group. The brand and search
+  sit above these areas without labeling the whole rail as Creator Tools. The
+  rail width is 178 px and its rows/padding are tighter.
+- Vapor-managed `validate --project vapor-studio` passes formatting, compile,
+  58 tests, strict Clippy, and Rustdoc. Combined with the already validated
+  Vapor and CLI workspaces, this checkpoint covers 102 tests across all three.
+  No deployment, publication, commit, or push was performed.
+- No rendered screenshot review has been done, so the new navigation taxonomy
+  and sizing still need visual confirmation. The larger service ownership,
+  operation readiness, and product journey passes remain active.
+
+
+## 2026-10-18 Authoring workspace / composition boundary
+
+- The owner confirmed that opening a creator folder must leave the selected
+  playable composition and its launch settings unchanged; authoring workspace
+  is tracked separately.
+- `WorkspaceAction::Open` now changes only the service's global authoring
+  workspace and its workspace/catalog projections. It no longer attaches that
+  folder to the active composition, clears its Packagepack/resolved graph/
+  installation, or increments the composition revision.
+- Creating or selecting a composition no longer implicitly binds or switches
+  the authoring workspace. A composition can still retain an explicit source
+  workspace binding for source-run behavior; it is independent state. The core
+  composition-creation helper no longer accepts a workspace argument, making
+  that binding explicit rather than implicit at its API boundary.
+- Added regression coverage proving an installed composition, graph, explicit
+  source binding, and launch arguments survive opening another folder, and
+  proving profile selection/creation do not move or inherit the editor context.
+- Vapor-managed `validate --project vapor-studio` passes: formatting, compile,
+  60 tests, strict Clippy, and Rustdoc. `git diff --check` passes across the
+  parent, Studio, and shared Vapor workspaces. No local deployment, Steam
+  action, commit, or push was performed.
+- This resolves the previously pending workspace/composition decision. The
+  one-service process model, shared domain contracts, player operation
+  lifecycle, and visual review remain active work—not completion claims.
+
+
+## 2026-10-18 Composition contract and saved-state migration
+
+- Promoted composition as the actual shared contract: renamed the public
+  protocol and Studio core types/modules, document fields, active selection,
+  revision, action IDs, operation identifiers, and service bootstrap field.
+  Bumped the client protocol to version 9; the service accepts the old
+  `--active-profile` process argument only as a compatibility alias.
+- Added a schema 1 to schema 2 durable-state migration. Old `profiles`,
+  `active_profile_id`, and `profile_revision` keys are accepted only while
+  decoding schema 1; migration rewrites canonical composition keys atomically.
+  Existing composition identity, Packagepack, graph, source association,
+  launch arguments, global workspace, and auxiliary state are retained.
+  Runtime installation observations remain intentionally transient.
+- The legacy egui seed is now explicitly the only profile-named import shape;
+  current writes and protocol snapshots use compositions. GUI bootstrap reads
+  prior storage keys and forwards the legacy payload to the service.
+- Added regression tests for v1 state migration and launch-setting preservation,
+  canonical protocol serialization, plus updated process scenario naming.
+- Vapor-managed `validate --project vapor` passes: formatting, check, 41 tests,
+  Clippy, and Rustdoc. `validate --project vapor-studio` passes: formatting,
+  check, 61 tests, Clippy, and Rustdoc. Combined, 102 tests pass across the
+  two affected workspaces.
+- No deployment, userdata deletion, Steam action, commit, or push has been
+  performed. Full domain ownership, shared service-host extraction, player
+  lifecycle, and UI review remain open.
+
+
+## 2026-10-18 Composition UI alignment and panel ownership
+
+- Renamed the UI's selected composition state, lifecycle actions, creation,
+  preview, launch, and selection flows to composition semantics. Old profile
+  storage keys and fields now appear only in the explicit legacy-egui import
+  adapter. The developer simulator uses `composition ID` as its documented
+  command; `profile` remains an undocumented command alias for continuity.
+- Split composition selection and management into separate page modules, and
+  renamed the composition-content panel to describe its actual responsibility.
+  The composition route now assembles selection, management, content, install,
+  and launch panels by name rather than hiding selection under a profile file.
+- The service and core operation/result names now agree with the composition
+  action family, and composition CRUD errors and diagnostics use the product
+  noun. Legacy decoder identifiers are retained only when upgrading old data.
+- Vapor-managed `validate --project vapor-studio` passes: formatting, compile,
+  61 tests, strict Clippy, and Rustdoc. The shared Vapor workspace also passed
+  its full validation earlier in this pass: 41 tests, Clippy, and Rustdoc.
+  `git diff --check` passes in the parent, shared Vapor, and Studio worktrees.
+  No local deployment, Steam action, commit, push, or userdata migration was
+  performed.
+
+
+## 2026-10-18 Shared composition and Library policy ownership
+
+- Moved composition create/rename/remove/duplicate rules, exact graph identity
+  comparison, and stable graph fingerprinting from Studio core into
+  `vapor_client_domain`; Studio core now re-exports the shared rules and keeps
+  only legacy eframe storage decoding locally.
+- Moved the durable cross-frontend state document to `vapor_client_domain`;
+  the protocol snapshot and Studio file store now adapt the same document.
+- Moved composition state transitions to `vapor_client_domain`; the service
+  retains host-specific default-root lookup, persistence, revisioning, and rollback.
+- Added durable Library Auto-Install preferences to service state and snapshots,
+  plus a domain-owned `LibraryAction::SetAutoInstall` operation with ID validation and
+  atomic save/rollback behavior. The preference defaults to retained/manual
+  management. Incremented the client protocol version to 10.
+- Kept automatic update selection and unreachable-item collection as domain
+  policy only; lifecycle orchestration and provider effects remain open.
+- `git diff --check` is the only verification run; no build, test, deploy, or
+  launch was performed per owner preference.
+
+- Extended `vapor_content::resolve_from` so a host can select an eligible exact
+  artifact per dependency while the shared resolver owns edge validation, graph
+  construction, convergence, and cycle detection. Shell preview has not yet
+  adopted the shared traversal; source/cache/installed policy stays its adapter
+  responsibility. No build, tests, or deployment were run.
+- Persisted each resolved dependency's authored version requirement so later
+  automatic updates can honor composition compatibility. Added a shared query
+  that gathers constraints across all compositions and fails closed when a
+  legacy or malformed edge lacks a usable range.
+- Moved `InstallPlan` and its node/source/dependency result types from Shell into
+  `vapor_client_domain`; Shell retains compatibility re-exports while provider
+  selection remains in its adapter. Added the path dependency to the CLI
+  lockfile without running Cargo.
+- Added optional-edge semantics to shared `DependencySpec` and resolution:
+  optional content remains in authored/provider data but is deliberately omitted
+  from automatic required-graph resolution.
+- Replaced Studio core and protocol copies of install-preview node/source/
+  dependency records with aliases to the shared application plan. The service
+  and GUI adapters now pass those records without field-by-field semantic
+  remapping; the protocol wrapper still carries the selected composition ID.
+- The protocol was already at version 10 for the expanded shared contracts;
+  its source enum now uses the domain's `RootSeed` value consistently. Added
+  direct shared-domain dependencies and lockfile entries to CLI and Studio
+  core rather than relying on a transitive or Shell-owned alias.
+- Moved pack-member, target-relationship, pack-shape, and playable composition
+  validation from the broad `vapor_core` resolver into `vapor_content`.
+  Core retains its catalog-facing compatibility functions and uses the shared
+  error type. The shared validator now rejects malformed graphs with missing
+  roots or dangling edges instead of assuming its public input is well formed.
+- Replaced the Shell install preview's recursive resolver with
+  `vapor_content::resolve_report_from`; provider selection still applies the
+  existing workspace-first-for-authored-closures, installed, cache, then seed
+  order. The shared graph supplies dependency-first plan order, optional edges
+  remain omitted by shared policy, and complete Packagepack graphs pass the
+  shared validator before the preview can be ready.
+- Moved catalog merge identity, same-version metadata conflict detection, and
+  location reconciliation into `vapor_client_domain`; Studio core now only
+  gathers workspace/cache/installed observations and calls the shared merge.
+- Moved install-plan orchestration into `vapor_client_domain` behind
+  `InstallContentProvider`. Shell now implements root/dependency candidate
+  selection and returns availability/provenance facts; the shared planner owns
+  exact traversal, compatibility, cycle reporting, dependency ordering,
+  conflicts, and readiness.
+- `git diff --check` passed for the parent, Vapor, CLI, and Studio repositories.
+  No build, tests, deployment, commit, or push was run.

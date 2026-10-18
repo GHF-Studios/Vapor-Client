@@ -49,7 +49,7 @@
 - Modify: `Vapor/crates/vapor_core/src/**` and `Vapor/crates/vapor_core/Cargo.toml`
 - Modify: `Vapor/Cargo.toml` and `Vapor/Workspace.vapor.toml`
 - Source: `Vapor-SDK/crates/vapor_sdk_core/src/**`
-- Source: backend modules in `Vapor-Shell/crates/vapor_shell/src/**`
+- Source: backend modules in `Vapor-Shell/crates/vapor_cli/src/**`
 
 **Consumes:** Task 1 source-to-destination ledger.
 
@@ -67,7 +67,7 @@
 ## Task 3: Make Vapor-CLI the single terminal facade
 
 **Files:**
-- Source: `Vapor-Shell/crates/vapor_shell/src/{command,prompt,launch_session,main,lib}.rs`
+- Source: `Vapor-Shell/crates/vapor_cli/src/{command,prompt,launch_session,main,lib}.rs`
 - Source: `Vapor-SDK/crates/vapor_sdk_cli/src/**`
 - Source: `Vapor-Launcher/crates/vapor_launcher_cli/src/**`
 - Destination: CLI workspace and manifest files in the renamed `Vapor-CLI` checkout

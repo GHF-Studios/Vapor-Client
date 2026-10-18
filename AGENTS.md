@@ -12,7 +12,7 @@ custom content and should use the Workshop/content model rather than app/root
 publication paths.
 
 User-facing product instructions belong in `README.md` and the Shell docs under
-`Vapor-CLI/crates/vapor_shell/docs/`. Planning docs and this file are agent
+`Vapor-CLI/crates/vapor_cli/docs/`. Planning docs and this file are agent
 protocol and review infrastructure; do not let them substitute for beginner or
 operator documentation.
 

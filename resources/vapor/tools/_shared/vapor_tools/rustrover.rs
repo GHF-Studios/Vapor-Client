@@ -244,7 +244,7 @@ fn verify_rustrover_setup(
             "Vapor-CLI",
             &shell_metadata,
             &[
-                "vapor_shell",
+                "vapor_cli",
                 "vapor_sdk_cli",
                 "vapor_sdk_core",
                 "clap",
@@ -316,7 +316,7 @@ fn verify_app_root_centered_run_configurations(idea: &Path, app_root: &Path) -> 
             || xml.contains("development/ide_run/run.rs")
             || xml.contains("$PROJECT_DIR$/tools")
             || xml.contains(".idea/vapor-run")
-            || xml.contains("cargo run --package vapor_shell")
+            || xml.contains("cargo run --package vapor_cli")
             || xml.contains("cargo run --package vapor_studio_ui")
             || xml.contains("cargo run --package vapor_sdk_cli")
         {

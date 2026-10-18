@@ -75,8 +75,8 @@
 **Files:**
 - Create: `Vapor-Studio/crates/vapor_studio_core/src/catalog.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_core/src/operation.rs`
-- Modify: `Vapor-CLI/crates/vapor_shell/src/content.rs`
-- Modify: `Vapor-CLI/crates/vapor_shell/src/steam.rs`
+- Modify: `Vapor-CLI/crates/vapor_cli/src/content.rs`
+- Modify: `Vapor-CLI/crates/vapor_cli/src/steam.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_ui/src/pages/discover.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_ui/src/components/content_detail.rs`
 
@@ -93,7 +93,7 @@
 **Files:**
 - Create: `Vapor-Studio/crates/vapor_studio_core/src/composition.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_core/src/operation.rs`
-- Modify: `Vapor-CLI/crates/vapor_shell/src/content.rs`
+- Modify: `Vapor-CLI/crates/vapor_cli/src/content.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_ui/src/pages/discover.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_ui/src/pages/library.rs`
 - Modify: `Vapor-GUI/crates/vapor_gui/src/main.rs`
@@ -133,8 +133,8 @@
 - Modify: `Vapor-Studio/crates/vapor_studio_core/src/operation.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_ui/src/components/content_detail.rs`
 - Modify: `Vapor-Studio/crates/vapor_studio_ui/src/pages/workspace.rs`
-- Modify: `Vapor-CLI/crates/vapor_shell/src/content.rs`
-- Modify: relevant Workshop docs under `Vapor-CLI/crates/vapor_shell/docs/`
+- Modify: `Vapor-CLI/crates/vapor_cli/src/content.rs`
+- Modify: relevant Workshop docs under `Vapor-CLI/crates/vapor_cli/docs/`
 
 **Produces:** Context-aware Workshop create/update with actual staged-artifact review, explicit confirmation, receipt persistence, and refresh into discovery/library state.
 

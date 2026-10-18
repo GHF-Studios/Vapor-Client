@@ -45,9 +45,9 @@ root publish --account ACCOUNT --yes
   content, not app/depot source.
 
 The current Shell command model is documented in
-[`Vapor-CLI/crates/vapor_shell/docs/commands.md`](Vapor-CLI/crates/vapor_shell/docs/commands.md).
+[`Vapor-CLI/crates/vapor_cli/docs/commands.md`](Vapor-CLI/crates/vapor_cli/docs/commands.md).
 The product model behind it is in
-[`product-topology.md`](Vapor-CLI/crates/vapor_shell/docs/design/product-topology.md).
+[`product-topology.md`](Vapor-CLI/crates/vapor_cli/docs/design/product-topology.md).
 
 ## Repository Checkouts
 
@@ -85,7 +85,7 @@ provider scripts but perform no upload. Real Workshop create, publish, and
 delete operations remain manual authority-changing actions.
 
 See
-[`Vapor-CLI/crates/vapor_shell/docs/content.md`](Vapor-CLI/crates/vapor_shell/docs/content.md)
+[`Vapor-CLI/crates/vapor_cli/docs/content.md`](Vapor-CLI/crates/vapor_cli/docs/content.md)
 for layout, receipts, fingerprints, and repair behavior.
 
 ## Setup And Recovery
