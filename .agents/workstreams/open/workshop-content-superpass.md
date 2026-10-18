@@ -162,9 +162,33 @@
   saves the profile result; tests cover one terminal event and verification
   failure reconciliation.
 - Vapor-managed Studio validation passes: 49 tests, Clippy, and Rustdoc.
-- Next service tranche: workspace/editor file operations and authoring, then
-  Workshop and publishing. Workspace text-file access and most authoring and
-  Workshop actions still run from the GUI today.
+- Moved workspace file discovery, bounded reads, conflict-checked writes, and
+  safe new-file creation behind service-owned workspace actions and typed
+  results. The GUI editor no longer reads or writes workspace files itself.
+- Moved source composition, Workshop metadata, runtime output declarations,
+  content validation, registered-source discovery, content scaffolding, and
+  starter workspace creation behind async service authoring actions. The UI
+  submits typed intent and applies service results; the service owns the Vapor
+  Shell calls and workspace file effects.
+- Moved workspace validation, registration, content adoption, and
+  unregistration behind the service operation lifecycle. Unregister results
+  carry the removed content identity so affected profile state is invalidated.
+- Moved workspace path validation and initial file discovery into service
+  actions. The UI now asks the service to open a folder and then requests its
+  file list through the same operation/result path as later editor requests.
+- Preserved full source-link semantics across the authoring protocol
+  (relationship, optionality, version, Workshop ID, and reason), added complete
+  Workshop policy fields, workspace-bound stale-result rejection, and raised
+  the protocol version for the wire-shape change.
+- Removed the GUI's duplicate local-worker result variants for those authoring
+  operations. Vapor-managed formatting passed after the refactor. Compilation,
+  tests, runtime exercise, deployment, and Steam actions were intentionally
+  left to the owner for this tranche.
+- Remaining service-boundary gaps found in the audit: Steam root publishing
+  still has GUI-owned operation flow, and root publishing, app bootstrap, and
+  local toolchain actions need a final ownership review. Address those before
+  the end-to-end operation-flow review. The current authoring changes are not
+  yet compile- or runtime-verified.
 - Cancelled the first real `root publish` attempt after SteamPipe scanned about
   2.6 GiB. The staged root depot was runtime plus `packages/setup`; the setup
   payload alone contained the Rust toolchain, Cargo home, Git, and SteamCMD.
