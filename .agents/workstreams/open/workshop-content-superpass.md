@@ -3161,3 +3161,16 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   tests, strict Clippy, and Rustdoc. `client deploy local` installed the updated
   service and all frontend binaries. Vapor commit `21e8e82` is pushed; no Steam
   upload occurred. Parent note/submodule pointer are being checkpointed now.
+
+### 2026-10-20 Bound outbound IPC memory
+
+- Frame-count bounds were insufficient because protocol frames vary in size. The
+  local writer now encodes each frame once, queues the bytes under both the
+  existing 576-frame limit and a 40 MiB per-client byte ceiling, and writes the
+  encoded payload directly. Saturated clients are marked closed so stale queued
+  frames are discarded instead of drained before reconnect.
+- Added coverage that an outbound client stops accepting frames at its byte
+  budget. Full Vapor-managed validation passed; local deployment completed and
+  the installed CLI's `source status` successfully round-tripped through the
+  service. Vapor commit `1e218f7` is pushed. The parent submodule pointer and
+  this note are being checkpointed; no Steam upload occurred.
