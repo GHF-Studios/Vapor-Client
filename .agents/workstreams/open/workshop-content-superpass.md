@@ -3201,3 +3201,8 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   a fresh Shell/CLI process on protocol 22 connected successfully. This is an
   expected process-restart requirement after protocol changes, not a remaining
   deployment mismatch.
+- A follow-up ownership review removed five unhandled duplicate developer
+  protocol actions for format/check/test/build/clean; `Workspace::RunTool` and
+  `Workspace::Clean` are now their sole service routes. All-workspace managed
+  validation passed again, local deployment completed, and fresh CLI source
+  status succeeded. No Steam upload occurred.
