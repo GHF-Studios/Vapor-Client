@@ -3018,3 +3018,28 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   streamed as structured operation events, and operations do not yet expose
   cooperative cancellation. The milestone channel is useful progress, but it
   does not make the frontends pure facades.
+
+### 2026-10-19 Managed operation output continuation
+
+- Managed Cargo subprocess stdout and stderr now travel through the shared
+  operation lifecycle as typed, operation-scoped IPC events. CLI writes each
+  stream back to its matching terminal stream; Studio shows a bounded output
+  panel for the active operation. The operation API itself enforces an 8 KiB
+  UTF-8-safe line limit, and the Cargo reader drains oversized lines without
+  retaining their full contents.
+- Kept the synchronous workspace-tool wrappers' prior terminal behavior; only
+  service callers opt into IPC output events. The CLI architecture note now
+  reflects that boundary, and Studio labels output for fmt/check/test/build
+  operations without implying it is always build output.
+- Added core output-forwarding and size-bound tests, protocol round-trip
+  coverage, and provider tests for UTF-8-safe truncation and continuing to the
+  next line after oversized input. Vapor, Vapor-CLI, and Vapor-Studio managed
+  validation passed (format, check, tests, strict Clippy, Rustdoc).
+- Locally deployed through Vapor's managed deployment flow and restarted the
+  installed shell. A fresh managed Vapor workspace test completed at 100%, and
+  Cargo/test output arrived in the terminal through the new service path. No
+  Steam publication or Steam launch was performed.
+- This closes the foreground subprocess-output gap for managed workspace tools.
+  Cooperative cancellation and remaining local/bootstrap ownership boundaries
+  are still open; the frontends are not yet pure facades. Current changes are
+  pending commit/push.
