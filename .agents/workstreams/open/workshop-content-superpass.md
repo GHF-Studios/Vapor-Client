@@ -3087,3 +3087,19 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   passed after this addition. No production code changed in this follow-up, so
   the prior local deployment still represents the production changes. No Steam
   upload was performed.
+
+### 2026-10-19 End-to-end output backpressure
+
+- Review found that bounded child-pipe readers and a capped final output list
+  still fed through an unbounded service inbox. Replaced that middle queue with
+  a 256-message synchronous channel, so a slow frontend now pushes back through
+  the provider reader to the child process instead of accumulating output.
+- Added a capacity regression check. Full Vapor-managed validation passed;
+  local deployment completed, the deployed Shell restarted, and
+  `test --project vapor` passed through the service. No Steam upload occurred.
+- The output path now has bounded retention at the child reader, service inbox,
+  session event list, and protocol writer. Cooperative cancellation and the
+  remaining bootstrap/source ownership boundaries are still open.
+- Vapor checkpoints are pushed at `bbbfaa2` (subprocess regression coverage)
+  and `3ddf7aa` (bounded service inbox); the parent note and submodule pointer
+  are the remaining checkpoint.
