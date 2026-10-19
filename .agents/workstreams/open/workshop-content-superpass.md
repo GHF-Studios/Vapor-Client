@@ -3150,3 +3150,14 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   ownership boundaries are still open. The parent checkpoint and updated
   submodule pointer are being recorded separately; `cloc_this.sh` remains
   untouched.
+
+### 2026-10-20 Bound local service peer count
+
+- Follow-up review found that bounded per-client queues still allowed an
+  unlimited number of local peers, each with reader/writer threads. The service
+  now accepts at most eight connected peers; excess local connections are
+  closed before allocating client threads or outbound queues.
+- Vapor-managed `validate --project vapor` passed format check, compilation,
+  tests, strict Clippy, and Rustdoc. `client deploy local` installed the updated
+  service and all frontend binaries. Vapor commit `21e8e82` is pushed; no Steam
+  upload occurred. Parent note/submodule pointer are being checkpointed now.
