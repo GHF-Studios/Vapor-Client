@@ -3074,5 +3074,16 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   deploy/package orchestration, process bootstrap/handoff, and cancellation
   ownership remain local. The new output path improves observability but does
   not change those boundaries. Implementation commits are pushed in Vapor
-  (`cbb72d3`) and Vapor-CLI (`681b6dc`); this workstream note and the parent
-  submodule pointers are being checkpointed here.
+  (`cbb72d3`, with output regression coverage at `bbbfaa2`) and Vapor-CLI
+  (`681b6dc`); this workstream note and the parent submodule pointer are being
+  checkpointed here.
+
+### 2026-10-19 Child-process output regression coverage
+
+- Added a subprocess integration fixture that writes 128 lines to each output
+  stream, verifies both pipes drain through the bounded reader, and checks that
+  non-zero child exits retain their diagnostic text.
+- Vapor-managed `test --project vapor` and full `validate --project vapor`
+  passed after this addition. No production code changed in this follow-up, so
+  the prior local deployment still represents the production changes. No Steam
+  upload was performed.
