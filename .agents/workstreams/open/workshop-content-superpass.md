@@ -51,9 +51,10 @@
   that matching typed result event, while Studio keeps only a concise status
   instead of exposing staging paths and fingerprints in its operation feed.
 - Studio now understands the package operation kind and result payload, but
-  does not yet expose a creator action for it. A Studio build-and-package flow
-  still needs the managed Cargo build operation moved behind the service; simply
-  exposing package would fail for content without current build outputs.
+  does not yet expose a creator action for it. The service already owns managed
+  workspace builds and typed package staging; the remaining Studio work is to
+  compose those operations into a clear build-and-package workflow and report
+  which outputs belong to the selected workspace.
 - `content validate` now runs through a typed Library artifact-validation
   action against the explicitly opened workspace; source diagnostics return
   through the same operation event path as install and acquisition outcomes.
@@ -68,15 +69,15 @@
   shared validator: at most 32 unique target strings, with no surrounding
   whitespace and a 128-byte limit. Fixture
   process coverage stages a Linux+Windows package and confirms the matrix is
-  visible in the returned review. Existing batch publication stays on its
-  provider batch API so multiple uploads still share one SteamCMD session.
-- Single-item Workshop create/update previews now use the same service review
-  as confirmed uploads, and CLI validates create-versus-update identity before
-  publication. Multi-item dry-run and publishing remain provider operations;
-  a batch review object and service-owned transaction are still needed.
-  Workshop deletion is a provider preview only because real deletion lacks a
-  controlled SteamUGC implementation. Source builds remain CLI orchestrated
-  until the service owns the managed toolchain workflow.
+  visible in the returned review. Confirmed batch publication goes through the
+  service-owned transaction; its provider still uses one SteamCMD session for
+  the batch.
+- Single-item and batch Workshop staging/publication use typed service reviews
+  and confirmation-bound service operations; CLI validates create-versus-update
+  intent before publication. Workshop deletion remains preview-only because a
+  controlled SteamUGC delete implementation is not available. Workspace
+  build, validation, and package work are service actions rather than frontend
+  subprocesses.
 - Vapor-managed `validate --project vapor` and
   `validate --project vapor-cli` passed, including formatting, compilation,
   tests, Clippy, and documentation. No real Workshop upload or runtime launch
@@ -122,12 +123,11 @@
   changes. This pass tightened eligibility so the preference is available only
   for unambiguous cached Workshop runtime content used by a composition; crates,
   Packagepacks, non-Workshop cache items, and unreferenced items are rejected.
-- Important remaining semantic split: Studio's `PublishingAction::StageRoot`
-  packages already-deployed app binaries; CLI `root publish` builds/promotes the
-  source workspace, syncs release assets, and publishes a target matrix. They are
-  not equivalent workflows. CLI single-item real Workshop create/update now use
-  the service review; dry-run and multi-item batch publication remain provider
-  workflows until a batch review and transaction exist.
+- Release actions have two intentionally distinct service workflows:
+  `StageRoot` / `PublishRoot` package the deployed Vapor app root, while
+  `StageApplication` / `PublishApplication` build and publish the application
+  source workspace. Workshop single-item and batch reviews/publication are also
+  service-owned; the provider performs the underlying SteamCMD batch upload.
 - Strict Vapor-managed validation passed for Vapor, Vapor-CLI, Vapor-Studio,
   Vapor-GUI, Vapor-Installer, and Vapor-Steam-Entrypoint. No local deployment,
   Steam launch, publication, commit, or push was performed.
@@ -148,11 +148,13 @@
   not reduce the overall LOC count. The current workspace measurement is 69,004
   Rust lines, so the LOC pressure test remains open and needs evidence-based
   removal of redundant behavior rather than credit for code movement.
-- Confirmed remaining provider paths: source registration/repair, authored
-  content validate/build/package/cache, Workshop dry-run and multi-item batch
-  publication still run from CLI workflows. Single-item real Workshop
-  create/update and target-aware local deploy now use the shared service. Root
-  source release likewise differs from Studio staging of deployed binaries.
+- Confirmed remaining frontend-owned paths: `vapor client deploy local` still
+  performs bootstrap/deployment from the CLI, local root bundle assembly still
+  runs as a CLI workflow, and `source sync` is a placeholder. Authored content
+  validation/build/package, cache acquisition, Workshop single/batch review and
+  publishing use service actions. Vapor app-root publication (`StageRoot` /
+  `PublishRoot`) and application release (`StageApplication` /
+  `PublishApplication`) are distinct service-owned product workflows.
 - Re-ran Vapor-managed strict validation after the module changes: Vapor, CLI,
   Studio, GUI, Installer, and Entrypoint all pass. Entrypoint's seven launch-mode
   tests pass. No local deployment, Steam launch, publication, commit, or push was
@@ -3100,6 +3102,9 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - The output path now has bounded retention at the child reader, service inbox,
   session event list, and protocol writer. Cooperative cancellation and the
   remaining bootstrap/source ownership boundaries are still open.
+- This supersedes earlier status lines above: workspace builds/package staging
+  and Workshop batch reviews/publication are service-owned; local client
+  deployment/bootstrap and local root bundle assembly remain CLI-owned.
 - Vapor checkpoints are pushed at `bbbfaa2` (subprocess regression coverage)
   and `3ddf7aa` (bounded service inbox); the parent note and submodule pointer
   are the remaining checkpoint.
