@@ -3129,3 +3129,24 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   through Vapor; no Steam upload occurred.
 - Vapor change pushed as `59aa27a`. Parent submodule pointer and this checkpoint
   are being recorded separately; `cloc_this.sh` remains user-owned.
+
+### 2026-10-20 Bounded service protocol queues
+
+- Corrected the slow-client writer capacity: it now holds the full 512-event
+  operation-output window plus 64 lifecycle/snapshot frames, so a normal output
+  batch no longer triggers the disconnect safety path. The capacity derives
+  from the session output limit rather than duplicating it.
+- Bounded the local service input channel at eight messages. Socket readers now
+  apply backpressure instead of retaining an unbounded request burst. Added a
+  regression check for the input channel's full/drain/retry behavior; saturation
+  of a client writer continues to remove its auth and telemetry state.
+- Full Vapor-managed superworkspace validation passed after these changes.
+  The host-only release dry-run completed its build and staged review (AppID
+  2122620, depots 2122621/2122622, 5,499 files, Linux x86_64). Managed local
+  deployment completed and installed the CLI, GUI, installer, entrypoint,
+  IDE host, and client service. No Steam upload or branch mutation occurred.
+- Vapor queue fix pushed as `bd0e1cd`; the earlier disconnect-on-overflow fix
+  remains at `59aa27a`. Cooperative cancellation and remaining bootstrap/source
+  ownership boundaries are still open. The parent checkpoint and updated
+  submodule pointer are being recorded separately; `cloc_this.sh` remains
+  untouched.
