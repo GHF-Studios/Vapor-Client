@@ -3043,3 +3043,36 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   Cooperative cancellation and remaining local/bootstrap ownership boundaries
   are still open; the frontends are not yet pure facades. Current changes are
   pending commit/push.
+
+### 2026-10-19 Release output and bounded service buffering continuation
+
+- Unified workspace builds and application-release builds on one provider
+  subprocess reader. It drains stdout and stderr concurrently, preserves stream
+  identity, bounds each retained line to 8 KiB, and truncates oversized lines
+  without splitting UTF-8. Release preparation now reports each Cargo step and
+  streams its output through the existing Client operation events; the CLI
+  renders the two streams to their matching terminal streams.
+- Closed the host-only app release preview failure: `--host-only` now resolves
+  to the provider's detected host target instead of an empty target list, so
+  service validation receives a valid release target. Release-matrix uploads
+  still require the full declared matrix.
+- Bounded queued Client output to 512 events while preserving operation status
+  events. When the service drops older output for a frontend that is not polling,
+  it inserts a visible omission notice. This complements the provider's bounded
+  reader channel and Studio's bounded output view.
+- Managed validation of the full Vapor superworkspace passed (format checks,
+  compile checks, tests, strict Clippy, Rustdoc). After resolving one compile
+  error in the CLI host-target adapter, full validation passed again. A managed
+  local deployment completed, then the installed shell ran
+  `root publish --host-only --dry-run`; the full host release build streamed
+  progress/output, and the staged review reported 5,499 files across two depots
+  for `x86_64-unknown-linux-gnu`. A second skip-build dry run confirmed the
+  staged review. After the bounded queue change, the local app was deployed
+  again, its shell restarted, and a managed Vapor test completed with streamed
+  output. No Steam upload or branch mutation occurred.
+- Frontends still are not fully decoupled: some source discovery, root local
+  deploy/package orchestration, process bootstrap/handoff, and cancellation
+  ownership remain local. The new output path improves observability but does
+  not change those boundaries. Implementation commits are pushed in Vapor
+  (`cbb72d3`) and Vapor-CLI (`681b6dc`); this workstream note and the parent
+  submodule pointers are being checkpointed here.
