@@ -3174,3 +3174,16 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   the installed CLI's `source status` successfully round-tripped through the
   service. Vapor commit `1e218f7` is pushed. The parent submodule pointer and
   this note are being checkpointed; no Steam upload occurred.
+
+### 2026-10-20 Byte-bounded protocol delivery
+
+- A frame-count limit still allowed large snapshots to consume excessive memory.
+  Outbound IPC now queues encoded bytes once under both a 576-frame ceiling and
+  a 40 MiB per-client budget. Closing a client marks its writer closed, so
+  queued stale frames are discarded; the frontend reconnects for a fresh
+  snapshot.
+- Added regression coverage for exhausting the byte budget. Managed Vapor
+  validation passed format, check, tests, strict Clippy, and Rustdoc. Local
+  deployment completed; the installed CLI's `source status` completed through
+  the shared service. Vapor commit `1e218f7` is pushed. Parent pointer/note are
+  being recorded; no Steam upload occurred.
