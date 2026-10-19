@@ -31,10 +31,244 @@
 
 ## Current checkpoint
 
+### 2026-10-19 Workshop publication through the shared service
+
+- Single-item Workshop creation and update now use the shared Client service's
+  open-workspace → stage-review → confirmed-publish lifecycle from Vapor CLI.
+  The service review carries the selected target matrix end to end; provider
+  publication still re-stages and fingerprints the same matrix before upload.
+- `content deploy` now sends its authored-source install through the same
+  service-owned Library lifecycle and carries the build target matrix in the
+  typed Install action. Vapor CLI still owns the managed Cargo build step.
+- Authored-source `content acquire` and `content download` now use a typed
+  Library Acquire action. The service serializes cache mutations with install,
+  composition, and Workshop work; CLI output no longer exposes cache roots or
+  receipt paths as the primary result.
+- Authored `content package` now opens the workspace and uses a typed authoring
+  operation for both preview and staging. The result retains target, artifact
+  root, fingerprint, file/byte totals, and receipt for the CLI's creator-facing
+  diagnostics; it is serialized with other background operations. CLI waits for
+  that matching typed result event, while Studio keeps only a concise status
+  instead of exposing staging paths and fingerprints in its operation feed.
+- Studio now understands the package operation kind and result payload, but
+  does not yet expose a creator action for it. A Studio build-and-package flow
+  still needs the managed Cargo build operation moved behind the service; simply
+  exposing package would fail for content without current build outputs.
+- `content validate` now runs through a typed Library artifact-validation
+  action against the explicitly opened workspace; source diagnostics return
+  through the same operation event path as install and acquisition outcomes.
+- `content list` now refreshes and renders the singleton service catalog rather
+  than combining separate provider scans for source and installed content. It
+  reports incomplete or failed catalog observations instead of presenting
+  partial data as an authoritative empty Library.
+- Packagepack selection now reads role, installed/enabled state, and version
+  from that same catalog before updating the service-owned active composition;
+  CLI no longer queries installed artifacts separately for this decision.
+- The service bounds authored package and Workshop review matrices through one
+  shared validator: at most 32 unique target strings, with no surrounding
+  whitespace and a 128-byte limit. Fixture
+  process coverage stages a Linux+Windows package and confirms the matrix is
+  visible in the returned review. Existing batch publication stays on its
+  provider batch API so multiple uploads still share one SteamCMD session.
+- Single-item Workshop create/update previews now use the same service review
+  as confirmed uploads, and CLI validates create-versus-update identity before
+  publication. Multi-item dry-run and publishing remain provider operations;
+  a batch review object and service-owned transaction are still needed.
+  Workshop deletion is a provider preview only because real deletion lacks a
+  controlled SteamUGC implementation. Source builds remain CLI orchestrated
+  until the service owns the managed toolchain workflow.
+- Vapor-managed `validate --project vapor` and
+  `validate --project vapor-cli` passed, including formatting, compilation,
+  tests, Clippy, and documentation. No real Workshop upload or runtime launch
+  was performed.
+
+### 2026-10-19 Provider and service ownership follow-through
+
+- Continued the semantic split of the Vapor Client provider: `content.rs` is
+  now a 2,757-line lifecycle facade; authored-project operations, runtime
+  launch resolution, Workshop publication, data models, packaging, and index
+  persistence have named child modules. Runtime-target normalization and
+  validation now have one shared provider implementation used by packaging,
+  distribution, launch, and workspace discovery.
+- Centralized background-operation startup and completion handling across
+  composition, Workshop, Library, workspace, authoring, and root-publishing
+  workflows. The common service coordinator is 2,498 lines; each workflow
+  retains its own validation, domain execution, and typed result. The common
+  retryable “operation in progress” rejection is now one service invariant.
+- This reorganization makes ownership more visible; the moved implementation
+  still exists and is not counted as removed behavior. The current approved
+  `cloc_this.sh` measurement is 68,958 Rust lines. That remains a pressure
+  signal for further evidence-based removal of duplicate or unneeded behavior.
+- Vapor-managed formatting and full validation passed for Vapor, Vapor-CLI,
+  Vapor-Studio, Vapor-GUI, Vapor-Installer, and Vapor-Steam-Entrypoint after
+  these changes. This covers compilation, each configured test suite, Clippy,
+  and documentation generation; it does not prove the GUI or Steam runtime
+  experience. No deployment, launch, Steam publication, commit, or push was
+  performed.
+
+### 2026-10-19 Shared-service boundary verification
+
+- Current source has one per-installation Vapor Client service over cross-platform
+  local IPC; normal frontends connect to it, while stdio is reserved for fixture
+  simulation. The earlier note claiming one private stdio child per frontend was
+  stale and is corrected by this checkpoint.
+- CLI player launch, composition selection, Workshop acquisition/subscription,
+  and Library install/update/verify/repair/enable/disable/uninstall all dispatch
+  through typed service actions. The service serializes operations and guards
+  Library mutations that could invalidate a composition.
+- Auto-Install execution is present for Workshop acquisition: it resolves the
+  newest version accepted by dependent composition constraints, updates affected
+  installed compositions, and collects auto-managed content after reachability
+  changes. This pass tightened eligibility so the preference is available only
+  for unambiguous cached Workshop runtime content used by a composition; crates,
+  Packagepacks, non-Workshop cache items, and unreferenced items are rejected.
+- Important remaining semantic split: Studio's `PublishingAction::StageRoot`
+  packages already-deployed app binaries; CLI `root publish` builds/promotes the
+  source workspace, syncs release assets, and publishes a target matrix. They are
+  not equivalent workflows. CLI single-item real Workshop create/update now use
+  the service review; dry-run and multi-item batch publication remain provider
+  workflows until a batch review and transaction exist.
+- Strict Vapor-managed validation passed for Vapor, Vapor-CLI, Vapor-Studio,
+  Vapor-GUI, Vapor-Installer, and Vapor-Steam-Entrypoint. No local deployment,
+  Steam launch, publication, commit, or push was performed.
+
+### 2026-10-19 service and CLI ownership cleanup
+
+- Split the service session read model into `session/snapshot.rs`; catalog,
+  composition, Workshop, Library, workspace, authoring, and publishing
+  operations now have named service modules. The coordinator is about 2,400
+  lines, down from about 6,700 before the extraction. The feature modules still
+  share session state by design; operation state remains service-owned.
+- Split CLI command grammar and execution into named `model`, `client`,
+  `content`, `root`, and `source` modules. The router is about 900 lines; the
+  command-family modules carry their own explicit dependencies. Root release
+  assembly and app-root file staging now live with root publishing; content
+  and player actions call the shared service adapter.
+- These changes reorganize ownership and preserve existing operations; they do
+  not reduce the overall LOC count. The current workspace measurement is 69,004
+  Rust lines, so the LOC pressure test remains open and needs evidence-based
+  removal of redundant behavior rather than credit for code movement.
+- Confirmed remaining provider paths: source registration/repair, authored
+  content validate/build/package/cache, Workshop dry-run and multi-item batch
+  publication still run from CLI workflows. Single-item real Workshop
+  create/update and target-aware local deploy now use the shared service. Root
+  source release likewise differs from Studio staging of deployed binaries.
+- Re-ran Vapor-managed strict validation after the module changes: Vapor, CLI,
+  Studio, GUI, Installer, and Entrypoint all pass. Entrypoint's seven launch-mode
+  tests pass. No local deployment, Steam launch, publication, commit, or push was
+  performed; the latest Steam launch path is therefore compiler-tested, not
+  runtime-proven.
+
+## 2026-10-19 CLI launch and composition selection boundary
+
+- Player-facing `launch default` and `launch selected` now connect to the
+  singleton Vapor Client service. The service resolves default roots, owns
+  installed-composition launch/install/verification, and reports the terminal
+  operation result to the CLI; source-workspace developer runs remain separate.
+- CLI `content select`, `deselect`, `selected`, and `deploy --select` now use
+  the service's persistent active composition root. The old parallel
+  Packagepack selection record is no longer read or written by these commands.
+- Workshop-ID `content acquire`, `download`, and `subscribe` now call the
+  service's typed Steamworks actions; `subscribe` now changes the actual Steam
+  subscription. Local authored artifact caching stays with the source provider,
+  and mixed local/Workshop batches are rejected rather than crossing providers.
+- Removed the CLI's duplicate direct player-launch handoff and its
+  launch-specific diagnostics fields. Workshop acquisition uses the signed-in
+  Steam client session that the service shares with Studio; per-command account
+  overrides were removed from those player acquisition commands.
+- Vapor-managed CLI formatting, checks, build, and tests pass (8/8). No game,
+  GUI, Steam launch, deployment, publication, commit, or push was performed.
+- At this checkpoint, the remaining gaps are source-workspace content
+  create/publish and the full root source-release pipeline; they need service
+  contracts that preserve runtime target matrices and staged review semantics.
+
+## 2026-10-19 Service-owned Library lifecycle
+
+- Added typed shared `LibraryAction` operations for install, update, verify,
+  repair, enable, disable, and uninstall. CLI player commands now dispatch
+  through the singleton Client service rather than mutating provider state.
+- The application layer executes those operations through Vapor's provider;
+  the service serializes them with composition/workshop work, returns terminal
+  operation summaries, and refreshes its catalog after successful changes.
+- Install/update/repair carry their source workspace as explicit operation
+  context. This avoids accidentally using a stale Studio workspace when the
+  CLI was invoked from a different source tree. Verify, enable, disable, and
+  uninstall do not require an open source workspace.
+- Mutations fail closed when the target appears as a composition root or in
+  its last resolved graph. Bulk update/repair also fail when any composition
+  has a resolved root, directing users to the composition lifecycle workflow.
+  This closes the CLI bypass and serializes the ownership check with the
+  operation. The service rejection path has a fixture regression test.
+- Added domain reachability tests for roots and transitive dependencies and
+  protocol round-trip coverage for the new action family.
+- Vapor-managed validation passes for Vapor and Vapor-CLI workspaces; later
+  strict validation also covered Studio, GUI, Installer, and Entrypoint. Local
+  deployment, Steam publication/launch, commit, and push were not performed.
+- Remaining adjacent gap: Workshop content create/publish and some authored
+  cache/deploy operations still use provider calls from CLI. This pass does not
+  claim that every Vapor frontend lifecycle path is service-owned yet.
+
+
+## 2026-10-19 Release package verification
+
+- Fixed host-only root packaging so Cargo keeps using its host-default target
+  directory while depot staging still receives the normalized host triple.
+  The managed CLI test suite passes (7/7), and managed CLI build passes.
+- Built an optimized release package in a disposable app root. `root package
+  --host-only` completed, staged 5,192 files across common and Linux depots,
+  and promoted the runtime binaries plus Steamworks sidecar. No installed
+  application data or Steam state was touched.
+- Confirmed the staged `vapor-client-service` starts in help mode, carries an
+  `$ORIGIN` runpath, and resolves `libsteam_api.so` beside itself. The staged
+  Vapor CLI and installer both return help successfully. An entrypoint help
+  probe is not a safe health check: it enters launch bootstrap and attempted to
+  initialize the service; it exited because the isolated app root is read-only
+  in this environment. No game or GUI was launched.
+- Optimized package sizes include Vapor 8.55 MB, GUI 40.28 MB, client service
+  16.28 MB, IDE host 1.81 MB, Installer 0.89 MB, and Entrypoint 0.57 MB. The
+  installed Steam app remains unchanged and still has the older much larger
+  binaries; no deploy, publication, Steam launch, commit, or push occurred.
+- Removed only the disposable release package root created for this smoke pass
+  after recording its results.
+
+
+This continuation confirmed the Steam entrypoint failure: every GUI mode tried
+to bootstrap `vapor-client-service`, whose Steamworks library was staged beside
+the GUI instead of the actual linked service. The service now owns its
+Steamworks sidecar and relative loader path; Installer starts without the shared
+service so recovery remains available. Steam staging smoke checks require both
+the service and its platform Steamworks library. `root package` and real
+`root publish` now build/promote Cargo release-profile outputs under
+`output/release`; `root build --release` builds those outputs without promoting
+them. Developer build/deploy stays under `output/dev`.
+
+Removed the unreferenced 3,644-line legacy CLI embedded in `vapor_core` and the
+unreferenced standalone Devtools executable, retaining the Diagnostics library
+embedded in Studio. Managed deployment removes the retired Devtools and
+`vapor-studio-service` binaries. The active `cloc_this.sh` metric went from
+70,868 to 68,073 Rust lines at the latest measurement (2,795 fewer); the
+broader codebase review continues to use that as a pressure test for dead and
+duplicate responsibilities, not as a behavior quota. Vapor-managed root build,
+Vapor workspace tests, CLI tests, and entrypoint tests passed. Service RPATH
+and sidecar loading were verified on Linux. An optimized `root package
+--host-only` completed in a disposable app root; the installed Steam app remains
+unchanged. No deployment, actual game/GUI launch, Steam publication, commit, or
+push occurred.
+
+The provider's former 8,066-line content module is now divided into the public
+content facade plus authored-workspace operations, installed-composition launch
+resolution, and Workshop item publication/SteamCMD modules. The facade keeps
+its existing public API through re-exports. Vapor-managed formatting, workspace
+compile, and workspace tests pass after the extraction (91 tests across the
+workspace). This is a boundary cleanup, not a reduction in total LOC or a claim
+that all provider responsibilities are now minimal.
+
 Pass 1's ownership review is complete. `vapor_client_domain` owns shared
 application policy and install planning; `vapor_client_provider` in Vapor owns
-filesystem/content/Workshop provider operations; Vapor CLI re-exports those
-operations; the Vapor-owned application crate consumes the provider directly.
+filesystem/content/Workshop provider operations; Vapor CLI now shares service
+launch, composition-selection, and Workshop acquisition/subscription actions,
+but still calls providers directly for broader Library and publishing workflows.
+The Vapor-owned application crate consumes the provider directly.
 This removes the Studio Core -> CLI dependency inversion. Pass 2 is underway:
 the application and service-host crates now live in Vapor, the managed service
 binary is `vapor-client-service`, and its distribution validation uses the same
@@ -43,8 +277,8 @@ frontend; singleton bootstrap and multi-client IPC remain. The CLI also still
 calls provider operations directly. Auto-Install's agreed behavior is latest
 version compatible with all dependent compositions plus automatic local
 collection at zero dependents; only the domain policy and durable preference
-exist so far, not lifecycle execution. No build, test, deploy, commit, or push
-was performed in this continuation.
+exist so far, not lifecycle execution. Singleton/multi-client IPC and
+lifecycle execution remain.
 
 
 - Added Vapor-owned `vapor_client_domain` and exposed its application-domain
@@ -2488,3 +2722,299 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   conflicts, and readiness.
 - `git diff --check` passed for the parent, Vapor, CLI, and Studio repositories.
   No build, tests, deployment, commit, or push was run.
+
+## 2026-10-19 Reviewed Workshop batches and root-package integrity
+
+- Added service-owned Workshop batch stage/review and confirmed publish actions.
+  Reviews carry all selected identities and target-aware package facts; the
+  service bounds batches to 32, rejects duplicate identities, rechecks workspace
+  and Library conflicts, and binds the publish phrase to the batch size and
+  account. Provider publication still sends the entire batch through one
+  SteamCMD session, and verifies every package fingerprint before upload.
+- Routed CLI multi-item `content publish` dry-run and upload through the same
+  service lifecycle. The CLI keeps one service connection alive through
+  workspace open, stage, and publish. Single-item create/update now follows the
+  same continuous connection shape.
+- Bound the Studio Steam-root upload confirmation to the package assembled at
+  review. Package reports carry a deterministic FNV-1a fingerprint over sorted
+  package paths and file bytes; publication fingerprints the copied package
+  and aborts before SteamCMD if it differs from the review. Root package
+  fingerprinting also detects symlink cycles instead of recursing indefinitely.
+- The CLI's full source-release workflow (`root publish`: managed build,
+  promotion, documentation/assets, multi-target depot staging, SteamPipe) still
+  remains CLI-owned and is distinct from Studio's already deployed app-root
+  upload. Consolidating that full release transaction behind the service is an
+  open ownership boundary.
+- Vapor-managed validation passed for `vapor`, `vapor-cli`, and `vapor-studio`,
+  including formatting, check, tests, Clippy, and Rustdoc. No deployment, Steam
+  upload, launch, commit, or push was performed.
+- Added a service-process integration path for multi-item publication: it stages
+  a batch through IPC, confirms against the service review, and verifies both
+  the terminal success event and the subsequent review-cleared snapshot. This
+  closes the gap between the service's unit-level transaction test and the
+  process protocol used by real frontends.
+- The first integration run exposed event ordering in the test: success may
+  arrive before the clearing snapshot. The assertion now waits for both.
+- Hardened the actual root-package copy traversal against recursive directory
+  symlinks, so it now fails with `SymlinkCycle` instead of following a cycle
+  during package assembly. The regression test covers both planning fingerprints
+  and the actual copy path.
+- Re-ran Vapor-managed `validate --project vapor`: formatting, compilation,
+  49 service tests, 10 service-process tests, 2 root SDK tests, Clippy, and
+  Rustdoc all passed. No deployment, runtime launch, Steam operation, commit,
+  or push was performed.
+- Extended the process proof to reject a wrong account-bound confirmation while
+  retaining the staged review, then accept the exact phrase. The batch route
+  now verifies both safe rejection and successful completion across IPC.
+- Vapor-managed `validate --project vapor-cli` also passed after the root
+  package traversal change (formatting, check, 9 CLI tests, Clippy, Rustdoc).
+- Began closing the remaining source-release ownership gap: added typed service
+  actions and review state for staging and publishing the multi-target Vapor
+  app release, and routed CLI `root publish` staging/upload through that service
+  lifecycle. The CLI retains build/promotion/docs/assets preparation for now.
+- Release confirmation is bound to the staged target matrix, branch, account,
+  description, depot IDs, and payload fingerprint. The provider re-stages before
+  upload and rejects uploads without an expected reviewed fingerprint. Added
+  serialization, input-validation, fingerprint, and wrong-confirmation tests.
+- One integration limit is now explicit: the background service is launched
+  with null stdin, so SteamCMD cannot prompt for a first-time password or Guard
+  code. Current service publishing requires an already usable SteamCMD login;
+  a frontend-mediated authentication challenge is a separate protocol/UI pass.
+- Managed `validate --project vapor-cli` passed while routing CLI release
+  operations through the service. The latest Vapor validation exposed and
+  cleared formatting drift, a missing startup snapshot field, and a Clippy
+  cleanup; the current post-test changes are awaiting a complete validation
+  rerun. No deployment, Steam upload, launch, commit, or push was performed.
+- The author clarified the ownership decision: CLI and GUI are both facades
+  over the same Client service, including release/publish actions. This
+  confirms the direction of the new `StageApplication` / `PublishApplication`
+  protocol; no separate CLI Steam upload path is intended. The existing Studio
+  root-package action remains a distinct reviewed artifact operation, while
+  both paths execute through the Client service.
+- Revalidated with the managed Vapor workflow after the release service API
+  changes: `vapor`, `vapor-cli`, and `vapor-studio` all pass fmt, check, tests,
+  Clippy, and Rustdoc. Current test counts include 7 client-application tests,
+  49 service tests, 10 service-process tests, 2 SDK root tests, 9 CLI tests, and
+  6 Studio UI tests. `git diff --check` passes in the parent, Vapor, CLI, and
+  Studio repositories. No deployment, Steam upload, launch, commit, or push was
+  performed.
+- Routed SteamCMD output from both app-release and Studio root-package upload
+  providers to service stderr instead of inheriting protocol stdout. This
+  prevents SteamCMD logs from corrupting the Client's framed stdout transport;
+  foreground calls still inherit stdin for login prompts, while the
+  background service's null stdin keeps it noninteractive.
+- Revalidated after that transport fix with managed workflows: `vapor`,
+  `vapor-cli`, and `vapor-studio` each pass formatting, compile, tests, strict
+  Clippy, and docs. The latest Vapor run includes 50 service tests, 10
+  process-level service tests, and 2 SDK root tests; CLI has 9 tests and Studio
+  has 6. `git diff --check` is clean across the parent and all three repos.
+  Repeated the three managed validations after restoring inherited stdin for
+  foreground SteamCMD, and all pass again.
+- Ran the full managed `root publish --dry-run` path with the current source
+  root. It completed the full target-matrix validation, built and promoted the
+  installable outputs, assembled docs/assets, and returned the service's staged
+  review for Linux and Windows split depots (AppID 2122620; depots 2122621,
+  2122622, 2122623). It wrote a local SteamPipe build script and did not upload.
+  This found the Windows-target Clippy issue above, which was fixed before the
+  successful rerun. This proves service-owned stage/review and CLI integration;
+  it does not prove upload or first-time SteamCMD authentication. Build,
+  promotion, docs, and asset preparation still run in the CLI before the
+  service request. The user's facade rule makes moving that remaining release
+  preparation into the shared service the next ownership pass; this slice
+  moved staging and upload only.
+- The owner clarified again that CLI and GUI are facades over the same Client
+  service, including app release. App release validation, target builds, and
+  promotion now run from the service's `StageApplication` operation through a
+  managed provider module; the CLI no longer runs Cargo validation/build or
+  promotes binaries during `root publish`. Protocol v16 carries the explicit
+  build choice and the review records whether the service validated that build.
+  The service rejects real upload when a preview used `--skip-build`. Managed
+  validation passed for Vapor and Vapor-CLI, including compile/check, tests,
+  strict Clippy, and Rustdoc; no deployment or Steam upload was performed.
+- Remaining release ownership split: the CLI still builds docs and copies
+  scripts/tools/launch assets before requesting service staging. Move those
+  operations into the service before considering the complete root-release
+  workflow service-owned. First-time SteamCMD authentication still needs a
+  frontend-mediated challenge; service publishing currently needs a usable
+  cached login.
+- Closed the remaining app-release ownership split. The Client service now runs
+  managed Rust validation/build/promotion, documentation generation, release
+  asset synchronization, depot staging/review, and reviewed SteamPipe upload.
+  CLI `root publish` only submits the typed stage/publish actions; the CLI no
+  longer prepares release files itself. Local `root deploy` shares the provider
+  asset synchronizer and documentation builder rather than maintaining its own
+  asset-copy implementation. These are both facades over Client-owned release
+  capabilities, while local build/deploy remains an explicit developer path.
+- Re-ran managed validation after this consolidation: `vapor`, `vapor-cli`, and
+  `vapor-studio` all pass fmt, check, tests, strict Clippy, and Rustdoc. The
+  runs include 50 Client service tests, 10 service-process tests, 9 CLI tests,
+  and 6 Studio UI tests. Parent, Vapor, and Vapor-CLI diff checks are clean.
+  First-time SteamCMD login still needs a frontend-mediated auth challenge;
+  no deployment, Steam upload, launch, commit, or push was performed.
+- Facade review found the split is not complete. Studio already sends most
+  content/composition/workspace/Workshop/publishing intents through the Client
+  IPC client, but it still embeds `vapor_devtools` in-process (which connects
+  to telemetry outside Client IPC) and directly depends on `vapor_sdk_core` for
+  Steam constants. The CLI still calls `vapor_client_provider` and `vapor_core`
+  directly for source/content operations, Cargo workflows, operation reporting,
+  and Tracy launch. These are confirmed ownership leaks, not just future polish.
+- Removed Studio's direct `vapor_core` dependency for content taxonomy and
+  workspace actions. `ContentKind` is now re-exported through the Client domain
+  and protocol; Studio command palette and workspace controls use frontend
+  intents mapped to typed protocol actions. Other direct SDK/devtools and CLI
+  provider paths remain open work.
+- Revalidated after this contract cleanup: managed `vapor`, `vapor-cli`, and
+  `vapor-studio` validations pass formatting, check, tests, strict Clippy, and
+  Rustdoc. Studio's six UI tests pass; CLI's nine tests pass. No deployment,
+  runtime launch, Steam upload, commit, or push was performed.
+
+## 2026-10-19 Source authoring and telemetry IPC continuation
+
+- CLI source registration, open/close, workspace initialization, and metadata
+  repair now use typed Client service actions. The former CLI-only source
+  registry and its duplicate starter-workspace generator were removed from the
+  CLI code; the service uses Vapor's canonical source state and provider
+  authoring APIs. The old Steam-installation `.vapor/state` registry file is
+  intentionally left untouched; existing registrations stored there may need
+  to be re-added because no migration was introduced.
+- Source metadata repair is now a provider operation behind the application
+  and service layers. Preview and write results are typed; CLI no longer
+  swallows repair failures. The line edit preserves inline comments and the
+  repair is idempotent.
+- Studio's live diagnostics no longer opens its own TCP telemetry consumer or
+  reads active-session metadata directly. The shared service now owns that
+  connection, exposes typed session/telemetry IPC events, and sends live data
+  only to clients that explicitly subscribe. Service subscription routing and
+  the protocol event round-trips are covered. The IPC protocol is now v18.
+- Studio's managed Tracy library is now service-owned: list/import requests use
+  typed Developer actions and snapshots, analysis runs as a background service
+  operation, and its result event is delivered only to diagnostics subscribers.
+  The Devtools UI no longer depends on `vapor_core` or `vapor_telemetry`; it
+  consumes protocol snapshots and events. Profiler launch also uses the same
+  service action from Studio and CLI.
+- Steam root distribution identity is now service-owned as well. Studio reads
+  the canonical AppID/depot identity from its service snapshot instead of
+  importing SDK constants, and CLI leaves Workshop AppID selection to the
+  service instead of parsing the installation manifest a second time. The CLI's
+  now-redundant source parser was removed.
+- Added protocol round-trip coverage for analysis options/results, a fixture
+  guard for managed trace access, and subscriber-routing coverage for analysis
+  results. Bumped the IPC protocol to v18. The root identity addition and
+  removal of duplicate CLI parsing are included in the successful validations.
+- Managed validation passed for Vapor, Vapor-CLI, and Vapor-Studio after these
+  changes: formatting, checks, tests, strict Clippy, and Rustdoc. Latest counts
+  include 12 provider, 53 service, and 10 service-process tests; CLI has 9 and
+  Studio has 6. After the follow-up identity change, the Vapor, Studio, and CLI
+  managed validations each passed again, and `git diff --check` is clean in the
+  parent, Vapor, CLI, and Studio repositories. No deployment, Steam upload,
+  launch, commit, or push was performed.
+- The frontends still are not pure facades. A concrete remaining path is CLI
+  `launch --current-workspace`: it runs a long-lived configured process and
+  streams its output into the invoking terminal. Moving it behind the shared
+  service correctly requires service-owned process supervision, cancellation,
+  and output events that a frontend can render. The existing operation API has
+  lifecycle progress but no child-process output or cancellation contract; a
+  background action alone would hide useful output and leave the process
+  unmanaged. Keep this path explicit until that contract is designed and
+  implemented. Other intentional host/bootstrap paths still include local
+  installation and entrypoint deployment, whose service self-replacement
+  authority needs separate lifecycle handling.
+
+### 2026-10-19 Content-rule ownership continuation
+
+- Moved the canonical authored dependency relationship names, exclusive choice
+  groups, and required composition slots into `vapor_content`, beside the
+  Rust-defined content kinds and allowed dependency rules. The provider now
+  delegates its validation to those rules, the Client domain re-exports them,
+  and Studio's creator screens call the shared domain surface instead of
+  application-layer wrappers. Removed the duplicate content-kind string parser
+  and enum conversion from the application adapter; creator UI parses the
+  canonical vocabulary directly.
+- Added focused rule tests for Packagepack slots and invalid pairs. Managed
+  `validate --project vapor`, `validate --project vapor-studio`, and
+  `validate --project vapor-cli` pass formatting, compile checks, configured
+  tests, strict Clippy, and Rustdoc. Current logged counts include 5
+  `vapor_content` tests, 55 service tests, 10 service-process tests, 9 CLI tests,
+  and 6 Studio UI tests. `git diff --check` remains clean across the parent,
+  Vapor, CLI, and Studio repositories.
+- The current CLI implementation already routes Workshop batch stage/review and
+  publish through typed Client service actions. Earlier checkpoints above that
+  still describe it as provider-owned; treat those statements as superseded by
+  the current source. The remaining Workshop build gap is earlier in the
+  pipeline: CLI still performs managed Cargo validation and target builds
+  before asking the service to stage/publish authored content.
+- Consolidated host target identity and app-local cross-linker configuration
+  in the shared Client provider. Release building now uses the same target
+  mapping and linker setup as other Vapor workflows; CLI tool readiness and
+  workflow code use that provider implementation through a thin adapter. This
+  removes the duplicate 223-line CLI cross-toolchain module and fixes its
+  configuration drift with release builds.
+- Added coverage proving Windows GNU Cargo receives the shared MinGW compiler,
+  linker, and archiver settings. Managed Vapor, Vapor-CLI, and Vapor-Studio
+  validations pass after the consolidation. Latest counts are 13 provider, 55
+  service, 10 service-process, 9 CLI, and 6 Studio UI tests; `git diff --check`
+  is clean for all modified roots. No local deployment, runtime launch, Steam
+  action, commit, or push was performed.
+- Continued service-boundary work by removing `content deploy`'s redundant
+  full-workspace build. It now asks the Client service to install the selected
+  artifact and its source dependencies, so unrelated workspace projects are not
+  built. The command docs now distinguish this from the explicit all-workspace
+  `content build` command. Vapor-CLI managed validation passes (8 tests);
+  Vapor-Studio validation passes (6 tests); `git diff --check` is clean for the
+  parent, Vapor, CLI, and Studio roots.
+- Removed the CLI's separate managed-Rust preflight before `fmt`, `check`,
+  `test`, `build`, and `validate`. These commands now let the same service
+  operation that executes the work report missing workspace/toolchain failures,
+  avoiding a frontend-only gate followed by a second backend validation.
+  Vapor-CLI validation passes again after this change (8 tests).
+- The frontends are not fully decoupled yet. Installed composition launch and
+  Workshop/root publishing use typed Client actions; remaining local ownership
+  includes source-workspace indexing and target selection in CLI, root local
+  deploy/package staging, and OS-level process handoff/bootstrap. Cargo
+  operation output is still emitted by the service process rather than
+  streamed to the requesting frontend. Do not claim facade-only architecture
+  until these seams have explicit shared contracts. A proposed migration of
+  binary promotion into the provider was rejected by Auto-review because it
+  would replace deployed executables and delete retired ones; leave that
+  boundary unchanged pending specific authorization. No deployment, Steam
+  action, commit, or push was performed in this continuation.
+- Rewrote the CLI architecture note to describe the current ownership truth:
+  typed Client actions own most content, composition, Workshop, publishing,
+  authoring, and workspace-tool behavior, while target selection, local root
+  deployment/package orchestration, bootstrap, and child-process handoff remain
+  CLI-owned. It also records that managed tool output is not streamed to clients
+  yet. This avoids presenting the frontends as already pure facades.
+- Final diff hygiene check is clean in the parent, Vapor, Vapor-CLI, and
+  Vapor-Studio repositories. Existing unrelated dirty repository state remains
+  preserved; this continuation did not deploy, publish, commit, or push.
+
+### 2026-10-19 Operation feedback and client startup continuation
+
+- Managed Cargo progress now carries the latest completed step label through
+  the shared operation event. The CLI renders the same step and percentage;
+  Studio already consumes the event message for its status. This is milestone
+  reporting, not a raw compiler-output stream.
+- A live smoke check found that a shared-service client stopped reading as soon
+  as it received `ServiceReady`, before the initial state snapshot. Requests
+  then used revision 0 and were rejected as stale. The handshake is now shared
+  by startup and reconnect paths and waits for both frames for real clients;
+  readiness probes may complete at `ServiceReady` because initial session
+  creation deliberately sends no snapshot to them. Fresh shell startup, source
+  registration/open, and managed workspace requests now work after deployment.
+- Validation exposed Cargo argument assembly placing `--manifest-path` after
+  the `--` separator for rustfmt and Clippy. Manifest selection is now always
+  passed to Cargo before tool-specific arguments. Added focused coverage for
+  handshake ordering, progress labels, format-check and Clippy argument order.
+- Ran Vapor-managed formatting after you had authorized it, then full
+  `validate --project vapor` passed (format check, compile check, tests, strict
+  Clippy, and Rustdoc). Managed Vapor-CLI and Vapor-Studio validation also
+  passed after the shared progress API changes. The local Vapor Client was
+  deployed twice as fixes landed; the final deployed shell completed a managed
+  workspace test and displayed `100% — Finished tests for vapor` through the
+  live service operation event. `git diff --check` is clean across the parent
+  and all modified nested repositories. No Steam upload or game launch was
+  performed.
+- Remaining output boundary: compiler subprocess stdout/stderr are still not
+  streamed as structured operation events, and operations do not yet expose
+  cooperative cancellation. The milestone channel is useful progress, but it
+  does not make the frontends pure facades.
