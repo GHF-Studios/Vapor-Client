@@ -3174,3 +3174,30 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   the installed CLI's `source status` successfully round-tripped through the
   service. Vapor commit `1e218f7` is pushed. The parent submodule pointer and
   this note are being checkpointed; no Steam upload occurred.
+
+### 2026-10-20 Managed workspace cancellation
+
+- Added an operation-scoped cancellation token to the shared runner and a
+  `session.cancel-operation` service action keyed by the active operation ID.
+  Cancellation remains available while revisions advance; stale IDs and
+  non-cancellable operations are rejected. Only real-workspace format, check,
+  test, and development build are cancellable. Release builds, publishing,
+  installation, cleanup, and state-changing content operations are not.
+- The provider starts managed Cargo in an isolated process group on Unix and
+  uses process-tree termination on Windows; cancellation drains both bounded
+  output pipes and stops descendants as well as Cargo. Late completion messages
+  for a cancelled operation are discarded before they can mutate client state.
+- Studio now offers a Stop control for those four workspace tools and shows
+  “Stopping…” during shutdown. CLI progress handling also recognizes the
+  cancelling lifecycle state. The protocol version is now 22.
+- Added coverage for shared cancellation state, cancellation lifecycle status,
+  stopping a child with a sleeping descendant, cancel action validation,
+  revision-independent targeting, and suppression of a late failed result.
+  Full Vapor-managed superworkspace validation passed (format check, check,
+  tests, Clippy, Rustdoc for all seven workspaces). Local deployment completed;
+  a fresh deployed CLI successfully queried source status through the service.
+  No Steam upload occurred.
+- The already-running Shell process remained on protocol 21 after deployment;
+  a fresh Shell/CLI process on protocol 22 connected successfully. This is an
+  expected process-restart requirement after protocol changes, not a remaining
+  deployment mismatch.
