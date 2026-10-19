@@ -3114,3 +3114,18 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   and `3ddf7aa` (bounded service inbox). Parent checkpoints and the updated
   Vapor submodule pointer are pushed; `cloc_this.sh` remains the only unrelated
   local change.
+
+### 2026-10-19 Slow-client protocol delivery
+
+- Review found the final bounded IPC writer queue silently ignored full-queue
+  errors. That could leave a frontend connected after it missed an operation
+  result or state snapshot. The service now removes clients that cannot accept
+  a protocol frame and clears their authentication and telemetry subscription;
+  the Client reconnect path then obtains a fresh snapshot.
+- Added a regression test for queue saturation and subscription cleanup, while
+  retaining coverage that telemetry reaches only subscribed clients.
+- Full Vapor-managed validation passed across the superworkspace, including
+  tests, Clippy, and Rustdoc. The updated Client service was deployed locally
+  through Vapor; no Steam upload occurred.
+- Vapor change pushed as `59aa27a`. Parent submodule pointer and this checkpoint
+  are being recorded separately; `cloc_this.sh` remains user-owned.
