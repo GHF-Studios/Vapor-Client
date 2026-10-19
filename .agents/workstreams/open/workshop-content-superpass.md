@@ -3222,3 +3222,36 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   Local deployment succeeded. A disposable Rust workspace launched through the
   freshly deployed CLI and service, and both stdout and stderr markers arrived
   at the CLI. No Steam upload occurred.
+
+### 2026-10-20 Root deployment and package through the Client service
+
+- `root deploy` now submits a typed `DeployApplication` workspace action; the
+  service promotes the selected already-built artifacts, optionally refreshes
+  documentation, and synchronizes app-root assets. Promotion now lives in the
+  provider rather than the CLI.
+- `root package` now submits a typed `PackageApplication` action; the service
+  owns the managed release build, promotion, documentation generation, asset
+  synchronization, distribution staging, and Steam depot smoke check. Both
+  actions return one completion summary to CLI; fixture services reject them.
+- The release host-only package was exercised end to end through the freshly
+  deployed service: five release executables built, seven runtime artifacts
+  were promoted, 5,524 files staged for Linux x86_64, and the depot smoke check
+  passed. `root deploy --skip-docs --host-only` also completed through the
+  service after the final deployment. No Steam upload or branch change occurred.
+- Managed full-workspace validation passed after the service/package and CLI
+  changes. After the follow-up startup-window and operation-cancellation edits,
+  `validate --project vapor` passed format, check, tests, Clippy, and docs;
+  `client deploy local` and the deployed root-deploy operation passed again.
+- One old Vapor Shell remained on protocol 24 after protocol 25 was deployed;
+  restarting into the deployed CLI resolved that version mismatch. The client
+  now allows a bounded 30-second first-snapshot startup window.
+- Read-only cache inspection found 123 GB under installed `output/dev`, 4.1 GB
+  under `output/release`, and 4.1 GB under `output/docs`, with 22 GB free on a
+  222 GB filesystem (91% used). Host-default `debug` outputs coexist with
+  explicit Linux-target `debug` outputs for the same projects, plus large
+  `incremental` and `deps` trees; the dated preserved/smoke directories are
+  comparatively small. No cache was removed. A future cache pass should first
+  eliminate host-target duplication and share compatible Cargo target caches
+  across first-party workspaces, while retaining a small fixed set of named
+  modes (iterative dev, cross-target dev, release, and profiling) and an
+  explicit, inspectable prune policy.
