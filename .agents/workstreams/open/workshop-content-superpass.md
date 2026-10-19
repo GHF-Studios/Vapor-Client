@@ -3099,6 +3099,11 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Added a capacity regression check. Full Vapor-managed validation passed;
   local deployment completed, the deployed Shell restarted, and
   `test --project vapor` passed through the service. No Steam upload occurred.
+- Ran `root publish --host-only --dry-run` from that deployed Shell. The full
+  managed host release build streamed output and returned the expected review:
+  AppID 2122620, depots 2122621/2122622, 5,499 staged files, and target
+  `x86_64-unknown-linux-gnu`. This exercised source build plus release staging;
+  it did not upload to Steam.
 - The output path now has bounded retention at the child reader, service inbox,
   session event list, and protocol writer. Cooperative cancellation and the
   remaining bootstrap/source ownership boundaries are still open.
@@ -3106,5 +3111,6 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   and Workshop batch reviews/publication are service-owned; local client
   deployment/bootstrap and local root bundle assembly remain CLI-owned.
 - Vapor checkpoints are pushed at `bbbfaa2` (subprocess regression coverage)
-  and `3ddf7aa` (bounded service inbox); the parent note and submodule pointer
-  are the remaining checkpoint.
+  and `3ddf7aa` (bounded service inbox). Parent checkpoints and the updated
+  Vapor submodule pointer are pushed; `cloc_this.sh` remains the only unrelated
+  local change.
