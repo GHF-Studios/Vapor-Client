@@ -3189,7 +3189,7 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   for a cancelled operation are discarded before they can mutate client state.
 - Studio now offers a Stop control for those four workspace tools and shows
   “Stopping…” during shutdown. CLI progress handling also recognizes the
-  cancelling lifecycle state. The protocol version is now 22.
+  cancelling lifecycle state. The protocol version is now 23.
 - Added coverage for shared cancellation state, cancellation lifecycle status,
   stopping a child with a sleeping descendant, cancel action validation,
   revision-independent targeting, and suppression of a late failed result.
@@ -3198,7 +3198,7 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   a fresh deployed CLI successfully queried source status through the service.
   No Steam upload occurred.
 - The already-running Shell process remained on protocol 21 after deployment;
-  a fresh Shell/CLI process on protocol 22 connected successfully. This is an
+  a fresh Shell/CLI process on protocol 23 connected successfully. This is an
   expected process-restart requirement after protocol changes, not a remaining
   deployment mismatch.
 - A follow-up ownership review removed five unhandled duplicate developer
@@ -3206,3 +3206,19 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   `Workspace::Clean` are now their sole service routes. All-workspace managed
   validation passed again, local deployment completed, and fresh CLI source
   status succeeded. No Steam upload occurred.
+
+### 2026-10-20 Route source launches through the Client service
+
+- `launch --current-workspace` now sends a typed workspace Run Configuration
+  request to the shared service. The CLI supplies its current directory as
+  context; the service discovers the workspace, resolves `default`, owns the
+  process, and streams output and lifecycle state to connected frontends. It
+  stays separate from Studio's selected authoring workspace.
+- Moved bounded managed child-process execution into Vapor core so both
+  workspace tools and Run Configurations share output draining and process-tree
+  cancellation. The CLI no longer resolves or launches a workspace directly.
+- Added protocol round-trip and production-service boundary coverage. Managed
+  validation across all seven workspaces passed after the integration test.
+  Local deployment succeeded. A disposable Rust workspace launched through the
+  freshly deployed CLI and service, and both stdout and stderr markers arrived
+  at the CLI. No Steam upload occurred.
