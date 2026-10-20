@@ -58,6 +58,11 @@
 - Vapor-Studio managed formatting, compilation, tests, Clippy, and Rustdoc pass
   with this handoff, and local deployment succeeded. The current catalog's
   conflicting copies correctly keep the action disabled pending explicit repair.
+- A copy review removed frontend implementation names from creator progress and
+  empty states (for example, “Vapor Shell,” “Studio service,” and “catalog”)
+  where the person only needs the action or result. Steam release wording now
+  names the upload review rather than SteamPipe internals. Managed Studio
+  validation and local deployment pass after the copy change.
 - Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
