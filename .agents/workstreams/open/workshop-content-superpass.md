@@ -3460,3 +3460,24 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   API. This is also the bootstrap/recovery path when the service is absent or
   being removed, so making it service-owned needs a deliberate startup/shutdown
   contract; no speculative change was made here.
+
+### 2026-10-20 Retired cache cleanup and build-output review
+
+- Removed only the `target` directories under the retired per-user project names
+  `vapor-sdk`, `vapor-shell`, and `vapor-launcher`. Each parent contained only
+  that generated cache, and the names do not occur in current workspace
+  manifests. No source, installation, Workshop, session, or active build output
+  was removed. The three directories occupied about 8 GB; current disk sample is
+  188 GB used of 222 GB, with 32 GB free. The installed `output/dev` cache stays
+  at 104 GB; current per-user Vapor development data is 41 GB.
+- The largest active directories still mix compiled dependencies and
+  incremental state: `vapor` debug is 16 GB (8.8 GB deps, 5.7 GB incremental),
+  `loo-cast` debug is 23 GB (19 GB deps, 3.7 GB incremental), and `vapor-gui`
+  debug is 12 GB (7.4 GB deps, 3.6 GB incremental). `output/docs/target` adds
+  2.6 GB. These numbers confirm separate Cargo target roots and incremental
+  state as the main active-cache cost; do not delete or share these roots until
+  a managed rebuild measures the compile-time and disk trade-off. The just-added
+  workspace Clean action now has an exact per-project route for the 104 GB tree.
+- Current focused code commits were pushed: Vapor `4a95c71`, Vapor-CLI
+  `b7a5257`, Vapor-Studio `4ad6c74`, and Vapor-Client parent `a7afeac`. The
+  parent commit excludes the unrelated user-owned `cloc_this.sh` change.
