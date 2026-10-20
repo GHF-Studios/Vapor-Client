@@ -3404,5 +3404,10 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   the Loo-Cast Steam installation. This validates the managed deployment path,
   not an interactive GUI/game launch. Vapor-Studio commits `a3fa484` and
   `ca65b4a` are pushed.
+- Creator and discovery copy now describes outcomes (for example, preview-only,
+  package built on this device, and upload review out of date) rather than
+  exposing internal staging mechanics. Managed Studio validation passed again
+  with 10 tests, Clippy, and Rustdoc, and local deployment was repeated. The
+  final Studio UI checkpoint is `77ffb43`.
 - The read-only development output sample remains about 104 GB with 30 GB free;
   no caches were removed. Docs upload still waits on VPS access/token.
