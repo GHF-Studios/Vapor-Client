@@ -3481,3 +3481,29 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Current focused code commits were pushed: Vapor `4a95c71`, Vapor-CLI
   `b7a5257`, Vapor-Studio `4ad6c74`, and Vapor-Client parent `a7afeac`. The
   parent commit excludes the unrelated user-owned `cloc_this.sh` change.
+
+### 2026-10-20 Explicit Installer root ownership
+
+- The visual Installer accepted `--app-root` for its display but called core
+  operations that independently rediscovered `VAPOR_HOME` or the executable
+  path. A mismatched override could therefore show one root while checking,
+  installing, repairing, or uninstalling another.
+- Added explicit `VaporInstallation` contexts and passed them through core
+  toolchain discovery, developer-environment discovery, installation,
+  diagnosis, repair, and uninstall. Existing no-argument APIs still discover
+  the active installation and delegate to the explicit-context versions.
+- Explicit roots are canonicalized and must be an installed app root with a
+  valid `[root]` section in `App.vapor.toml`; a source checkout or arbitrary
+  directory is rejected rather than falling back to another discovered root.
+- Uninstall's machine-level cleanup now removes only environment values,
+  profile blocks, and the legacy anchor that point at the selected app root;
+  uninstalling a secondary root no longer removes another root's launcher
+  integration. Added regression coverage for installation/toolchain identity,
+  Installer root retention, and root-scoped Linux profile/anchor cleanup.
+- Vapor-managed validation passed for `vapor`, `vapor-installer`, and
+  `vapor-gui`, including formatting, checks, tests, Clippy, and Rustdoc. Local
+  deployment succeeded to the installed Loo-Cast app root after the final
+  explicit-root validation changes; no interactive GUI launch or Steam
+  publication was performed. Post-validation cache sample:
+  `output/dev` 104 GB, filesystem 189/222 GB used with 32 GB available. No cache
+  data was removed. The user-owned `cloc_this.sh` modifications remain excluded.
