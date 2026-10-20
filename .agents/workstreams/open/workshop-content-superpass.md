@@ -171,21 +171,37 @@
   waits up to five seconds for a review snapshot matching both operation ID
   and selector(s). The original host-only `content create --dry-run` completed
   and returned a private review instead of the former false “stage again” error.
-- The full Linux+Windows example build remains blocked: Vapor reports
-  `linker cc not found` while compiling host build scripts, even though its
-  managed service can execute `cc` and its Cargo PATH includes `/usr/bin`. The
-  temporary diagnostic was removed. No Steam Workshop item was created; a
-  host-only upload was correctly refused because real publication requires the
-  full declared target matrix. Investigate this build-environment mismatch
-  before creating private items.
-- The final locally deployed CLI reran the complete managed host-only create
-  gate (fmt, check, tests, Clippy, docs, build) and returned the expected
-  private review. Vapor tests (12 client, 10 application, 3 domain, 9 protocol,
-  49 provider, 40 service, and 2 SDK-core) and Vapor-CLI tests (9) pass. Active
-  source and selected composition were restored to `vapor-client` and Loo-Cast.
-- Pushed commits: Vapor `b0c66ae`, Vapor-CLI `ba023a6`, and Vapor-Examples
-  `07ae8f0`. The parent repository still needs the corresponding submodule
-  pointers and this checkpoint committed.
+- The earlier `linker cc not found` failure was transient: managed Windows
+  `build` passed. Full Linux+Windows Create dry-runs then exposed the actual
+  package gap: Windows GNU static Crates emit `lib<name>.a`/`.rlib`, while the
+  provider searched only MSVC `.dll`/`.lib` names. The provider now recognizes
+  GNU archives, with a regression test. `wheel-core` and `wheel-rules` declare
+  `rlib` plus `staticlib`; full Create dry-runs now stage both targets.
+- Created six private Steam Workshop items in dependency order under app 2122620:
+  `wheel-core` 3823733452, `wheel-rules` 3823733589, `terminal-engine`
+  3823733745, `hello-world-game` 3823733921, `tiny-game-mod` 3823734052, and
+  runnable `hello-world-packagepack` 3823734148. All initial packages staged
+  and uploaded successfully for Linux and Windows GNU.
+- The first Workshop roundtrip uncovered missing `workshop-id` values on
+  dependency edges. Added the IDs, bumped the shared Vapor content version to
+  0.1.1, and published all six existing private items again. The batch upload
+  reported six updates; receipts record each upload. Full target-matrix staging
+  passed before this update.
+- Subscribed to the packagepack, installed it with its six-node closure, passed
+  package verification, and launched it through `vapor launch selected`.
+  Because the authored workspace was open, this proves local install and launch
+  but does not prove a clean player install can fetch every Workshop dependency.
+  Steam's local Workshop folder still exposes cached 0.1.0 packagepack metadata
+  after the 0.1.1 update; a fresh-cache/player-machine roundtrip remains to be
+  verified. The temporary installed example packagepack was removed afterward.
+- Managed Vapor formatting and full workspace tests passed (12 client, 10
+  application, 3 domain, 9 protocol, 49 provider, 40 service, and 2 SDK-core
+  tests). Full Linux+Windows example Create dry-runs passed their managed fmt,
+  check, tests, Clippy, docs, and build gates. Active source and selected
+  composition were restored to `vapor-client` and Loo-Cast.
+- Pushed commits: Vapor `6efe082` and Vapor-Examples `aca638c`, alongside the
+  previously pushed Vapor-CLI `ba023a6`. The parent repository still needs the
+  updated submodule pointers and this checkpoint committed.
 
 ## Current checkpoint
 
