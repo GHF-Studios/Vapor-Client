@@ -63,6 +63,12 @@
   where the person only needs the action or result. Steam release wording now
   names the upload review rather than SteamPipe internals. Managed Studio
   validation and local deployment pass after the copy change.
+- The Workshop sharing screen now leads with content identity, visibility,
+  human-readable platforms, included files, and dependencies. Steam IDs remain
+  available under `Workshop details`; the temporary package path, fingerprint,
+  and raw target triple are no longer shown in the normal review. The empty
+  state now sends users with no open project to Workspace, while an open project
+  goes to Discover. Managed Studio validation and local deployment pass.
 - Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
