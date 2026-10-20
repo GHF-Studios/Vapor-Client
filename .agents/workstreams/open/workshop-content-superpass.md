@@ -29,6 +29,32 @@
 
 ## Completed
 
+### 2026-10-20 Documentation publishing and development-cache normalization
+
+- Added typed `docs publish` through the shared Vapor Client service and CLI.
+  It builds the curated public documentation bundle, uploads only to the
+  configured Vapor Docs archive endpoint, requires an admin token in the
+  service environment, rejects public cleartext HTTP, and refuses redirects.
+  Local deployment remains separate. Fixture, URL, archive, and local upload
+  coverage pass.
+- Rustdoc now shares one Cargo target root across the declared documentation
+  workspaces and stages new site output before replacing the installed docs;
+  failed swaps restore the prior site. A complete managed docs build succeeded.
+  The Rustdoc cache fell from about 4.1 GB across per-workspace trees to 2.5 GB.
+- Host-target normalization now uses Cargo's default host output directory
+  across build, release promotion, and content packaging. Regression tests cover
+  host and foreign-target layouts. After successful managed local deployment,
+  removed the five obsolete explicit-host cache trees (about 28 GB of directory
+  usage, freeing about 13 GB on disk after shared files); cross-target and
+  normal debug caches remain. The development cache fell from about 123 GB to
+  97 GB and the filesystem moved from 91% to 86% used.
+- Managed `validate` passed for Vapor and Vapor CLI; Studio validation also
+  passed. Local deployment succeeded and the installed `docs build` succeeded
+  after restarting the shell to pick up its new protocol. No server upload was
+  completed: the web publisher command is present, but the docs token is not
+  configured in the local service environment, and both the saved VPS SSH key
+  and default SSH-agent route were rejected by the server.
+
 ## Current checkpoint
 
 ### 2026-10-19 Workshop publication through the shared service
