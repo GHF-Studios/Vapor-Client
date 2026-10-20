@@ -30,6 +30,23 @@
 
 ## Completed
 
+### 2026-10-20 Studio creator package workflow
+
+- Added project-level `Build package` in Studio's creator workspace, dispatching
+  the existing typed package action through the shared Client service. The
+  service performs the canonical validation/build/stage path; Studio does not
+  run Cargo or package providers itself.
+- Added `Preview package` under the project's `More` menu to keep the project
+  row compact. Preview uses temporary output; Build stages a reusable local
+  package and explicitly reports that no publishing occurred.
+- Package completion remains visible in the open workspace with content ID,
+  friendly platform label, file count, and size. Internal artifact paths and
+  fingerprints stay out of the normal result UI. Unsaved workspace edits block
+  both actions; a result is only shown for the workspace that produced it.
+- Vapor-managed `validate --project vapor-studio` passed after the change:
+  formatting, compilation, 6 tests, Clippy, and Rustdoc. No deployment or
+  Workshop publication was performed.
+
 ### 2026-10-20 Documentation publishing and development-cache normalization
 
 - Added typed `docs publish` through the shared Vapor Client service and CLI.
@@ -81,11 +98,10 @@
   diagnostics; it is serialized with other background operations. CLI waits for
   that matching typed result event, while Studio keeps only a concise status
   instead of exposing staging paths and fingerprints in its operation feed.
-- Studio now understands the package operation kind and result payload, but
-  does not yet expose a creator action for it. The service already owns managed
-  workspace builds and typed package staging; the remaining Studio work is to
-  compose those operations into a clear build-and-package workflow and report
-  which outputs belong to the selected workspace.
+- Studio's creator package action is complete; the remaining integration gap
+  is a direct transition from a staged package to a focused sharing/publishing
+  review. Current Workshop review remains its own source-authoritative staging
+  path, rather than claiming it reuses this local package output.
 - `content validate` now runs through a typed Library artifact-validation
   action against the explicitly opened workspace; source diagnostics return
   through the same operation event path as install and acquisition outcomes.
