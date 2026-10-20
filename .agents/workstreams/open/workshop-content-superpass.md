@@ -48,7 +48,7 @@
   removed the five obsolete explicit-host cache trees (about 28 GB of directory
   usage, freeing about 13 GB on disk after shared files); cross-target and
   normal debug caches remain. The development cache fell from about 123 GB to
-  97 GB and the filesystem moved from 91% to 86% used.
+  98 GB at the final sample; the filesystem moved from 91% to 86% used.
 - Managed `validate` passed for Vapor and Vapor CLI; Studio validation also
   passed. Local deployment succeeded and the installed `docs build` succeeded
   after restarting the shell to pick up its new protocol. No server upload was
