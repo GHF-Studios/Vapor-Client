@@ -19,7 +19,7 @@
   `resources/vapor/shell-scripts/**`,
   `App-Source.vapor.toml`, `README.md`, `AGENTS.md`,
   `.agents/workstreams/README.md`, `../SuperWorkspace.vapor.toml`,
-  `resources/vapor/tools/**`,
+  `resources/vapor/tools/**`, `../Vapor-Examples/**`,
   `.agents/workstreams/open/vapor-studio-launcher-design.md`,
   `docs/superpowers/specs/2026-10-14-vapor-repository-boundaries-design.md`,
   `../Vapor-Platform-Server/deploy/scripts/build-vapor-client-docs-bundle.sh`,
@@ -153,6 +153,39 @@
   `Vapor-Platform-Server` commit `8546bea`, and built a 4.2 MB curated archive
   containing the current CLI docs and all seven product books at
   `/tmp/vapor-current-docs-20261020.tar.gz`.
+
+### 2026-10-21 Terminal wheel content and Workshop staging
+
+- Reworked the Vapor-Examples terminal game into one compact wheel roguelike:
+  animated number flashes, salvage/cache/repair/hazard outcomes, hull upgrades,
+  extraction and banking, loss/restart, and one direct mod seam. The tiny mod
+  contributes a bonus wheel outcome; it does not introduce a game framework.
+- Migrated the six example artifacts from generic `Vapor.toml` markers to the
+  role manifests (`Engine`, `Game`, `Game-Mod`, `Crate`, and `Packagepack`),
+  registered them in the example workspace, and declared the Linux+Windows
+  runtime matrix. The packagepack stages the terminal engine executable as its
+  launch target. All six items carry private Steam metadata.
+- Managed example validation passed; the host-only local deployment and
+  terminal launch succeeded. Managed Vapor and Vapor-CLI test suites passed.
+  The CLI Workshop staging race is fixed: after the operation succeeds, it now
+  waits up to five seconds for a review snapshot matching both operation ID
+  and selector(s). The original host-only `content create --dry-run` completed
+  and returned a private review instead of the former false “stage again” error.
+- The full Linux+Windows example build remains blocked: Vapor reports
+  `linker cc not found` while compiling host build scripts, even though its
+  managed service can execute `cc` and its Cargo PATH includes `/usr/bin`. The
+  temporary diagnostic was removed. No Steam Workshop item was created; a
+  host-only upload was correctly refused because real publication requires the
+  full declared target matrix. Investigate this build-environment mismatch
+  before creating private items.
+- The final locally deployed CLI reran the complete managed host-only create
+  gate (fmt, check, tests, Clippy, docs, build) and returned the expected
+  private review. Vapor tests (12 client, 10 application, 3 domain, 9 protocol,
+  49 provider, 40 service, and 2 SDK-core) and Vapor-CLI tests (9) pass. Active
+  source and selected composition were restored to `vapor-client` and Loo-Cast.
+- Pushed commits: Vapor `b0c66ae`, Vapor-CLI `ba023a6`, and Vapor-Examples
+  `07ae8f0`. The parent repository still needs the corresponding submodule
+  pointers and this checkpoint committed.
 
 ## Current checkpoint
 
