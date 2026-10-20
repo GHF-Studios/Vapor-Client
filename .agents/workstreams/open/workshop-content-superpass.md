@@ -55,6 +55,9 @@
   existing confirmation-bound review flow; the service still rebuilds and
   fingerprints the current saved source. Stale catalog data, active work,
   unsaved edits, and conflicting on-device copies disable the handoff.
+- Vapor-Studio managed formatting, compilation, tests, Clippy, and Rustdoc pass
+  with this handoff, and local deployment succeeded. The current catalog's
+  conflicting copies correctly keep the action disabled pending explicit repair.
 - Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
