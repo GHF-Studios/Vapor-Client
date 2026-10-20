@@ -88,6 +88,12 @@
   action whose result became unknown. Managed Vapor and Studio validation passed,
   and `client deploy local` succeeded. Vapor commit `811353b`; Studio commit
   `320e46b`.
+- A second startup review found that launcher and service processes shared one
+  lock, forcing the launcher to release it before readiness and leaving a race
+  between concurrent entrypoints. Bootstrap and service endpoint claims now use
+  separate locks: launchers serialize until the service accepts a connection,
+  while the child can bind independently. Managed Vapor validation and local
+  deployment passed. Vapor commit `59b2f79`.
 - The latest read-only `cloc_this.sh` measurement is 76,043 Rust LOC, up from
   the earlier 68,958 baseline. Treat that as a review pressure signal, not a
   deletion target; the user's script remains dirty and untouched.
