@@ -3255,3 +3255,11 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   across first-party workspaces, while retaining a small fixed set of named
   modes (iterative dev, cross-target dev, release, and profiling) and an
   explicit, inspectable prune policy.
+
+### 2026-10-20 Documentation builds through the Client service
+
+- Added typed `WorkspaceAction::BuildDocumentation` (`workspace.build-documentation`, protocol 26). The service now owns the asynchronous operation and calls the application/provider documentation build; `vapor docs build` opens the selected workspace in the service and waits for that action. CLI retains only local path lookup/open behavior.
+- The protocol action catalog round-trips the new action, and fixture process coverage confirms documentation builds are unavailable in fixture sessions. Vapor-managed validation passed for `vapor` and `vapor-cli`, including format, checks, tests, Clippy, and Rustdoc.
+- Local deployment installed the new protocol pair. A real `docs build` through the deployed CLI/service generated seven sections; `docs path` then resolved the installed index. No Steam upload occurred.
+- Fresh disk sample remained 199 GB used of 222 GB (91%, 22 GB free): `output/dev` 123 GB, `output/release` 4.1 GB, `output/docs` 4.1 GB, `output/content` 593 MB, and `output/root` 149 MB. The docs directory contains seven per-workspace Cargo target trees (Vapor 935 MB, GUI 929 MB, Studio 890 MB, Installer 792 MB, CLI 413 MB, Examples 232 MB, Entrypoint 2.2 MB). The build also visibly recompiles overlapping dependency graphs in separate target roots. This confirms duplicated docs build caches; no cache was removed.
+- Cache redesign must separate generated docs from Cargo target artifacts and share only compatible dependency caches by toolchain, profile, and target. Cargo's `target/doc` output is workspace-sensitive, so sharing target roots requires preserving each section's own rendered docs; simply pointing all sections at one root would mix Rustdoc outputs.
