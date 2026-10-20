@@ -50,6 +50,11 @@
   friendly platform label, file count, and size. Internal artifact paths and
   fingerprints stay out of the normal result UI. Unsaved workspace edits block
   both actions; a result is only shown for the workspace that produced it.
+- A successfully staged package with Workshop metadata now offers a guarded
+  `Review Workshop upload` handoff directly from its result. It opens the
+  existing confirmation-bound review flow; the service still rebuilds and
+  fingerprints the current saved source. Stale catalog data, active work,
+  unsaved edits, and conflicting on-device copies disable the handoff.
 - Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
