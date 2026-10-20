@@ -74,6 +74,11 @@
   Steam upload itself. Build-file editing and project cleanup confirmations
   describe their effect without exposing Cargo target-directory mechanics.
   Managed Studio validation and local deployment pass after this copy pass.
+- Publishing review details now distinguish everyday actions from recovery
+  information: Steam uploader commands and package paths are collapsed under
+  `Advanced package details`, and file-editor/cleanup language stays focused on
+  user-visible outcomes. Managed Vapor-Studio formatting, full validation, and
+  local deployment passed. Studio commit `708bbf8` contains this pass.
 - Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
