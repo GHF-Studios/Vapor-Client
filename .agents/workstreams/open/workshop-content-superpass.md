@@ -3409,5 +3409,10 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   exposing internal staging mechanics. Managed Studio validation passed again
   with 10 tests, Clippy, and Rustdoc, and local deployment was repeated. The
   final Studio UI checkpoint is `77ffb43`.
+- Workshop subscriptions now show a live checking state instead of an empty
+  “not loaded” screen during the initial request. The empty state names Steam
+  Workshop correctly, and the technical Workshop item ID is collapsed under
+  details. Managed Studio validation passed (10 tests, Clippy, Rustdoc) and
+  local deployment was repeated; Studio commit `f45b473` is pushed.
 - The read-only development output sample remains about 104 GB with 30 GB free;
   no caches were removed. Docs upload still waits on VPS access/token.
