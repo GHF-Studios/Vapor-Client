@@ -63,7 +63,12 @@
   content output area. Managed validation passed after that fix and local
   deployment succeeded. A Workshop publish dry-run correctly refuses the
   existing source version while its downloaded/installed copies disagree;
-  those cached items remain untouched and no upload was performed.
+  those cached items remain untouched and no upload was performed. A focused
+  regression test confirms temporary package staging stays under its selected
+  output root and removes its temporary directory on drop. Current development
+  output is about 104 GB (30 GB free, 87% filesystem use); no cache data was
+  deleted. The largest areas remain per-workspace debug/incremental trees and
+  repeated Windows-target trees.
 
 ### 2026-10-20 Documentation publishing and development-cache normalization
 
