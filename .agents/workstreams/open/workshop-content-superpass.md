@@ -34,18 +34,28 @@
 
 - Added project-level `Build package` in Studio's creator workspace, dispatching
   the existing typed package action through the shared Client service. The
-  service performs the canonical validation/build/stage path; Studio does not
-  run Cargo or package providers itself.
+  service now runs a managed workspace build first, then packages/stages the
+  selected content; Studio does not run Cargo or package providers itself.
 - Added `Preview package` under the project's `More` menu to keep the project
-  row compact. Preview uses temporary output; Build stages a reusable local
-  package and explicitly reports that no publishing occurred.
+  row compact. Preview still builds the workspace, but package assembly uses
+  temporary output; Build stages a reusable local package and explicitly
+  reports that no publishing occurred.
+- An empty target selection from Studio now resolves to the workspace's declared
+  runtime matrix at the shared service boundary. Both package and Workshop
+  review build and stage that same resolved matrix; explicit subsets remain
+  explicit, and workspaces without a declared matrix retain host-default
+  behavior. This fixes Studio's prior host-only default for multi-platform
+  content.
 - Package completion remains visible in the open workspace with content ID,
   friendly platform label, file count, and size. Internal artifact paths and
   fingerprints stay out of the normal result UI. Unsaved workspace edits block
   both actions; a result is only shown for the workspace that produced it.
-- Vapor-managed `validate --project vapor-studio` passed after the change:
-  formatting, compilation, 6 tests, Clippy, and Rustdoc. No deployment or
-  Workshop publication was performed.
+- Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
+  passed after the target-matrix correction: formatting, compilation, tests,
+  Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
+  reopened the Loo-Cast source and returned its Library catalog. The Loo-Cast
+  workspace currently declares no runtime target matrix, so a real multi-target
+  package preview was not exercised. No Workshop publication was performed.
 
 ### 2026-10-20 Documentation publishing and development-cache normalization
 
@@ -65,7 +75,14 @@
   removed the five obsolete explicit-host cache trees (about 28 GB of directory
   usage, freeing about 13 GB on disk after shared files); cross-target and
   normal debug caches remain. The development cache fell from about 123 GB to
-  98 GB at the final sample; the filesystem moved from 91% to 86% used.
+  98 GB at the final sample; the filesystem moved from 91% to 86% used. A
+  later sample found roughly 23 GB in per-workspace incremental compiler state,
+  with 32 GB free on disk. A read-only scan found about 5.2 GB of likely
+  duplicate compiled artifacts across workspace target directories; SHA-256
+  checks confirmed that four of the largest repeated artifacts are byte-
+  identical. This pass left caches intact; shared target roots or profile
+  changes need measured rebuilds before replacing the current fast-iteration
+  setup.
 - Managed `validate` passed for Vapor and Vapor CLI; Studio validation also
   passed. Local deployment succeeded and the installed `docs build` succeeded
   after restarting the shell to pick up its new protocol. No server upload was
