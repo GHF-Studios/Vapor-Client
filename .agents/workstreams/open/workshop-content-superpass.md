@@ -3387,3 +3387,21 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Local deployment installed the new protocol pair. A real `docs build` through the deployed CLI/service generated seven sections; `docs path` then resolved the installed index. No Steam upload occurred.
 - Fresh disk sample remained 199 GB used of 222 GB (91%, 22 GB free): `output/dev` 123 GB, `output/release` 4.1 GB, `output/docs` 4.1 GB, `output/content` 593 MB, and `output/root` 149 MB. The docs directory contains seven per-workspace Cargo target trees (Vapor 935 MB, GUI 929 MB, Studio 890 MB, Installer 792 MB, CLI 413 MB, Examples 232 MB, Entrypoint 2.2 MB). The build also visibly recompiles overlapping dependency graphs in separate target roots. This confirms duplicated docs build caches; no cache was removed.
 - Cache redesign must separate generated docs from Cargo target artifacts and share only compatible dependency caches by toolchain, profile, and target. Cargo's `target/doc` output is workspace-sensitive, so sharing target roots requires preserving each section's own rendered docs; simply pointing all sections at one root would mix Rustdoc outputs.
+
+### 2026-10-20 Player entry-point routing
+
+- Home now shows a state-appropriate primary action: install an uninstalled
+  composition, open its associated source project when needed, build and launch
+  only when that exact project is open, launch an installed composition, or
+  route stale/partial installations to review.
+- Home and Compositions now share the root-source check. Compositions no longer
+  builds whichever unrelated workspace happens to be open; it opens the
+  composition's source project first. Unsaved context edits disable that switch
+  with an accurate explanation.
+- Managed Studio formatting and full validation passed (10 tests, Clippy, and
+  Rustdoc); `client deploy local` deployed Studio, CLI, GUI, installer,
+  entrypoint, and service binaries into the Loo-Cast Steam installation. This
+  validates compilation and local deployment, not an interactive GUI/game
+  launch. Vapor-Studio commit `a3fa484` is pushed.
+- The read-only development output sample remains about 104 GB with 30 GB free;
+  no caches were removed. Docs upload still waits on VPS access/token.
