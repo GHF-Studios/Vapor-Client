@@ -3416,3 +3416,47 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   local deployment was repeated; Studio commit `f45b473` is pushed.
 - The read-only development output sample remains about 104 GB with 30 GB free;
   no caches were removed. Docs upload still waits on VPS access/token.
+
+## 2026-10-20 Operation identity and cache cleanup correction
+
+- Re-audit corrected an older facade finding: Studio's `vapor_devtools` is an
+  in-process presentation crate. It consumes telemetry and operation events
+  delivered over Client IPC; it no longer opens its own telemetry socket. CLI
+  source/content/workspace tools, player launch, profiler actions, and release
+  publication also dispatch through typed Client actions. The stale 2026-10-19
+  paragraph above that calls those paths direct provider or telemetry leaks is
+  superseded by this evidence.
+- CLI diagnostics previously wrapped commands in a second local
+  `OperationService`, inventing separate operation IDs and estimated phases
+  even when the Client service was doing the work. Removed that descriptor and
+  wrapper (171 lines); CLI diagnostics now record phase and status transitions
+  from the actual service operation ID. Synchronous host/bootstrap commands
+  remain recorded by the shell's command log.
+- Studio's confirmed workspace-clean action previously removed only the
+  per-project `user_data_root/development/<project>/target` used by source-run
+  configurations. Managed workspace validation and package builds store their
+  active Cargo caches under `<app-root>/output/dev/<project>`, so the largest
+  cache went untouched. Clean now clears both per-project development output
+  roots for the open workspace. Its provider validates each project name as a
+  single path component and removes only that project's dev directory; dated
+  smoke/preservation directories, release outputs, source, installed content,
+  and Workshop downloads are preserved. The confirmation explains the rebuild
+  cost and preserved user data.
+- Added provider tests proving cleanup removes the selected project's dev
+  cache, preserves unrelated smoke/release folders, and rejects path escape.
+  Vapor-managed `validate --project vapor` passed format, check, tests, Clippy,
+  and Rustdoc; `validate --project vapor-cli` passed with 7 CLI tests, and
+  `validate --project vapor-studio` passed with 10 UI tests. `client deploy
+  local` completed after these changes; no GUI/game launch or cache deletion
+  was performed.
+- The post-build disk sample is 191 GB used of 222 GB, 29 GB free. Installed
+  `output/dev` is 104 GB; `output/docs/target` is 2.6 GB. The separate OS-owned
+  `~/.local/share/vapor/development` directory is about 50 GB across current
+  and legacy project names. The two cache roots have distinct ownership and
+  are not combined in this pass; deletion remains deferred until the requested
+  cleanup phase. Docs upload still needs restored VPS access/token.
+- Another facade seam remains visible: `Vapor-Installer` directly calls the
+  shared core's install/repair/uninstall functions instead of the Client IPC
+  API. This is also the bootstrap/recovery path when the service is absent or
+  being removed, so making it service-owned needs a deliberate startup/shutdown
+  contract; no speculative change was made here.
