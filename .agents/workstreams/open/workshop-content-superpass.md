@@ -69,6 +69,11 @@
   and raw target triple are no longer shown in the normal review. The empty
   state now sends users with no open project to Workspace, while an open project
   goes to Discover. Managed Studio validation and local deployment pass.
+- The app-release review likewise hides the uploader command and local package
+  location in `Advanced package details`; normal status text now describes the
+  Steam upload itself. Build-file editing and project cleanup confirmations
+  describe their effect without exposing Cargo target-directory mechanics.
+  Managed Studio validation and local deployment pass after this copy pass.
 - Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
