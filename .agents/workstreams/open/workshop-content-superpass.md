@@ -79,6 +79,18 @@
   `Advanced package details`, and file-editor/cleanup language stays focused on
   user-visible outcomes. Managed Vapor-Studio formatting, full validation, and
   local deployment passed. Studio commit `708bbf8` contains this pass.
+- A service disconnect previously triggered an implicit reconnect inside the
+  Client receive methods. Studio polls from its UI frame, so the 30-second
+  startup window could freeze the interface; a failed attempt then permanently
+  dropped the connection. Receive operations now return disconnection directly.
+  Studio reconnects on a worker thread, exposes a retry action after failure,
+  restores the latest snapshot, and refreshes the catalog. It never replays an
+  action whose result became unknown. Managed Vapor and Studio validation passed,
+  and `client deploy local` succeeded. Vapor commit `811353b`; Studio commit
+  `320e46b`.
+- The latest read-only `cloc_this.sh` measurement is 76,043 Rust LOC, up from
+  the earlier 68,958 baseline. Treat that as a review pressure signal, not a
+  deletion target; the user's script remains dirty and untouched.
 - Vapor-managed `validate --project vapor`, `vapor-cli`, and `vapor-studio`
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
