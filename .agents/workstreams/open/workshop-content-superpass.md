@@ -3390,18 +3390,19 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 
 ### 2026-10-20 Player entry-point routing
 
-- Home now shows a state-appropriate primary action: install an uninstalled
-  composition, open its associated source project when needed, build and launch
-  only when that exact project is open, launch an installed composition, or
-  route stale/partial installations to review.
-- Home and Compositions now share the root-source check. Compositions no longer
-  builds whichever unrelated workspace happens to be open; it opens the
-  composition's source project first. Unsaved context edits disable that switch
-  with an accurate explanation.
+- Home now presents a state-appropriate primary action: install an uninstalled
+  composition, build and launch when its package root is available from its
+  associated source workspace, launch an installed composition, or route stale
+  and partial installations to review.
+- Home and Compositions share the same package-root source check. Build input is
+  the composition's saved workspace association, independent of the Studio
+  editor's current folder. Unsaved editor/composition changes still block the
+  operation so it cannot silently omit pending edits.
 - Managed Studio formatting and full validation passed (10 tests, Clippy, and
-  Rustdoc); `client deploy local` deployed Studio, CLI, GUI, installer,
-  entrypoint, and service binaries into the Loo-Cast Steam installation. This
-  validates compilation and local deployment, not an interactive GUI/game
-  launch. Vapor-Studio commit `a3fa484` is pushed.
+  Rustdoc). `client deploy local` returned to the Vapor Shell prompt after
+  deploying Studio, CLI, GUI, installer, entrypoint, and service binaries into
+  the Loo-Cast Steam installation. This validates the managed deployment path,
+  not an interactive GUI/game launch. Vapor-Studio commits `a3fa484` and
+  `ca65b4a` are pushed.
 - The read-only development output sample remains about 104 GB with 30 GB free;
   no caches were removed. Docs upload still waits on VPS access/token.
