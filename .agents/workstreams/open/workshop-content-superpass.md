@@ -22,6 +22,7 @@
   `resources/vapor/tools/**`,
   `.agents/workstreams/open/vapor-studio-launcher-design.md`,
   `docs/superpowers/specs/2026-10-14-vapor-repository-boundaries-design.md`,
+  `../Vapor-Platform-Server/deploy/scripts/build-vapor-client-docs-bundle.sh`,
   and this record. Do not claim unrelated local flight changes as part of this
   workstream. Build/test may run only through Vapor's managed commands at the
   owning workspace root; no raw Cargo. Deploy, publish, and Steam launch remain
@@ -53,7 +54,11 @@
   after restarting the shell to pick up its new protocol. No server upload was
   completed: the web publisher command is present, but the docs token is not
   configured in the local service environment, and both the saved VPS SSH key
-  and default SSH-agent route were rejected by the server.
+  and default SSH-agent route were rejected by the server. Fixed the server's
+  stale `Vapor-Shell` docs source after the CLI repository rename, pushed as
+  `Vapor-Platform-Server` commit `8546bea`, and built a 4.2 MB curated archive
+  containing the current CLI docs and all seven product books at
+  `/tmp/vapor-current-docs-20261020.tar.gz`.
 
 ## Current checkpoint
 
