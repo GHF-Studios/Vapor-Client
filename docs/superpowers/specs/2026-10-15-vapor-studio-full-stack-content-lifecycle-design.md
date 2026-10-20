@@ -3,9 +3,33 @@
 **Status:** owner-approved design
 **Date:** 2026-10-15
 
+## Product boundary revision (owner-approved 2026-10-20)
+
+This revision supersedes the single-GUI assumption below. Vapor has three
+separate graphical products:
+
+- **Vapor Launcher** is the deliberately simple player experience: discover,
+  subscribe, install into eligible Compositions, update, repair, and Play.
+- **Vapor Studio** is the creator experience: create content, compose it,
+  inspect and validate artifacts, run locally, and publish to Workshop.
+- **Vapor IDE** is the code-authoring experience: open source workspaces,
+  navigate and edit code, and invoke managed development operations.
+
+They are separate frontends over one Vapor Client service and one canonical
+content/workspace model. CLI is another facade over that service. UI separation
+must not create separate catalogs, identities, dependency resolution, install
+state, provider sessions, or publishing implementations. The service owns
+operations and state; each frontend owns only the workflows and presentation
+appropriate to its audience.
+
+This is a product-boundary decision, not a claim that three applications are
+already implemented. Current binaries still bundle some of these workflows.
+Steam entrypoint aliases, packaging, and the exact IDE tool surface remain
+implementation decisions and must be checked against the shipped manifests.
+
 ## Goal
 
-Make Vapor Studio the normal GUI for the complete player and creator lifecycle: discover content, install and compose it, create from templates, edit and validate it, run it locally, publish to Steam Workshop, and keep installed content current. Studio is the product surface; Vapor supplies the operation and safety machinery beneath it.
+Make Vapor's player, creator, and code-authoring experiences coherent frontends over one Vapor-owned content lifecycle: Launcher handles play, Studio handles creation and release, and IDE handles source editing. Vapor supplies the shared operation and safety machinery beneath them.
 
 ## Product objects
 
@@ -18,16 +42,14 @@ These are distinct concepts and must be visibly linked. A locally authored graph
 
 ## Application structure
 
-A persistent, restrained shell provides location/context, global search, and operation status. Primary destinations:
+Each frontend keeps a persistent, restrained shell appropriate to its task; no frontend inherits another audience's navigation by default. Launcher destinations:
 
-1. **Home:** resume a composition or workspace; surface recent activity and actionable update/download/failure state.
-2. **Discover:** one searchable catalog across enabled sources, including Steam Workshop, first-party sources, and local content. Browse filters by kind and compatibility. A detail view shows provenance, versions, dependencies, compatibility, and install targets.
-3. **Library:** compositions and their installation state. A selected composition exposes its resolved graph, updates, settings, Play, add-content, repair, duplicate, and related source/workspace actions.
-4. **Create:** templates for engine-supported content and pack kinds. Creation asks only for required identity/name/location choices, then opens the resulting workspace.
-5. **Workspace:** contextual authoring shell with a project/content tree, central editor or preview, inspector, and collapsible operations/problems/logs panel. Validation, local run, and publishing act on the selected content and show their exact targets.
-6. **Workshop integration:** browse and subscription/update state lives with discovery; a content item's owned upload, version, and publication state is available from its detail/workspace context. Publishing is an explicit review of staged content followed by a clearly named confirmation.
+1. **Launcher:** Home, Discover, and Library focus on compositions, subscriptions, install/update/repair state, and Play. It has no source editor, Cargo workflow, or creator publishing controls.
+2. **Studio:** Create and Compose workflows produce registered source content and playable Packagepacks. Workshop review and publishing live in the context of the authored artifact.
+3. **IDE:** source navigation, code editing, diagnostics, and managed developer operations act on explicit workspaces without owning content identities or lifecycle state.
+4. **Shared operation center:** each frontend presents progress and errors relevant to its task while consuming typed results from the same local service. Studio and IDE can expose developer details; Launcher translates failures into player-safe explanations.
 
-Diagnostics remain available as a tool surface without defining the top-level product navigation. Panels are contextual and hideable; launcher tasks do not inherit the full editor layout.
+A single searchable catalog, Composition model, local Library, Workshop provider, and operation service back all three surfaces. Diagnostics remain available as a contextual tool surface. Steam entrypoint mapping and packaging must be reviewed separately against the actual root manifest.
 
 ## End-to-end flows
 
@@ -39,10 +61,12 @@ Both flows use the same stable content identity, provenance, compatibility, depe
 
 ## Ownership boundaries
 
-- **Studio UI:** navigation, task flow, presentation, progress, and explicit user confirmation.
-- **Vapor core:** identity, local discovery, compatibility/resolution, workspace/build/run operations, and typed operation requests/results.
-- **Vapor CLI / Steam providers:** managed acquisition, subscriptions, install/update/repair and Workshop operations through controlled providers.
-- **Vapor publishing services:** validate and stage the actual artifact; Studio presents review and confirmation, never a form-only preview.
+- **Launcher UI:** player navigation, composition selection, install/update/repair choices, progress, and concise recovery actions.
+- **Studio UI:** creator navigation, templates, composition authoring, validation, local run, artifact review, and explicit publish confirmation.
+- **IDE UI:** source navigation/editing and developer-facing diagnostics; it does not implement build or content lifecycle logic.
+- **Vapor Client service/core:** canonical identities, discovery, compatibility/resolution, workspace/build/run operations, install state, typed progress/results, and operation authorization.
+- **CLI and Steam providers:** additional service facades/providers; no independent content model or parallel lifecycle implementation.
+- **Publishing service:** validates and stages the actual artifact; Studio presents review and confirmation, never a form-only preview.
 - **In-game workbench:** remains in-process, but shares workspace/content and operation contracts rather than duplicating business logic.
 
 Long operations run off the UI frame loop and report structured progress, completion, cancellation, and actionable failure. Normal GUI workflows use Vapor-managed toolchains, caches, and providers.
