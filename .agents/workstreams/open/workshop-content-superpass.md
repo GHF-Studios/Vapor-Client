@@ -54,8 +54,16 @@
   passed after the target-matrix correction: formatting, compilation, tests,
   Clippy, and Rustdoc. Local deployment succeeded, and the interactive Shell
   reopened the Loo-Cast source and returned its Library catalog. The Loo-Cast
-  workspace currently declares no runtime target matrix, so a real multi-target
-  package preview was not exercised. No Workshop publication was performed.
+  workspace now declares Linux and Windows GNU targets. A real managed build
+  completed for both targets, and a package dry-run successfully staged the
+  7-file, 1.35 GB payload entirely inside the Loo-Cast installation without
+  changing package files. The first preview exposed a source-boundary bug:
+  package and Workshop review temporary directories were created under `/tmp`,
+  which rejected Windows runtime staging. They now live under the installation's
+  content output area. Managed validation passed after that fix and local
+  deployment succeeded. A Workshop publish dry-run correctly refuses the
+  existing source version while its downloaded/installed copies disagree;
+  those cached items remain untouched and no upload was performed.
 
 ### 2026-10-20 Documentation publishing and development-cache normalization
 
