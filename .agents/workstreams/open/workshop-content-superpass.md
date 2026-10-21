@@ -3826,3 +3826,28 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   upload because `VAPOR_DOCS_ADMIN_TOKEN` is not configured in the local Client
   service; the earlier owner-run SSH upload remains the available documented
   delivery path. No secret was read or copied.
+
+### 2026-10-21 Shared service race, IDE entrypoint, and Installer structure
+
+- A cold-start probe with two simultaneous frontends reproduced a stale-revision
+  failure while both requested the initial registered-source snapshot. The
+  Client service now coalesces identical active source-list lookups, and the
+  process handshake buffers live events that arrive before the initial snapshot
+  is ready. Managed Vapor tests passed, and concurrent fresh-start checks passed
+  on Linux and Windows GNU binaries under Wine.
+- Added a separate Rust IDE mode backed by the shared Client service. Its first
+  workspace surface has explorer, editor tabs, dirty/save tracking, inspector,
+  managed Check output, and a status bar; CLI and Steam Entrypoint route `ide`
+  through the existing GUI executable. Fresh deployed `vapor client launch ide
+  -- --help` reached the GUI mode and displayed its supported options.
+- Installer navigation now separates Overview, Your role, and Installation,
+  with persistent status and progress. Its role lifecycle remains service-backed;
+  install/repair/uninstall stay local to the Installer so recovery remains
+  possible when the Client service is unavailable.
+- Managed tests/validation passed for Vapor, GUI, CLI, Installer, and Entrypoint.
+  The Linux+Windows GNU root build passed, and the updated Linux app was locally
+  deployed. The earlier Linux launch probe was blocked by sandbox read-only
+  service state; the authorized managed run succeeded. No Steam upload occurred.
+- Remaining: native Windows laptop confirmation, visual UX review, and real
+  Rust Analyzer/LSP integration. The new IDE surface is a functional starting
+  point, not full IDE parity; the in-game Rhai workbench remains separate.
