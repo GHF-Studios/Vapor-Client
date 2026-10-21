@@ -21,11 +21,16 @@ fn setup_player(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Prepare a specific Steam installation for player use.
+pub fn setup_player_for(app_root: &Path) -> Result<(), String> {
+    setup_player(app_root)
+}
+
 fn setup_development(app_root: &Path) -> Result<(), String> {
     setup_player(app_root)?;
     println!();
     println!("Setup Development");
-    if !rust_status(app_root).ready {
+    if !rust_toolchain_installed(app_root) {
         install_rust(app_root)?;
     } else {
         install_rust_targets_and_components(app_root)?;
@@ -271,7 +276,14 @@ fn steamcmd_status(app_root: &Path) -> ComponentStatus {
 
 fn rust_status(app_root: &Path) -> ComponentStatus {
     let rustup = app_root.join("rustup/bin").join(executable("rustup"));
-    let required = ["cargo", "rustc", "rustfmt", "cargo-clippy", "rustdoc"];
+    let required = [
+        "cargo",
+        "rustc",
+        "rustfmt",
+        "cargo-clippy",
+        "rustdoc",
+        "rust-analyzer",
+    ];
     let (path, mut missing) = match expected_rust_bin(app_root) {
         Ok(bin) => {
             let missing = required
@@ -292,6 +304,18 @@ fn rust_status(app_root: &Path) -> ComponentStatus {
         path,
         missing,
     }
+}
+
+fn rust_toolchain_installed(app_root: &Path) -> bool {
+    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+    if !is_executable(&rustup) {
+        return false;
+    }
+    expected_rust_bin(app_root).is_ok_and(|bin| {
+        ["cargo", "rustc"]
+            .into_iter()
+            .all(|name| is_executable(&bin.join(executable(name))))
+    })
 }
 
 fn cross_status(app_root: &Path) -> ComponentStatus {

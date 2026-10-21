@@ -38,7 +38,7 @@ const LLVM_MINGW_X86_64_WINDOWS_SHA256: &str =
     "b9b68a4d276e16fa25802aaba458e4638f64b3884c290aaccdc2d87083b6ca35";
 
 const RUST_TARGETS: &[&str] = &["x86_64-unknown-linux-gnu", "x86_64-pc-windows-gnullvm"];
-const RUST_COMPONENTS: &[&str] = &["rustfmt", "clippy", "rust-src"];
+const RUST_COMPONENTS: &[&str] = &["rustfmt", "clippy", "rust-src", "rust-analyzer"];
 const PLAYER_DIRS: &[&str] = &[
     ".vapor/state",
     ".vapor/state/installer",

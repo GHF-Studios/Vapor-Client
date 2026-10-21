@@ -18,10 +18,9 @@ goto app_root_ready
 
 set "VAPOR=%APP_ROOT%\bin\%TARGET%\vapor.exe"
 set "INSTALLER=%APP_ROOT%\bin\%TARGET%\vapor-installer.exe"
+set "ENTRYPOINT=%APP_ROOT%\bin\%TARGET%\vapor-entrypoint.exe"
 set "LOG_DIR=%APP_ROOT%\.vapor\logs"
 set "LAUNCH_LOG=%LOG_DIR%\launch-wrapper.log"
-set "BOOTSTRAP_STATE_DIR=%APP_ROOT%\.vapor\state\installer"
-set "BOOTSTRAP_FAILURE=%BOOTSTRAP_STATE_DIR%\bootstrap-failure.txt"
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>nul
 
@@ -68,27 +67,20 @@ if /I "%LAUNCH_TARGET%"=="installer" goto installer
 if /I "%LAUNCH_TARGET%"=="vapor-installer" goto installer
 if not exist "%VAPOR%" goto missing_vapor
 
-set "INSTALLER_LOG=%APP_ROOT%\.vapor\logs\installer.log"
-if exist "%BOOTSTRAP_FAILURE%" del /Q "%BOOTSTRAP_FAILURE%" >nul 2>nul
-if exist "%INSTALLER%" goto run_installer_bootstrap
-call :write_bootstrap_failure "vapor-installer is missing for %TARGET%"
-goto installer_bootstrap_done
-
-:run_installer_bootstrap
-"%INSTALLER%" install
-if errorlevel 1 goto installer_bootstrap_failed
-goto installer_bootstrap_done
-
-:installer_bootstrap_failed
-call :write_bootstrap_failure "vapor-installer exited with status %ERRORLEVEL%"
-goto installer_bootstrap_done
-
-:installer_bootstrap_done
-
 if /I "%LAUNCH_TARGET%"=="play" goto play
 if /I "%LAUNCH_TARGET%"=="shell" goto shell
 if /I "%LAUNCH_TARGET%"=="vapor-shell" goto shell
+if /I "%LAUNCH_TARGET%"=="launcher" goto gui
+if /I "%LAUNCH_TARGET%"=="studio" goto gui
+if /I "%LAUNCH_TARGET%"=="ide" goto gui
+if /I "%LAUNCH_TARGET%"=="chooser" goto gui
 goto command
+
+:gui
+if not exist "%ENTRYPOINT%" goto missing_entrypoint
+"%ENTRYPOINT%" "%LAUNCH_TARGET%" %FORWARD_ARGS%
+set "STATUS=%ERRORLEVEL%"
+goto done
 
 :installer
 if not exist "%INSTALLER%" goto missing_installer
@@ -106,8 +98,10 @@ set "STATUS=%ERRORLEVEL%"
 goto done
 
 :shell
+set "VAPOR_PLAIN_INPUT=1"
 "%VAPOR%" %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
+set "VAPOR_PLAIN_INPUT="
 goto done
 
 :command
@@ -135,6 +129,13 @@ echo Update or reinstall the app on the selected Steam branch, then try again.
 set "STATUS=9009"
 goto done
 
+:missing_entrypoint
+echo error: expected Vapor app entrypoint is missing
+echo   target:  %TARGET%
+echo   checked: %ENTRYPOINT%
+set "STATUS=9009"
+goto done
+
 :done
 if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: vapor exited with status %STATUS%
 if not "%HOLD_TERMINAL%"=="1" goto done_no_hold_message
@@ -151,11 +152,3 @@ if defined ComSpec (
 :done_no_hold_message
 popd >nul 2>nul
 exit /b %STATUS%
-
-:write_bootstrap_failure
-if not exist "%BOOTSTRAP_STATE_DIR%" mkdir "%BOOTSTRAP_STATE_DIR%" >nul 2>nul
-(
-    echo %~1
-    echo %INSTALLER_LOG%
-) > "%BOOTSTRAP_FAILURE%"
-exit /b 0

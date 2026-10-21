@@ -128,6 +128,30 @@ The chooser routes to Launcher, Studio, IDE, Installer, and Shell.
   Vapor-Studio; `vapor client deploy local` passed. Local entrypoint launch
   worked. Tests, Windows, and Steam were not run during this checkpoint.
 
+## Current verification — 2026-10-21 Launcher and IDE usability slice
+
+- Launcher now opens at 720×520 (minimum 560×400), with tighter composition
+  rows, less repeated copy, and compact search fields. IDE opens at 1480×940,
+  shows repositories discovered from the configured Superworkspace before
+  requiring a manual folder path, supports service-owned file creation, and
+  exposes managed Check/Test/Build/Format actions. Switching projects and
+  running tools is blocked while edits are unsaved. Studio's fixed navigation
+  width is 160 px with 26 px section rows.
+- A local Launcher smoke attempt exposed an entrypoint naming collision:
+  `play` referred to both the Launcher UI and direct composition launch. The
+  GUI contract now has a distinct `launcher` mode while `play` remains the
+  direct composition route. Vapor-managed GUI tests passed (5 UI tests), and
+  Vapor-managed entrypoint tests passed (12 tests).
+- The final Linux host build and local promotion succeeded via `vapor root
+  build --host-only` and `vapor root deploy --host-only`. `vapor client launch
+  launcher` and `vapor client launch ide` both exited successfully after
+  opening their local app routes. This environment exposes no native-window
+  capture surface, so visual spacing and rendering still need human review.
+- Rust Analyzer/LSP, a native directory picker, and full IDE project/run-
+  configuration tooling remain unimplemented; syntax highlighting is now
+  shared by the IDE and Studio through `vapor_gui_core`. This is useful coding
+  workflow progress, not a claim that Vapor IDE replaces RustRover yet.
+
 ## Ownership and data flow
 
 ```text
@@ -334,3 +358,53 @@ USF and scripting work is in scope where needed to make content authoring and
 composition work coherently. It does not silently authorize unrelated rewrites
 of those systems; such changes should be justified by an actual integration
 boundary or root cause.
+
+## Current iteration — 2026-10-21
+
+- Launcher now prioritizes the selected composition, labels it explicitly, and
+  offers a direct game-only Workshop discovery path when the player has no
+  composition yet. Its compact player flow remains distinct from Studio's
+  authoring tools.
+- Studio and IDE share the same nested workspace file index through
+  `vapor_gui_core`, removing duplicated tree semantics. IDE save completion
+  records the submitted snapshot so edits typed during an in-flight save remain
+  dirty; Save All drains files sequentially. Project switch, filtering, file
+  creation, save, run, and managed developer tools remain explicit actions over
+  the shared Client service.
+- The IDE is still an editing and managed-build surface, not RustRover parity:
+  Rust Analyzer/LSP, diagnostics navigation, and run configurations remain
+  open implementation work. Do not obscure those gaps by adding decorative
+  panels or calling the current surface a complete IDE.
+- Linux local deployment and the Windows GNU/LLVM build passed after this
+  iteration. Managed GUI and Studio validation passed; no native window was
+  available for visual inspection. The next visual review should check narrow
+  layouts and real interaction with the deployed product chooser, Launcher,
+  Studio, and IDE.
+- Follow-up review found that Launcher Workshop searches used page `0`, while
+  the service requires page `1` or later. Search requests now use valid page
+  numbering, retain type filters, and expose paging with stale-filter guards;
+  subscriptions display download progress. Six Launcher-focused checks and
+  full Vapor-managed GUI validation passed, as did Linux local deployment and
+  Windows target build. Disk use remained 160/222 GB.
+
+### 2026-10-21 Shared syntax-aware editor
+
+- The in-game script workbench demonstrated useful syntax colors, but its
+  `egui_code_editor` widget targets egui 0.34 while Vapor's GUI uses egui 0.36.
+  Reused its lexer and Rust definitions with its UI feature disabled, then
+  wrapped egui 0.36's native `TextEdit` with the same Gruvbox token colors.
+- Promoted this file-aware editor into `vapor_gui_core`, so IDE and Studio share
+  one editor implementation. Rust, Rhai, TOML, Python, shell, Lua, SQL, and
+  assembly extensions select a language definition; unknown files stay plain
+  monospace text. Both editors show the selected language. Existing save/dirty
+  and TOML diagnostics still own their behavior.
+- Corrected the in-game `.rhai` workbench, which had been configured with Rust
+  syntax, to use Rhai keywords, types, literals, and comments. Added regression
+  coverage for Rhai token categories in both the shared editor and game editor.
+- Vapor-managed validation passed for `vapor-gui` and `vapor-studio`, including
+  tests, Clippy, and Rustdoc. Loo-Cast formatting, checking, and all 28 tests
+  passed, including the new editor test; full validation then stopped on about
+  200 existing Clippy errors across unrelated engine files. Linux host
+  deployment refreshed 11 artifacts/docs; the Windows GNU/LLVM target build
+  passed. Native visual review remains unavailable in this headless session;
+  Rust Analyzer/LSP and editor diagnostics/navigation remain unimplemented.

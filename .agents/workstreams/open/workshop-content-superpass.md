@@ -25,8 +25,8 @@
   `../Vapor-Platform-Server/deploy/scripts/build-vapor-client-docs-bundle.sh`,
   and this record. Do not claim unrelated local flight changes as part of this
   workstream. Build/test may run only through Vapor's managed commands at the
-  owning workspace root; no raw Cargo. Deploy, publish, and Steam launch remain
-  owner-controlled actions.
+  owning workspace root; no raw Cargo. Deploy, publish, and Steam launch require
+  owner authorization; Steam content and app publishing are authorized here.
 
 ## Completed
 
@@ -3870,3 +3870,206 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   fixed before validation passed. The launch-mode correction is being
   revalidated and locally deployed; Steam launch-option changes remain with
   the user.
+
+### 2026-10-21 Shared project browsing and player/IDE polish
+
+- IDE and Studio previously maintained separate nested file-tree models.
+  Moved safe relative-path indexing, sorted nesting, and case-insensitive file
+  filtering into `vapor_gui_core`; both frontends now consume the same model.
+  Absolute, parent-traversal, and other non-normal service paths are excluded
+  from display. The GUI and Studio lockfiles now record the shared dependency.
+- Fixed an IDE save race: a successful response now records the exact text sent
+  to the service, so edits made while the save was in flight remain visibly
+  unsaved and are re-saved by an active Save All batch. The IDE now has a
+  two-level action toolbar, `Ctrl/Cmd+N` for new files, `Ctrl/Cmd+F` for file
+  filtering, and `Ctrl/Cmd+W` to close a clean tab. Its recursive file view
+  carries one cohesive view context rather than a long parameter list.
+- Launcher puts the selected composition first and labels it, and the empty
+  player state offers a direct game-only Workshop search. The product chooser
+  now closes after handing off to a selected app, while remaining open if process
+  startup fails.
+- Vapor-managed validation passed for `vapor-gui` and `vapor-studio`, including
+  format, check, tests, Clippy, and Rustdoc. The Linux app-root build and local
+  deployment passed; the Windows GNU/LLVM target build also passed. Installed
+  entrypoint-to-GUI argument forwarding was confirmed for Launcher, chooser,
+  Studio, IDE, and Installer using each app's help route. A native window could
+  not be inspected in this session, so visual spacing and interactive launch
+  remain unverified. No Steam publish occurred.
+- Read-only disk check after the Linux and Windows builds: 160/222 GB used,
+  60 GB free; `output/dev` is 50 GB and `output/release` is 8.5 GB. No build
+  cache was removed.
+
+### 2026-10-21 Launcher Workshop search repair
+
+- All four Launcher routes into Workshop search used page `0`, but the shared
+  Client service and Steamworks query contract require 1-based pages. This made
+  Workshop discovery fail before Steam was queried. Searches now start at page
+  1, preserve their exact text/type filters during pagination, expose previous
+  and next page controls, and prevent overlapping requests while the service is
+  busy.
+- Added regression checks for page-number normalization, canonical game tags,
+  whitespace trimming, filter changes, and partial final-page counts. The UI
+  now prevents paging through stale results after a filter edit and displays
+  Steam download progress when available. Vapor-managed GUI format, check,
+  tests (including six Launcher cases), Clippy, and Rustdoc passed. Linux app-
+  root build and local deployment promoted 11 artifacts and refreshed docs.
+  Windows GNU/LLVM root build also passed. Native interaction remains
+  unverified in this headless session; no Steam publish occurred. Disk use is
+  unchanged at 160/222 GB; development and release outputs remain 50 GB and
+  8.5 GB respectively.
+
+### 2026-10-21 Shared IDE/Studio syntax editor
+
+- Followed the in-game workbench's Rust highlighting behavior into Vapor's
+  GUI. Because the game's widget is tied to egui 0.34 and Vapor GUI uses egui
+  0.36, reused the cached crate's syntax lexer and definitions without its UI
+  feature; the new `vapor_gui_core::code_editor` colors the native egui 0.36
+  text editor with the same Gruvbox token palette. The helper is shared by IDE
+  source files and Studio workspace files. It selects Rust, Rhai, TOML, Python,
+  shell, Lua, SQL, and assembly; other files remain plain text.
+- Vapor-managed validation passed for `vapor-gui` and `vapor-studio` (format,
+  check, tests, Clippy, Rustdoc). Loo-Cast formatting, checking, and 28 tests
+  passed, including the Rhai syntax test; its broader validation stopped on
+  roughly 200 existing Clippy errors outside the edited editor file. The
+  Windows GNU/LLVM root build and Linux host build passed; local deploy promoted
+  11 runtime artifacts and refreshed docs. `client launch ide -- --help`
+  reached the installed IDE entrypoint. A native GUI launch remained in the
+  foreground and was interrupted because this session has no window capture;
+  visual behavior is therefore not proven. No commit or Steam publish was
+  performed.
+- Remaining IDE gap: Rust Analyzer/LSP, diagnostics navigation, and native
+  directory selection.
+
+### 2026-10-21 Rust Analyzer provisioning and service lifetime
+
+- Completed the missing toolchain ownership pieces for the IDE language service.
+  The pinned developer toolchain now treats `rust-analyzer` as a required
+  component; both the managed developer-environment repair and the shipped
+  installer setup install it, and readiness reports whether it is available.
+  Protocol v29 adds a backward-compatible analyzer-ready field to installation
+  snapshots. Installer shows Rust Analyzer readiness, and the GUI README now
+  describes the current LSP feature set accurately.
+- Developer setup now distinguishes a missing analyzer/component from a missing
+  Rust/Cargo toolchain, so repairing this capability reuses the existing
+  toolchain instead of rerunning the bootstrap installer. The app-local repair
+  installed the pinned 1.97.0 analyzer and a second repair confirmed it was
+  already up to date.
+- Analyzer startup now guards the child process until all pipes and worker
+  threads are established; early failure kills and reaps it. A child-reaping
+  regression test covers the failed-startup path. The shared service exits
+  after a 15-second idle grace, but remains up while clients or operations are
+  active. A deployed-binary client handshake followed by disconnect confirmed
+  the service exited with status 0 after the grace. The shorter five-second
+  experiment was reverted after a long-running pre-deploy shell surfaced a
+  protocol-version mismatch; restarting the shell resolved it, so that message
+  was stale CLI/service version skew, not a reproduced timeout defect.
+- A real service-level LSP probe exposed and fixed an invalid `--stdio` argument
+  passed to Rust Analyzer. Through the installed Vapor Client service, the
+  pinned analyzer now starts, completes LSP initialize and shutdown, and accepts
+  the stop action. The service reports failed analyzer starts through its
+  language-server status event and reaps the child on disconnect.
+- Managed Vapor tests and validation passed for `vapor`, `vapor-gui`, and
+  `vapor-installer`, including Clippy and Rustdoc. The final Linux local
+  deployment succeeded. Rust Analyzer 1.97.0 completed a real service-mediated
+  LSP initialize and shutdown against the Vapor workspace. No live IDE window
+  was available, so editor-to-service interaction and visual behavior remain to
+  be checked interactively. No Steam upload or commit occurred.
+
+### 2026-10-21 IDE language-service pass
+
+- The shared Client service now owns one Rust Analyzer child per authenticated
+  local IDE client and workspace generation. It validates the workspace against
+  the active session, starts the pinned analyzer through `ManagedToolchain`,
+  bounds LSP frames and queues, drains bounded diagnostics, and stops the child
+  on workspace switch or disconnect. Protocol v28 adds a direct LSP-message
+  frame so keystrokes do not trigger full app-state snapshots.
+- The IDE initializes LSP, synchronizes Rust documents on open/change/save/
+  close, and surfaces workspace diagnostics with severity and clickable source
+  locations. Added definition navigation, hover inspection, and Ctrl/Cmd+Space
+  completion insertion. Position conversion handles UTF-16 LSP columns,
+  astral Unicode, CRLF, and UTF-8 editor offsets.
+- Vapor-managed validation passed for both `vapor` and `vapor-gui`, including
+  format, checks, tests, Clippy, and Rustdoc. The source-authoritative Linux
+  application root built and locally deployed the IDE and service binaries.
+  The native IDE could not be inspected in this headless session, and Rust
+  Analyzer was not exercised interactively against a real workspace.
+- Remaining: verify an interactive IDE session against a real workspace;
+  support external dependency source navigation, rename, code actions,
+  workspace symbols, and signature help. No Steam publish or commit occurred.
+
+### 2026-10-21 pinned IDE tooling and lifecycle follow-through
+
+- Rust Analyzer is now part of promoted developer-tool readiness and repair.
+  Installer status names the component and readiness distinguishes a missing
+  analyzer from a missing Rust toolchain. The pinned 1.97.0 component installed
+  and reported ready locally.
+- The stale LSP `--stdio` argument was removed. Analyzer child setup is guarded
+  so failed pipe/thread initialization kills and reaps it; switching workspace
+  or disconnecting stops the per-client analyzer. Service protocol 30 carries
+  LSP messages without app-snapshot churn and adds explicit frontend disconnect.
+- The IDE now applies Rust Analyzer formatting edits safely (UTF-16 ranges,
+  reverse application, overlap and invalid-boundary rejection) and lists
+  in-workspace references in its inspector with navigation. External references
+  are excluded from this list rather than opening arbitrary paths.
+- Host inspection found that old interactive shells accumulated zombie service
+  children, and that their service sessions could remain open after a one-shot
+  CLI operation. Detached service children now have a reaper; Client drop sends
+  a protocol disconnect that closes the service session. A Linux regression
+  test reproduced the zombie before the fix and passes after it. A fresh local
+  shell ran `composition list`; its service exited after the idle grace with no
+  zombie under the still-open shell.
+- `validate --project vapor`, `validate --project vapor-gui`, and
+  `validate --project vapor-installer` passed via the managed Vapor shell;
+  local deployment succeeded. GUI tests include formatting/reference parsing,
+  and service-mediated LSP initialize/shutdown was verified against the pinned
+  analyzer. The shared service exits after 15 seconds idle and retains itself
+  while clients or operations remain active. The earlier protocol mismatch was
+  a stale shell process; restarting it resolved the version skew.
+- Visual inspection remains unverified without a live desktop session. No Steam
+  publish, commit, or push was performed.
+
+### 2026-10-21 launcher lifecycle and Windows console follow-through
+
+- Kept the shared Client service as an on-demand process: it exits after the
+  15-second idle grace when no frontend or operation needs it, and active
+  operations keep it alive. A fresh deployed service with no clients exited
+  cleanly after the grace. Earlier stale interactive shells and their zombie
+  service children were terminated after the owner confirmed no sessions were
+  active; the follow-up process audit found no remaining Vapor shells/services.
+- Fixed both installed launch wrappers so GUI modes route to the native
+  entrypoint, ordinary Shell startup no longer implicitly invokes Installer,
+  and Installer remains available through its explicit recovery route. A
+  Linux wrapper harness verified chooser dispatch and that Shell starts without
+  running Installer.
+- Windows Shell now opts into the operating system's echoed line input instead
+  of Reedline's invisible edit line. Its input still uses Vapor's command
+  parser and quoting rules. Vapor-managed CLI tests passed (13 tests),
+  entrypoint tests passed (12 tests), and Linux local deployment succeeded.
+  The Windows console behavior still needs confirmation on the Windows laptop;
+  this session cannot execute a native Windows console interaction. No Steam
+  publish or commit occurred.
+
+### 2026-10-21 first-launch setup and Windows runtime release
+
+- Steam's default Play entrypoint now checks the installation's player-setup
+  receipt. On a fresh install it routes to Installer onboarding, preselects the
+  Player role, requires setup success before Play, and explains the explicit
+  Vapor uninstall path before removing the Steam app. Selecting Composer or a
+  higher role reconciles the managed developer toolchain, including the pinned
+  Windows `x86_64-pc-windows-gnullvm` Rust target and Vapor-managed LLVM-MinGW
+  linker; Player setup does not install developer tools.
+- Windows Loo-Cast launch failure was a missing Packagepack runtime payload,
+  not a missing Rust target on the player's machine. Published the complete
+  Loo-Cast Packagepack with Linux and Windows executables. Engine and Game
+  manifests now declare their Rust libraries, and the updated Workshop items
+  contain `libspacetime_engine.rlib` and `libloo_cast_game.rlib` for both
+  targets so Composers can reuse those constituents in new Packagepacks.
+- Vapor's full Linux/Windows release preview passed with 5,658 staged files
+  across common, Linux, and Windows depots. Steam accepted build 26115574 on
+  branch `vapor-dev`; SteamPipe metadata confirms depot IDs 2122621, 2122622,
+  and 2122623. All three Loo-Cast Workshop items (3762162251, 3762162407,
+  3762162548) were updated with both runtime targets.
+- Needs owner runtime check: update/acquire the Loo-Cast composition on the
+  Windows laptop, complete first-launch setup, then launch. Composer-role
+  installation and composing a new Packagepack from the newly shipped `.rlib`
+  constituents still need an end-to-end Windows check.
