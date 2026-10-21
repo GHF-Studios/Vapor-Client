@@ -4073,3 +4073,31 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   Windows laptop, complete first-launch setup, then launch. Composer-role
   installation and composing a new Packagepack from the newly shipped `.rlib`
   constituents still need an end-to-end Windows check.
+
+### 2026-10-21 alpha version pin and Workshop update roundtrip
+
+- Corrected all six Vapor Examples items to the fixed alpha version `0.5.0`
+  and aligned their dependency ranges to `^0.5`. The repo README now records the
+  phase policy: pre-alpha `0.1.0`, alpha `0.5.0`; schema evolution does not
+  increment versions. The existing six public Workshop IDs were updated in
+  place; no new items were created:
+  `3823733452`, `3823733589`, `3823733745`, `3823733921`, `3823734052`, and
+  `3823734148`.
+- Vapor-managed `validate --project all` passed for Vapor Examples. Its six
+  package payloads stage Linux and Windows GNU artifacts (38 files total).
+- A real composition update exposed two related stale-pin defects. The
+  application now begins Update from the stable Packagepack ID, refreshes the
+  Workshop graph, and reads the resulting installed graph by stable ID. The
+  service records the new resolved root version in the composition only after
+  Update succeeds. A regression test first failed on the stale saved root
+  (`0.1.1`) and passes after this change.
+- Vapor-managed `validate --project vapor` passed after the fix. Local deploy
+  succeeded. Through a fresh deployed shell, updating the public example
+  composition succeeded with six content nodes, and Verify passed for all six.
+  The current saved composition now follows `0.5.0`.
+- An interactive game launch was attempted but interrupted; this session did
+  not verify the rendered game experience. Steam updates were confirmed at the
+  provider level, but a clean non-owner Steam-account install is still not
+  proven here.
+- Do not increment example content versions for ongoing schema work. Keep
+  current alpha items at `0.5.0`; use `0.1.0` only for pre-alpha content.
