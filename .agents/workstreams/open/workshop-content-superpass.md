@@ -4101,3 +4101,26 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   proven here.
 - Do not increment example content versions for ongoing schema work. Keep
   current alpha items at `0.5.0`; use `0.1.0` only for pre-alpha content.
+
+### 2026-10-22 explicit Workshop refresh and Registry authority
+
+- Explicit Library acquisition and Subscribe now refresh selected Workshop items
+  from Steam even when Steam reports a locally installed item as current. This
+  prevents an old but valid local Workshop folder from being re-imported after
+  the author has published a newer alpha payload. Ordinary composition installs
+  still reuse cache; only explicit acquisition and Update force the provider
+  refresh.
+- Composition Update also refreshes its root-seed Workshop artifacts before
+  resolving and installing the newly requested graph.
+- Vapor-managed `validate --project vapor` passed (format, check, tests, Clippy,
+  and Rustdoc), then `client deploy local` succeeded. A deployed Shell acquired
+  the public Hello World Packagepack and its five required dependencies; all six
+  example artifacts in the Library now report `0.5.0`.
+- Accepted authority boundary: Registry owns canonical typed content metadata,
+  content-to-Workshop bindings, discovery records, and version/channel records.
+  Identity remains the source of verified authorship and role authorization.
+  Steam tags are discovery hints only until Registry-backed semantics are
+  implemented. This is recorded in Vapor-Platform-Server boundary docs; the
+  Registry service API itself remains unimplemented/unverified.
+- Version policy remains fixed by phase: pre-alpha `0.1.0`, alpha `0.5.0`;
+  evolving schemas do not trigger bumps.
