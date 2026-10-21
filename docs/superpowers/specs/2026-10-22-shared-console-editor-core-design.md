@@ -1,6 +1,6 @@
 # Shared Console and Editor Core
 
-**Status:** Draft for owner review  
+**Status:** Shared semantic core implemented; frontend integration ongoing  
 **Goal:** Make the in-game console, Vapor IDE/devtools console, and Vapor terminal presentation consistent through shared semantics and rendering rules, while preserving each host's command permissions and lifecycle.
 
 ## Why this boundary
@@ -47,6 +47,15 @@ Use one shared language registry and Rhai lexical definition so the in-game work
 4. Compare the same representative records and Rhai snippets across game overlay, Vapor GUI, and terminal; fix semantic or visual-role drift at the shared boundary.
 
 Each stage must compile through its owning Vapor-managed workspace. Add focused tests for pure record formatting, bounds, filters/history, and language classification; do not duplicate widget snapshots as a substitute for behavioral verification.
+
+## Implemented slice (2026-10-22)
+
+- Added `vapor_console_core` with structured records, severity/style roles, bounded scrollback and prompt history, filters, and shared Rhai tokenization.
+- Vapor telemetry preserves structured level, target, and fields compatibly; devtools consumes bounded shared history rather than flattening incoming records immediately.
+- Vapor GUI and the in-game workbench use the same Rhai language definition while keeping their editor widgets and egui versions separate.
+- Loo-Cast's game console adapts its local records to the shared semantic record and prompt history; command registration and dispatch remain game-owned.
+- Vapor CLI renders Client operation messages through shared levels and style roles, using ANSI only for a terminal when `NO_COLOR` is not set.
+- Remaining: exercise the shared structured record through live game/Vapor streams and improve richer terminal progress/output rendering. This slice does not claim one shared visual widget or full console parity.
 
 ## Acceptance
 

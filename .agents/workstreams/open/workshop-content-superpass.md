@@ -4124,3 +4124,35 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   Registry service API itself remains unimplemented/unverified.
 - Version policy remains fixed by phase: pre-alpha `0.1.0`, alpha `0.5.0`;
   evolving schemas do not trigger bumps.
+
+### 2026-10-22 Workshop lifecycle and shared console/editor integration
+
+- Launcher now has Discover and Subscriptions views over one PublishedFileId
+  row model. Steam discovery keeps its 50-result provider page; visible rows can
+  be paged at 10/20/50, and the full Steam-account subscription list has its
+  own local paging and text filter. Visible-page selection scopes group
+  subscribe/unsubscribe. Page size persists as a local UI preference.
+- Library, Discover, and Subscriptions join Steam subscription state with
+  machine-local catalog/cache/install facts. Unsubscribe does not remove a local
+  copy; removing an unused cached copy does not unsubscribe. The remove action
+  is unavailable while any Composition uses that content. Auto-Install stays a
+  separate explicit update/collection policy.
+- Studio's typed content-kind search now sends the canonical typed filter,
+  preserves it across remote page navigation, and supports the same visible
+  10/20/50 row pages and multi-select scope.
+- Added `vapor_console_core` for shared structured records, severity/style
+  roles, bounded history and prompt history, filters, and Rhai tokenization.
+  Vapor telemetry/devtools, Vapor CLI operation output, and Loo-Cast's console
+  and workbench now adapt the shared semantic records while keeping process,
+  Bevy, editor-widget, and command permissions host-owned.
+- Vapor-managed checks/tests passed for Vapor-GUI (latest 10 Launcher and 7
+  GUI-core tests), Vapor-Studio (15 tests), Vapor-CLI (14 tests, including
+  shared console rendering), and Vapor's full workspace (all tests passed).
+  Loo-Cast's full managed workspace check and tests also passed against the
+  new pinned console/telemetry revision (28 engine tests).
+- Launcher rows now keep the primary action visible and place unsubscribe,
+  local removal, and Auto-Install behind contextual menus where appropriate.
+  Bulk actions remain in the selected-items toolbar. Visual verification at
+  varied window sizes and owner testing of live Steam account behavior remain
+  outstanding. No Steam publish has occurred in this slice.
+- Alpha versions remain `0.5.0`; no content/schema version bump was made.
