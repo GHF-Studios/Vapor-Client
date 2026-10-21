@@ -1441,14 +1441,12 @@ lifecycle execution remain.
   testing: Windows depot binary availability, app-local setup, target-specific
   runtime outputs, and ABI policy. The example dynamic loader now has a Windows
   implementation, but it has not yet been compiled or run under MSVC.
-- Steamworks launch options match the four-option matrix. Linux uses
-  `bin/x86_64-unknown-linux-gnu/vapor-entrypoint` with `studio`, `play`,
-  `shell`, or `installer`; Windows uses
-  `bin\x86_64-pc-windows-gnullvm\vapor-entrypoint.exe` with the same
-  arguments. Studio and Play launch sibling Vapor Studio directly; Play adds
-  `--play`. Shell and Installer use the terminal wrapper; Shell runs player
-  setup before opening Vapor, while Installer opens directly. The target was
-  uploaded in BuildID `25970591`; test runtime behavior on Windows.
+- The Steamworks dashboard still needs to replace its old four-option matrix
+  with the approved two-option setup: default no-argument direct launch of the
+  Loo-Cast composition and optional `chooser`. The app contract routes the chooser to separate
+  Launcher, Studio, IDE, Installer, and Shell experiences. Test the uploaded
+  Windows runtime on a non-development machine after the launch options are
+  updated.
 - Run the owner-controlled installer install path from a fresh runtime-only depot
   install, open the Vapor and Loo-Cast sources only for development work,
   locally deploy root and selected first-party content, then iterate on the
@@ -3851,3 +3849,24 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Remaining: native Windows laptop confirmation, visual UX review, and real
   Rust Analyzer/LSP integration. The new IDE surface is a functional starting
   point, not full IDE parity; the in-game Rhai workbench remains separate.
+
+### 2026-10-21 Product chooser and distinct GUI applications
+
+- Entrypoint without arguments now launches the default playable composition
+  through Vapor and the shared Client service. The optional `chooser` route
+  opens `vapor-gui` without needing the Client service; it offers Launcher,
+  Studio, IDE, Installer, and Shell. Each GUI has its own executable while
+  sharing Vapor-GUI's eframe foundation. Installer remains a recovery-safe route.
+- Vapor's managed local deployment now builds/promotes the three product GUIs,
+  chooser, and installer GUI. Steam depot smoke checks require these binaries
+  for both Linux and Windows. CLI `client launch` defaults to Launcher and has
+  a separate `chooser` route. Steam's two launch options should each be
+  configured for Linux and Windows: default (no arguments) for direct play,
+  and `chooser` for app selection.
+- Managed validation passed for Vapor (all workspace checks, tests, Clippy,
+  Rustdoc), Vapor-CLI (12 tests), Vapor-GUI (all targets compile and five UI
+  tests), and Vapor Entrypoint (12 tests). The first Entrypoint validation
+  found a stale service-bootstrap argument and a missing IDE mode; both were
+  fixed before validation passed. The launch-mode correction is being
+  revalidated and locally deployed; Steam launch-option changes remain with
+  the user.

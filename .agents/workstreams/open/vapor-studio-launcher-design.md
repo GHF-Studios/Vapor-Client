@@ -3,39 +3,45 @@
 **State:** owner-approved direction; implementation design for review  
 **Scope:** Vapor GUI, composition lifecycle, Steam entrypoints and publishing, and the handoff to Loo-Cast's in-game workbench.
 
-> **Quick review:** Steam opens Vapor Studio by default. Studio manages
-> compositions, authoring, local deploy/run, Workshop, and safely confirmed
-> Steam publishing; direct play and recovery remain stable Steam entrypoints.
+> **Quick review:** Steam offers two entries per target: Play Loo-Cast directly
+> (default composition) and Choose an app (Launcher, Studio, IDE, Installer, or
+> Shell). The CLI can open the same apps directly.
 > Loo-Cast, USF, and scripting integration are part of the goal. Build/test
 > uses Vapor commands at the correct workspace roots; deploy/publish/Steam
 > launch remains an explicit owner-controlled action.
 
 ## Product goal
 
-Vapor's normal Steam launch opens a polished GUI where a player can select and
-run an experience, and a creator can discover, compose, edit, deploy, and
-publish content. The GUI is the normal path. The CLI remains a recovery and
-automation surface, not the product's primary workflow.
+Vapor's normal Steam launch starts Loo-Cast's default composition directly.
+The optional chooser opens Launcher, where a player can select other
+experiences, or Studio, IDE, Installer, and Shell. Launcher, Studio, and IDE
+are distinct GUI applications built on shared Vapor-GUI foundations. Studio
+lets a creator discover, compose, edit, deploy, and publish content. The CLI
+can open these products directly and remains a recovery and automation surface,
+not the product's primary workflow.
 
-The same product serves two related jobs:
+The product family serves three related jobs:
 
 - **Launcher:** manage a library of installed/available compositions, resolve
   their content, choose a version/source, and launch the selected experience.
 - **Studio:** create and edit content, assemble Packagepacks, inspect runtime
   state, deploy locally, and publish with an explicit safety review.
+- **IDE:** open Rust workspaces and provide coding tools, separately from
+  Studio's composition and content lifecycle.
 
 The existing eframe `vapor-devtools` application is the GUI foundation. Its
 runtime telemetry and Tracy views become a Diagnostics area in Studio instead
-of defining the whole product. Steam remains the stable bootstrap and exposes a
-small, deliberate set of entrypoints: Studio (default), direct play of the
-selected composition, and recovery shell/installer.
+of defining the whole product. Steam exposes two entrypoints: Play Loo-Cast
+(default, directly launching the default composition) and a small app chooser.
+The chooser routes to Launcher, Studio, IDE, Installer, and Shell.
 
 ## Current implementation facts
 
 - The active repositories are `Vapor`, `Vapor-CLI`, `Vapor-GUI`,
   `Vapor-Studio`, `Vapor-Steam-Entrypoint`, and `Vapor-Installer`. The root
-  Steam AppID is `2122620`; Vapor-GUI selects Studio, Play, or Installer modes
-  behind stable Steam entrypoints.
+  Steam AppID is `2122620`; Entrypoint dispatches the default launch to the
+  default composition and chooser selections to distinct Launcher, Studio,
+  IDE, and Installer GUI executables built from Vapor-GUI's shared host.
 - Vapor already owns managed workspace operations and application-local tool
   providers. `vapor run` and related commands use the selected workspace's
   pinned toolchain and Vapor-managed caches; this coding pass does not invoke
@@ -87,9 +93,11 @@ selected composition, and recovery shell/installer.
   operation and uploads an operation-owned copy of those exact staged bytes.
 - Loo-Cast's in-game script workbench remains inside the game process and is
   not yet connected to Studio's authoring or operation lifecycle.
-- Steamworks launch options were updated to the four stable entrypoint modes;
-  BuildID `25970591` was accepted for `vapor-dev`. Linux/Windows runtime
-  behavior remains owner-tested rather than established by this source review.
+- The previous Steamworks configuration used separate Studio, Play, Shell, and
+  Installer entries. It is superseded by the owner-approved two-entry plan:
+  default direct play and optional product chooser. The code and package
+  contract now implement this plan; the Steamworks dashboard still needs its
+  launch-option update.
 
 ## Current verification — 2026-10-16
 
@@ -124,18 +132,13 @@ selected composition, and recovery shell/installer.
 
 ```text
 Steam entrypoint
-      │
-      ▼
-Vapor-GUI mode router
-      │
-      ├── Studio ─── profile/composition ───► Vapor operations
-      │     │                                  │
-      │     ├── authoring/editor                ├── identity, discovery,
-      │     ├── publish review                  │   resolution, build/run
-      │     └── diagnostics                     └── Vapor-CLI services:
-      │                                              acquire/install/publish
-      ├── direct Play ─────────────────────────► selected profile
-      └── Installer
+      ├── no args -> vapor launch default ─────► default composition
+      └── chooser -> Vapor-GUI chooser
+             ├── Launcher ─────────────────────► player-selected composition
+             ├── Studio ─── profile/composition ─► Vapor operations
+             ├── IDE                                  identity, discovery,
+             ├── Installer                            resolution, build/run
+             └── Shell                                acquire/install/publish
 
 Loo-Cast in-game workbench ◄── shared bounded authoring/operation contracts
 ```
@@ -149,8 +152,9 @@ Loo-Cast in-game workbench ◄── shared bounded authoring/operation contract
   selection and authoring, workspace editing, launch intent, and GUI-facing
   operation coordination. It consumes Vapor and Vapor-CLI capabilities;
   lower layers do not depend on Studio.
-- **Vapor-GUI** owns desktop mode selection and platform integration for Studio,
-  direct Play, and Installer. It does not become a second content authority.
+- **Vapor-GUI** owns shared desktop foundations, the product chooser, and the
+  Launcher, Studio, IDE, and Installer application entrypoints. It does not
+  become a second content authority.
 - **Vapor-Studio** owns presentation, navigation, progress, and confirmation.
   The GUI must not duplicate content resolution or directly mutate Steam state.
 - **Loo-Cast's in-game workbench** remains inside the game process and closes
@@ -227,16 +231,17 @@ explain exactly what will run and what will be published.
 ## Steam launch and local deploy
 
 Steam stays the stable product entrypoint, not the content manager. Normal
-launch opens Studio. Direct Play starts the currently selected composition; if
-no valid selection exists, it returns to Studio with a useful explanation.
-Shell and Installer remain recovery/bootstrap paths. Entry points are stable
-product modes, not one Steam launch option per composition.
+launch starts the app's default playable composition. The optional `chooser`
+entry opens a small product menu for Launcher, Studio, IDE, Installer, and
+Shell. CLI users can run `vapor launch default`, `vapor client launch` for the
+Launcher, or `vapor client launch chooser` for the menu. Steam needs one
+launch-option pair per OS target, not one per product or composition.
 
 `Deploy Vapor Locally` means build and promote the Vapor application from the
 Vapor source workspace into its selected local Vapor app instance. It is not a
-Loo-Cast deployment, a SteamPipe publish, or a Workshop publish. `Launch in
-Steam` then opens the Steam-installed root entrypoint, which hands off to the
-selected local composition/profile through a validated launch request. It must
+Loo-Cast deployment, a SteamPipe publish, or a Workshop publish. The default
+Steam entry then starts the installed default composition through Vapor Client;
+the chooser entry opens the selected app. It must
 not replace Steam-managed files or change Steam launch options as a hidden side
 effect. The launch request is bounded, explicit, and visible in the operation
 report.
@@ -276,8 +281,9 @@ share a generic ambiguous “Publish” handler.
    lock or shared operation service.
 2. **Studio shell and Steam handoff:** turn the current eframe diagnostics app
    into a navigable Studio shell, keep Diagnostics intact, route Steam's default
-   entrypoint to Studio, and implement local deploy → Steam launch as a visible
-   operation chain.
+   entrypoint to direct default composition launch and the optional chooser to
+   Launcher and creator tools,
+   and implement local deploy → Steam launch as a visible operation chain.
 3. **Local composition loop:** discover and edit Packagepacks, resolve and lock
    graphs, install local realizations, maintain named profiles, and direct-play
    the selected composition.
@@ -291,15 +297,17 @@ share a generic ambiguous “Publish” handler.
 
 Keep the first playable milestone inside the full architecture: one source
 workspace, one local Packagepack, one resolved/locked composition, one local
-install/run profile, and Steam launching Studio/direct Play. Do not substitute a
-mock catalog or a separate hardcoded Loo-Cast path for the real content graph.
+install/run profile, and Steam launching the default composition directly with
+the chooser available for other products. Do not substitute a mock catalog or a
+separate hardcoded Loo-Cast path for the real content graph.
 
 ## Decisions and open details
 
-**Agreed:** Studio is the default Steam launch; direct Play is an optional
-entrypoint for the selected composition. The GUI owns composition and publish
-workflows; the CLI remains recovery tooling. Steam root publishing and Workshop
-publishing are separate workflows with explicit safety review.
+**Current agreement:** Steam's default entry launches the default Loo-Cast
+composition directly. One optional chooser entry exposes Launcher, Studio,
+IDE, Installer, and Shell. Each entry is configured for Linux and Windows. The
+CLI offers matching direct product launches. Steam root publishing and
+Workshop publishing remain separate workflows with explicit safety review.
 
 **To resolve during implementation discovery:** exact process/IPC form of the
 launch request, the local app-instance handoff mechanism, which existing
