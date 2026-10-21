@@ -198,18 +198,24 @@ fn install_llvm_mingw(app_root: &Path) -> Result<(), String> {
     if cfg!(target_os = "windows") {
         let archive = app_root
             .join(".vapor/downloads")
-            .join(format!("llvm-mingw-{LLVM_MINGW_VERSION}-msvcrt-x86_64.zip"));
+            .join(format!("llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-x86_64.zip"));
         download(LLVM_MINGW_X86_64_WINDOWS, &archive)?;
         verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
         let archive = app_root.join(".vapor/downloads").join(format!(
-            "llvm-mingw-{LLVM_MINGW_VERSION}-msvcrt-ubuntu-22.04-x86_64.tar.xz"
+            "llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
         ));
         download(LLVM_MINGW_X86_64_LINUX, &archive)?;
         verify_sha256(&archive, LLVM_MINGW_X86_64_LINUX_SHA256)?;
         extract_tar_xz_strip(&archive, &target)?;
     }
+    write(
+        &target.join("vapor-toolchain.toml"),
+        &format!(
+            "schema = 1\nversion = \"{LLVM_MINGW_VERSION}\"\nruntime = \"ucrt\"\ntarget = \"x86_64-pc-windows-gnullvm\"\n"
+        ),
+    )?;
     Ok(())
 }
 
@@ -295,15 +301,32 @@ fn cross_status(app_root: &Path) -> ComponentStatus {
         missing.push(format!("zig at {}", zig.display()));
     }
     let llvm_bin = app_root.join("tools/llvm-mingw/bin");
+    if !llvm_mingw_ucrt_marker_ready(app_root) {
+        missing.push(format!(
+            "UCRT toolchain marker at {}",
+            app_root
+                .join("tools/llvm-mingw/vapor-toolchain.toml")
+                .display()
+        ));
+    }
     for name in [
         executable("x86_64-w64-mingw32-clang"),
-        "x86_64-w64-mingw32-dlltool".to_owned(),
-        "llvm-dlltool".to_owned(),
+        executable("x86_64-w64-mingw32-dlltool"),
+        executable("llvm-dlltool"),
+        executable("x86_64-w64-mingw32-ar"),
     ] {
         let path = llvm_bin.join(&name);
         if !is_executable(&path) {
             missing.push(format!("{name} at {}", path.display()));
         }
+    }
+    let runtime = app_root.join("tools/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll");
+    if !runtime.is_file() {
+        missing.push(format!("libunwind.dll at {}", runtime.display()));
+    }
+    let runtime = app_root.join("tools/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll");
+    if !runtime.is_file() {
+        missing.push(format!("libunwind.dll at {}", runtime.display()));
     }
     let wrapper = app_root.join("tools/cross/bin").join(if cfg!(windows) {
         "x86_64-unknown-linux-gnu-zig-cc.cmd"
@@ -322,4 +345,19 @@ fn cross_status(app_root: &Path) -> ComponentStatus {
         path: zig,
         missing,
     }
+}
+
+fn llvm_mingw_ucrt_marker_ready(app_root: &Path) -> bool {
+    let marker = app_root.join("tools/llvm-mingw/vapor-toolchain.toml");
+    let Ok(source) = fs::read_to_string(marker) else {
+        return false;
+    };
+    [
+        "schema = 1",
+        &format!("version = \"{LLVM_MINGW_VERSION}\""),
+        "runtime = \"ucrt\"",
+        "target = \"x86_64-pc-windows-gnullvm\"",
+    ]
+    .into_iter()
+    .all(|required| source.lines().any(|line| line.trim() == required))
 }

@@ -203,6 +203,31 @@
   previously pushed Vapor-CLI `ba023a6`. The parent repository still needs the
   updated submodule pointers and this checkpoint committed.
 
+### 2026-10-21 Windows service startup and Steam redeploy
+
+- Windows startup serialization uses a named kernel mutex keyed by the state
+  directory and lock purpose; Unix retains advisory file locks. Updated the
+  Vapor, CLI, and Studio workspace lockfiles for the Windows-only dependency.
+- Traced the remaining Windows startup timeout to two independent blockers:
+  the named-pipe DACL used `OWNER RIGHTS` instead of granting the interactive
+  account, and the connection handshake called socket-style receive-timeout
+  methods that interprocess explicitly reports as unsupported for Windows named
+  pipes. The second failure occurred before sending `Connect`, then was retried
+  until Vapor surfaced a generic 30-second startup timeout.
+- The pipe ACL now grants only SYSTEM and the current token's explicit user SID.
+  Windows handshake setup no longer calls unsupported timeout methods; Unix
+  keeps its existing timeout behavior. Wine's pipe trace showed the corrected
+  SYSTEM+user DACL and a successful client pipe open; the locally deployed
+  Windows `vapor.exe source status` then completed immediately and returned the
+  expected service-backed status.
+- Managed Windows root build and local promotion passed. Full Steam release gates
+  passed for both Linux and Windows across Vapor, GUI, CLI, Installer, and Steam
+  Entrypoint. Split app staging contained 5,551 files across all three depots.
+  SteamCMD accepted AppID 2122620 BuildID 26095279; the VDF set `vapor-dev` live.
+- Native Windows still needs Leslie's direct confirmation. Restored the active
+  Vapor source to Loo-Cast after publishing. Changes remain uncommitted;
+  pre-existing dirty edits were preserved.
+
 ## Current checkpoint
 
 ### 2026-10-19 Workshop publication through the shared service
@@ -3556,3 +3581,248 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   publication was performed. Post-validation cache sample:
   `output/dev` 104 GB, filesystem 189/222 GB used with 32 GB available. No cache
   data was removed. The user-owned `cloc_this.sh` modifications remain excluded.
+
+### 2026-10-21 Composition CLI, Workshop identity, and target proof
+
+- Added first-class `composition list|install|verify|repair|update|launch`
+  commands to Vapor CLI. They are a thin facade over the existing Client IPC
+  actions. `composition list` reads the same service snapshot and shows the
+  active composition and installation state, so operation IDs are discoverable
+  without opening Studio. Managed CLI validation passed (11 tests, Clippy, and
+  Rustdoc); a fresh deployed shell listed both the default Loo-Cast and separate
+  Wheel Salvage compositions.
+- Workshop staging now accepts an unqualified content ID only when it matches
+  one authored project/version in the refreshed workspace. Duplicate-version
+  IDs still require `ID@VERSION`; stale, missing, and ambiguous identities get
+  distinct guidance. Added coverage for unique and ambiguous IDs. Managed Vapor
+  validation passed: format, check, tests (including 44 core/service tests),
+  Clippy, and Rustdoc.
+- The Installer role picker now syncs to the installed role rather than silently
+  defaulting a higher-role installation to Composer. Role promotion, health,
+  and repair share the same Composer-or-higher developer-tool policy. Promotion
+  prepares managed Rust/Cargo, the pinned Windows GNU/LLVM target and UCRT
+  linker, and Tracy; demotion changes the role without deleting those tools.
+  Managed Installer validation passed (2 tests, Clippy, and Rustdoc); the role
+  selector regression test confirms it won't propose an accidental demotion.
+- Staged the authored Loo-Cast Engine, Game, and Packagepack as one batch using
+  their declared Linux and Windows target matrix. The preview covered 542 files
+  (761,052,120 bytes) and showed the Packagepack's `loo-cast-packagepack.exe`
+  plus `libunwind.dll` for `x86_64-pc-windows-gnullvm`; Engine and Game are
+  statically included by that Packagepack. No Steam upload was performed. The
+  public Workshop items remain unchanged until a separately authorized upload.
+- Installed and verified the non-default Wheel Salvage composition through the
+  shared service. Both operations succeeded and verification reported all six
+  content items; the local service snapshot then showed that composition as
+  installed. This confirms its dependency graph and package-owned executable
+  through installation and verification, but not launch. Code review found a
+  remaining terminal handoff gap: the Engine requires a real TTY, while the
+  Client service runs with protocol pipes and Packagepack launch inherits the
+  service's standard streams. A TTY-aware launch boundary is still required;
+  no launch was attempted because it could corrupt the service protocol.
+- Final managed validation passed for Vapor Studio (10 tests), Vapor Installer
+  (2 tests), and Vapor Examples (10 game/mod/package tests plus content manifest
+  validation for all 6 items), in addition to the Vapor and CLI results above.
+  `client deploy local` succeeded after the CLI and service changes, updating
+  the installed Steam app directory. Disk sample was 154/222 GB used (66 GB
+  free); the Windows runtime package stage was about 758 MB. No caches were
+  removed and unrelated working-tree changes remain untouched.
+
+### 2026-10-21 Composition status clarity
+
+- A live service check showed `composition list` reporting `unknown` after a
+  service restart even when content was installed. This is intentional
+  invalidation of runtime observations on persistence load: installation
+  status is recalculated by verification, install, repair, update, or launch.
+  The CLI now labels this state `not checked`, and its command guide explains
+  that `composition verify ID` refreshes the status. A managed Vapor CLI
+  validation passed (11 tests, Clippy, and Rustdoc). The live verification
+  changed Wheel Salvage from `not checked` to `installed`; the default setup
+  remains unverified.
+
+### 2026-10-21 Documentation upload recovery
+
+- Correcting the earlier VPS-blocked note: the owner completed the interactive
+  one-off upload after restoring SSH access and creating the docs service
+  configuration. The returned server receipt reported `tar-gzip-tree`, 412
+  files, and 9,953,593 extracted bytes. VPS documentation delivery is therefore
+  operational; automated credential-free CI deployment remains a separate
+  follow-up, not a blocker to the manual upload.
+
+### 2026-10-21 Restore the Play action after service restart
+
+- The persisted composition intentionally clears its runtime installation
+  observation when the Client service restarts. Studio's Home page previously
+  treated that `Unknown` value as “Install,” even when the fresh local catalog
+  proved the exact Packagepack root was installed and enabled. Home now waits
+  for a successful, complete catalog refresh, distinguishes an installed root
+  from a Library-only copy, and restores `Launch` only for one exact,
+  unambiguous installed Packagepack. While discovery is pending or incomplete,
+  it shows a disabled “Checking composition…” action instead of the wrong
+  Install action; conflicting or multi-version roots route to composition
+  review. The service still validates the complete dependency graph at launch.
+  Regression tests cover installed, Library-only, unchecked, and ambiguous
+  cases.
+- Managed Studio validation passed (13 tests, Clippy, Rustdoc); local deployment
+  succeeded. No Steam upload or game launch was performed.
+- Latest read-only disk sample remains 154/222 GB used with 66 GB free; the
+  installed `output/dev` tree is 41 GB. No caches were removed in this subpass.
+
+
+### 2026-10-21 Terminal runtime and console retention
+
+- Reconciled the Wheel Salvage terminal launch: authored Engine metadata declared
+  terminal presentation, but the installed Engine manifest was stale and omitted
+  it. Updated `composition-1` through the shared Vapor Shell lifecycle. The
+  installed manifest now carries `presentation = "terminal"`, and composition
+  verification reported all six items ready.
+- Launched the Wheel Salvage composition and observed the expected handoff chain
+  from the Client service through Vapor Entrypoint to Konsole and the game
+  executable. The test process was intentionally interrupted after confirming
+  process routing; its resulting nonzero exit is not a clean game-session
+  result, and no GUI screenshot was available in this session.
+- Confirmed a deployment lifecycle edge case: when a long-running frontend keeps
+  the shared service alive, Linux can replace its executable while that process
+  continues running the old image. A later source update was handled by that
+  stale service until it was stopped. The current local deploy completed with no
+  service process left running, but coordinated restart/reconnect for a live
+  service remains unresolved and needs an explicit lifecycle design.
+- Studio's operation console now counts output lines evicted by its bounded
+  buffer and shows a visible omission notice. This avoids presenting the newest
+  300 lines as if they were the complete output. Regression coverage verifies
+  that the count and retained window stay synchronized. Vapor-managed Studio
+  validation passed: format check, check/build, 14 tests, Clippy, and Rustdoc.
+- Local Vapor deployment completed into the installed Loo-Cast Steam app root;
+  the updated Studio, Launcher, Entrypoint, Installer, IDE host, and Client
+  service binaries were promoted. No Workshop item or Steam build was uploaded.
+- Installer role promotion/demotion and managed Windows GNU/LLVM plus UCRT
+  tooling were already implemented and validated in this workstream; this note
+  confirms that requested capability is present rather than duplicating it.
+
+### 2026-10-21 Launcher service recovery
+
+- Launcher previously lost its shared Client connection permanently after a
+  service exit, leaving only the manual Reconnect button. It now retries
+  automatically with bounded exponential backoff (1–30 seconds), resets the
+  delay after recovery, and preserves immediate manual reconnect. This supports
+  recovery after a service lifecycle restart; it does not force a stale service
+  to exit.
+- Vapor-managed GUI validation passed: format check, check/build, all 3 GUI
+  tests, Clippy, and Rustdoc. Local deployment succeeded to the installed
+  Loo-Cast app root. No Workshop or Steam publication occurred.
+
+### 2026-10-21 Default composition launch smoke check
+
+- The local `composition list` showed both `default` and the non-default
+  `composition-1` Wheel Salvage setup. `composition verify default` completed
+  through the shared service and verified all three content items.
+- `composition launch default` started the installed Loo-Cast Packagepack
+  executable through the service. Bevy logged that packaged `assets/` and the
+  engine config file were absent and it fell back to compiled defaults. The
+  process started, but this environment has no usable native-app inspection, so
+  visual/gameplay success is not claimed. The smoke-test process was then
+  stopped and confirmed exited.
+- Read-only disk sample: 155/222 GB used, 65 GB free; local `output/dev` is
+  42 GB. No cache data was deleted.
+
+### 2026-10-21 Engine runtime roots in installed compositions
+
+- The default Loo-Cast launch exposed a composition-boundary mismatch: Vapor
+  supplied `VAPOR_ENGINE_ROOT`, and the installed Engine contained its authored
+  config/assets, but Bevy still read `assets/` from the Packagepack working
+  directory. The Engine now uses the resolved Engine root for Bevy's asset
+  directory and default `engine.ron` lookup. Explicit
+  `SPACETIME_ENGINE_CONFIG` still overrides this; source-run development keeps
+  the normal `assets/` fallback.
+- Added coverage for explicit config precedence, installed Engine config paths,
+  and source-development fallbacks. Vapor-managed Loo-Cast tests passed (27
+  Engine tests), and the managed development build passed for Linux and
+  `x86_64-pc-windows-gnullvm`.
+- A first composition update retained the old executable despite a new staged
+  package. Hash comparison isolated the missing lifecycle step: acquire the
+  staged source package into the Library before updating the composition. After
+  `content build`, `content package`, `content acquire`, and `composition
+  update`, installed and staged Linux executable hashes matched exactly.
+- `composition verify default` passed for all three content items. A subsequent
+  launch started the rebuilt Packagepack process without the prior Bevy missing
+  asset watcher or compiled-default config warnings. Process startup was
+  observed; no visual/gameplay assessment is claimed. The smoke-test process
+  exited after a graceful interrupt.
+- Loo-Cast `validate` remains blocked at Clippy: after the four reported
+  pre-existing style issues were corrected, the workspace Clippy phase reports
+  204 existing lints across unrelated Engine files. Loo-Cast format check,
+  Cargo check, and all 27 Engine tests passed. No broad lint suppression or mass
+  cleanup was applied.
+
+### 2026-10-21 Authoring package catalog handoff
+
+- Corrected an initial hypothesis: `PackageContent` stages output in the
+  package staging area; the Library catalog intentionally reads acquired cache
+  and installed content. A catalog refresh alone cannot make a staged package
+  installable, so that ineffective service change was reverted. Keep the two
+  intents distinct: stage for publishing; explicitly acquire into Library to
+  use a built source artifact in a composition.
+- Windows service timeout remains unproven: the startup path surfaces a bounded
+  timeout when the named-pipe endpoint never appears, but the existing Windows
+  report lacks service-side startup logs, so its root cause cannot be inferred
+  from that symptom alone.
+- To make the next failure actionable, shared-service startup now drains and
+  retains a bounded stderr tail, includes it in startup timeout errors, and
+  terminates a still-running child when the startup deadline expires. The
+  retention bound has a regression test. Vapor-managed validation passed again
+  (13 Client tests; check, Clippy, Rustdoc), and local deployment was repeated.
+  This validates the Linux path; the Windows timeout still needs a Windows
+  reproduction to confirm its root cause or that this diagnostic change fixes
+  it.
+- The Vapor root build completed for its declared Linux and Windows GNU/LLVM
+  target matrix after the platform-specific terminal-host correction. The
+  earlier build emitted one Windows-only unused-field warning; the corrected
+  matrix build completed without it. The source-authoritative Linux local
+  deployment was refreshed afterward. No Workshop publish or Steam build was
+  performed.
+- A focused fake-service test now exercises the actual timeout path: a child
+  writes a startup diagnostic but never binds the endpoint. The client returns
+  the bounded stderr tail and reaps the child; the test completes in under two
+  seconds. The final `vapor validate --project vapor` and Linux/Windows root
+  matrix build both passed, followed by another successful local deployment.
+- The earlier claim that an explicit Studio acquire action remained was stale.
+  Studio now retains the exact staged selector, offers `Add to Library`, and
+  dispatches the shared service's typed Acquire action against the saved source
+  workspace. The result refreshes the catalog and reports Library availability;
+  version matching is exact so an older cached version cannot mask the new
+  package. The protocol returns the selector and CLI correlation rejects a
+  mismatched result. Vapor and Studio managed validation passed after this
+  handoff was added (14 Client and 15 Studio tests); the cross-target matrix
+  and subsequent local deploy passed as recorded in later checkpoints.
+- Read-only disk check after the Linux and Windows target builds: 156/222 GB
+  used, 64 GB free. No cache cleanup was performed during this pass.
+
+### 2026-10-21 Direct local Launcher invocation
+
+- The shared Vapor CLI exposed `studio`, `play`, `shell`, and `installer`, but
+  no `launcher` name even though `play` routes to the separate player Launcher
+  binary. Added a clear `launcher` mode and retained `play` as a compatibility
+  alias to Entrypoint's existing `play` route; the default remains Studio. A
+  regression test first failed on the missing enum variant, then the updated
+  alias test failed against the old mapping and passed after the route change.
+- Vapor-managed CLI validation passed (12 tests, Clippy, Rustdoc, and format
+  check). Local deployment succeeded; the fresh installed help lists `launcher`
+  and removes the misleading separate `play` choice. The command guide now
+  documents `play` as a compatibility alias and distinguishes opening the
+  Launcher from `composition launch ID`. The old interactive Shell process
+  continued to parse its in-memory pre-deploy CLI and rejected the mode, so it
+  was exited. A fresh GUI launch attempt did not produce inspectable output in
+  this session; visual launch success is not claimed.
+- Rechecked the user-mentioned Installer capability in the current tree:
+  promotion reconciles pinned Rust/Cargo, Windows gnullvm, UCRT linker, and
+  Tracy; role changes support demotion without uninstalling tools. Managed
+  Installer validation passed (2 tests, Clippy, Rustdoc, format check).
+- The Linux+Windows GNU/LLVM application-root build and Linux local deploy
+  completed again after the final CLI alias change, followed by a successful
+  Linux local deploy. No Steam upload occurred. Disk remained 156/222 GB used
+  with 64 GB free; `output/dev` measured 43 GB. No cache data was deleted.
+- The public docs bundle includes the CLI command guide, so it was updated to
+  document `launcher`, the `play` alias, and the separate composition-launch
+  operation. `docs publish` was attempted through Vapor and stopped before
+  upload because `VAPOR_DOCS_ADMIN_TOKEN` is not configured in the local Client
+  service; the earlier owner-run SSH upload remains the available documented
+  delivery path. No secret was read or copied.

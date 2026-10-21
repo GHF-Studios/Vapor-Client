@@ -30,12 +30,12 @@ const RUSTUP_INIT_X86_64_WINDOWS: &str =
 const ZIG_X86_64_LINUX: &str = "https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz";
 const ZIG_X86_64_WINDOWS: &str =
     "https://ziglang.org/download/0.16.0/zig-x86_64-windows-0.16.0.zip";
-const LLVM_MINGW_X86_64_LINUX: &str = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-msvcrt-ubuntu-22.04-x86_64.tar.xz";
+const LLVM_MINGW_X86_64_LINUX: &str = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz";
 const LLVM_MINGW_X86_64_LINUX_SHA256: &str =
-    "a1f7968b48ba8d949194d6dee6c76f3cd0f61cba91658599af2c2c834a55ab87";
-const LLVM_MINGW_X86_64_WINDOWS: &str = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-msvcrt-x86_64.zip";
+    "534b92e067b22a6b4441f48ae9240a3341b17825d04d577eab0cf85c44b4deda";
+const LLVM_MINGW_X86_64_WINDOWS: &str = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-x86_64.zip";
 const LLVM_MINGW_X86_64_WINDOWS_SHA256: &str =
-    "744809646fdefe24a357399788d68fb07ecc65fa0be71baa2406793ce25c9813";
+    "b9b68a4d276e16fa25802aaba458e4638f64b3884c290aaccdc2d87083b6ca35";
 
 const RUST_TARGETS: &[&str] = &["x86_64-unknown-linux-gnu", "x86_64-pc-windows-gnullvm"];
 const RUST_COMPONENTS: &[&str] = &["rustfmt", "clippy", "rust-src"];
