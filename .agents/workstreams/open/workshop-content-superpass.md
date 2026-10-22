@@ -4157,10 +4157,12 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   local subpage, including subscribed results. A focused regression test passes.
   Visual verification at varied window sizes and owner testing of live Steam
   account behavior remain outstanding.
-- The full app root publish was accepted on `vapor-dev` after Linux+Windows
-  staging and validation: 5,865 files across the three app depots. `client deploy
-  local` then rebuilt and deployed the current refs to the Linux Steam install.
-  This slice changed no Workshop item payload, so it did not republish content.
+- The corrected full app root publish was accepted as Steam BuildID `26120830`
+  with `SetLive` configured to `vapor-dev`, after Linux+Windows staging and
+  validation: 5,865 files across the three app depots. Steam logs confirm all
+  three depot manifests uploaded successfully. `client deploy local` rebuilt
+  and deployed the same corrected GUI refs to the Linux Steam install. This
+  slice changed no Workshop item payload, so it did not republish content.
 - Final pushed refs: Vapor `7fc960a`, GUI `583710a`, Studio `b0fe641`, CLI
   `46d16f2`, Installer `4b67992`, Entrypoint `c6e178f`, Loo-Cast `c070bf3`,
   and parent Vapor-Client `2d59284` (tracking the three updated submodules).
