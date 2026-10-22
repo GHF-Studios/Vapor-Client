@@ -4367,3 +4367,17 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   formatting remain blocked because Vapor reports a stale in-progress
   reservation (`operation 2`) when the interactive Shell or documented script
   route is opened; no raw Cargo commands were used.
+
+### 2026-10-22 Shared console validation follow-up
+
+- The operation reservation was recoverable through the interactive Vapor
+  Shell. Managed validation completed for `vapor`, `vapor-gui`,
+  `vapor-studio`, and `vapor-cli`, including format checks, compilation, tests,
+  Clippy, and Rustdoc. Formatting drift in the touched workspaces was corrected
+  through Vapor's managed formatter.
+- Clippy identified a derivable default for `ConsoleLevel` and an oversized
+  `ConsoleCommandOutcome` variant. Both were corrected (derive the `Info`
+  default; box the typed action), and dependent GUI/Studio dispatchers were
+  updated to consume the boxed action. All four managed validations passed
+  after those changes. The earlier Linux local deployment had already
+  succeeded; no Steam publish or visual runtime review was performed here.
