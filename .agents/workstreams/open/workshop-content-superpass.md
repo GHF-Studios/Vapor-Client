@@ -4211,3 +4211,19 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   and removes local-cache/download terminology from subscription availability.
   Vapor-managed GUI validation passed and `client deploy local` rebuilt the
   Linux install. GUI commit `3532803` contains this wording pass.
+
+
+### 2026-10-22 Steam subscription state ownership
+
+- Renamed the Rust fields for Steam UGC download/install status to `steam_*`
+  across the Steam provider, shared application model, service projection, and
+  Launcher/Studio subscription views. This distinguishes Steam's temporary UGC
+  delivery facts from Vapor Library presence and composition installation.
+- Kept the established IPC JSON keys (`installed`, `needs_update`,
+  `downloading`, `download_progress`) unchanged, so the internal ownership
+  cleanup does not require synchronized frontend/service rollout. Added a
+  serialization assertion for those exact keys plus the internal names staying
+  off the wire.
+- Vapor-managed validation passed for `vapor`, `vapor-gui`, and
+  `vapor-studio`, including tests, Clippy, and Rustdoc. `git diff --check` passed
+  for each changed repository. Local deployment is pending this checkpoint.
