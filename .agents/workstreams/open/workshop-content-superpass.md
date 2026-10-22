@@ -4243,3 +4243,32 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   BuildID `26131117`; all three depot logs report successful manifests. This
   was app publication only; no Workshop content items were changed. The release
   manifest contains `SetLive = vapor-dev`.
+
+### 2026-10-22 Auto-Install ownership and player operation console
+
+- Catalog dependency facts are structured in the shared domain. The service
+  keeps the existing string labels on the wire and adds typed dependency facts
+  as an optional field, so older running frontends continue to decode catalog
+  snapshots without a protocol-version bump. Studio prefers typed facts and
+  can still display the prior string-only form.
+- Packagepacks own Auto-Install for cached, required Workshop dependencies.
+  Ownership is many-to-many; optional/conflict edges do not acquire ownership.
+  Subscription lists reconcile dependency owners, and removing the last owner
+  lets Vapor collect unused local copies and unsubscribe their Workshop items.
+  Explicit user opt-outs survive future ownership changes. Manually added
+  standalone content cannot enable Auto-Install.
+- Launcher operations now have a player-facing phase/summary panel and an
+  expandable command console with bounded history, text/source/severity
+  filters, colored records, timestamps, stderr/error highlighting, and terminal
+  ANSI cleanup. Shared GUI console primitives render severity marks with vector
+  drawing rather than font glyphs. Visible Launcher/IDE controls touched here
+  no longer depend on arrow, multiplication, or ellipsis glyphs.
+- Vapor-managed validation passed for `vapor`, `vapor-gui`, and
+  `vapor-studio` (format check, check, tests, Clippy, Rustdoc). Added coverage
+  for Packagepack ownership/opt-out, required dependency ownership, old
+  string-only protocol payloads, terminal escape cleanup, and Studio's typed
+  dependency projection. `git diff --check` passed across all changed repos.
+  `client deploy local` rebuilt and deployed the Linux Steam installation.
+- Live Steam account unsubscribe/re-subscribe behavior and visual review of the
+  new operation console remain unverified; no Steam content or app publication
+  was performed in this checkpoint.
