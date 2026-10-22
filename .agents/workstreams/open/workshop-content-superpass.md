@@ -4168,3 +4168,22 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   and parent Vapor-Client `2d59284` (tracking the three updated submodules).
   All affected repositories were clean and matched `origin/main` at checkpoint.
 - Alpha versions remain `0.5.0`; no content/schema version bump was made.
+
+### 2026-10-22 Workshop subscription metadata follow-through
+
+- Steam's subscription query already returned Workshop tags, but the Steam
+  adapter and protocol snapshot discarded them. Subscription rows therefore
+  lost their content type while Discover retained it. Tags now flow through the
+  Steam adapter, Client service snapshot, Launcher, and Studio projection.
+- Launcher Subscriptions now filters by the same canonical Vapor content kinds
+  as Discover, including local text search and paging; developer Crates remain
+  outside the player-facing type choices. A known local manifest kind takes
+  precedence over Steam tags. Steam tags remain discovery hints until Registry
+  serves authoritative typed metadata.
+- Older service snapshots without subscription tags decode with an empty list.
+  Focused tests cover Steam metadata projection, protocol compatibility,
+  Launcher classification/filtering, and the local-kind precedence rule.
+- Vapor-managed `validate --project vapor`, `validate --project vapor-gui`, and
+  `validate --project vapor-studio` passed. The new Launcher coverage brings
+  that workspace to 14 tests. Native visual review and live Steam account
+  behavior remain unverified in this session.
