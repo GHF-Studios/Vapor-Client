@@ -4379,5 +4379,20 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   `ConsoleCommandOutcome` variant. Both were corrected (derive the `Info`
   default; box the typed action), and dependent GUI/Studio dispatchers were
   updated to consume the boxed action. All four managed validations passed
-  after those changes. The earlier Linux local deployment had already
-  succeeded; no Steam publish or visual runtime review was performed here.
+  after those changes. A fresh Linux `client deploy local` then succeeded and
+  installed the updated service, Launcher, Studio, IDE, Installer, CLI, and
+  entrypoint binaries. No Steam publish or visual runtime review was performed
+  here.
+
+### 2026-10-22 Separate Problems and Console views
+
+- Studio and IDE now expose Problems and Console as separate bottom-panel tabs.
+  F2 opens the panel on Console; Studio Problems filters warning/error records
+  from the shared operation stream, while IDE Problems stays focused on Rust
+  Analyzer diagnostics. The shared Console retains its command prompt, filters,
+  and operation output.
+- Vapor-managed validation passed again for `vapor-gui` and `vapor-studio`,
+  including format checks, compilation, tests, Clippy, and Rustdoc. A fresh
+  Linux `client deploy local` installed the updated frontends and service.
+  Visual interaction and Windows runtime review remain outstanding; this is
+  still the initial command set, not full CLI command parity inside the GUI.
