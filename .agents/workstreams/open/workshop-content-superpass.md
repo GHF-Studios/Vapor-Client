@@ -228,6 +228,20 @@
   Vapor source to Loo-Cast after publishing. Changes remain uncommitted;
   pre-existing dirty edits were preserved.
 
+### 2026-10-22 Windows GNU Vapor host support
+
+- The Windows installer error came from treating the Vapor executable target
+  (`x86_64-pc-windows-gnullvm`) as if it were a Rustup host. Vapor now models
+  that executable target explicitly and maps both Windows app ABIs to Rustup's
+  supported Windows MSVC host; toolchain discovery uses the Rustup mapping,
+  while runtime/depot identity retains the app target.
+- Added regression coverage for Windows GNU mapping and rejected host tuples.
+  Vapor-managed validation passed, including tests, Clippy, and Rustdoc. The
+  full Linux+Windows root release preview staged 5,923 files across three
+  depots; Steam accepted BuildID 26142566 with `SetLive` set to `vapor-dev`.
+- Native Windows installer/role setup still needs confirmation on Leslie's
+  laptop after Steam delivers the update.
+
 ## Current checkpoint
 
 ### 2026-10-19 Workshop publication through the shared service
