@@ -4233,3 +4233,7 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   identifies the state as a Workshop download. A lifecycle test proves Steam
   transfer progress does not imply a local Library entry. GUI validation passed
   again and the local deployment was repeated successfully.
+
+- Extended the service fixture lifecycle test: Subscribe adds the content to the
+  Library catalog; Unsubscribe removes only the account subscription and leaves
+  the local Library copy available. Vapor-managed validation passed again.
