@@ -4316,5 +4316,18 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   completed after resolving the active source and staged 5,907 files across the
   Linux host target. This verifies the previously timing-out command path, but
   is not a cross-platform Steam upload or Windows runtime test.
-- Windows binaries have not yet been built, published, or exercised on the
-  user's laptop. Release and Windows verification remain the next checkpoint.
+- Cross-target release validation built Linux and Windows GNU binaries, and
+  Steam accepted BuildID `26140496` for 5,921 files across all three depots.
+  The user's Windows runtime check remains outstanding.
+
+### 2026-10-22 Steam toolchain pin packaging fix
+
+- Installer on Windows reported missing `metadata/toolchain.toml` from the Steam
+  app root. The installation already owned this pin, but `App-Source.vapor.toml`
+  used an explicit file allowlist that omitted it from the common depot.
+- Added a required installation-to-common-depot mapping for only that file. A
+  Vapor-managed dry-run confirmed the staged file contains schema 1 and Rust
+  1.97.0; the full Linux+Windows release matrix passed.
+- Steam accepted BuildID `26142082` on `vapor-dev`, with 5,922 files across all
+  three depots. Windows runtime confirmation remains pending on the user's
+  laptop.

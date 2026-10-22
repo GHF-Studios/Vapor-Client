@@ -21,6 +21,12 @@ required = true
 
 [[root.steam.depots.common.include]]
 root = "installation"
+from = "metadata/toolchain.toml"
+to = "metadata/toolchain.toml"
+required = true
+
+[[root.steam.depots.common.include]]
+root = "installation"
 from = "docs"
 to = "docs"
 required = true
