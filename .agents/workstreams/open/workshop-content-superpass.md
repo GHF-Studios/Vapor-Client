@@ -4185,5 +4185,25 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   Launcher classification/filtering, and the local-kind precedence rule.
 - Vapor-managed `validate --project vapor`, `validate --project vapor-gui`, and
   `validate --project vapor-studio` passed. The new Launcher coverage brings
-  that workspace to 14 tests. Native visual review and live Steam account
+  that workspace to 15 tests. Native visual review and live Steam account
   behavior remain unverified in this session.
+
+### 2026-10-22 Workshop lifecycle release follow-through
+
+- Completed the prior checkpoint's omitted type flow: Steam subscription details
+  now preserve Workshop tags through the service protocol into Launcher and
+  Studio. Launcher Subscriptions has typed filtering and paging; player views
+  keep developer Crates in Studio, not the player catalog. Verified local
+  manifest type overrides untrusted Steam discovery tags.
+- Protocol compatibility remains additive: older subscription snapshots decode
+  without tags. Focused checks cover tag retention, typed filtering, crate
+  visibility, and verified local type precedence.
+- Managed validation passed for `vapor`, `vapor-gui`, and `vapor-studio`; the
+  Launcher workspace now has 15 tests. Local deployment succeeded. Full Steam
+  release validation/build passed for Linux and Windows GNU, and Steam accepted
+  BuildID `26130592` with `SetLive` to `vapor-dev`; all three depot manifests
+  uploaded successfully (5,865 staged files). No Workshop payload changed.
+- Pushed commits: Vapor `b32fec7`, GUI `b582a8c`, Studio `122fbab`, and parent
+  Vapor-Client `d429915`. Alpha stays at `0.5.0`. Visual review at varied
+  resolutions and live-account install/subscribe behavior still need owner
+  confirmation.
