@@ -4227,3 +4227,9 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Vapor-managed validation passed for `vapor`, `vapor-gui`, and
   `vapor-studio`, including tests, Clippy, and Rustdoc. `git diff --check` passed
   for each changed repository. Local deployment is pending this checkpoint.
+
+- Follow-up review found Launcher was presenting Steam UGC transfer progress as
+  “Preparing for Library,” although Library acquisition is separate. It now
+  identifies the state as a Workshop download. A lifecycle test proves Steam
+  transfer progress does not imply a local Library entry. GUI validation passed
+  again and the local deployment was repeated successfully.
