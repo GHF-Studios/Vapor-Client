@@ -4345,3 +4345,25 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Steam accepted BuildID `26142082` on `vapor-dev`, with 5,922 files across all
   three depots. Windows runtime confirmation remains pending on the user's
   laptop.
+
+### 2026-10-22 Shared command console and operation output
+
+- Added a service-owned command vocabulary and parser for help/status, catalog
+  refresh, composition selection/launch, and managed workspace tools. Authoring
+  consoles convert those commands to existing typed Client actions; the Launcher
+  remains read-only. CLI output now uses the same structured console record and
+  ANSI-cleaning contracts rather than printing child output as unlabelled text.
+- Extended operation output across core, service protocol, and frontends with
+  timestamp, explicit severity, source, action, process, and pipe stream. Plain
+  stderr is no longer mislabeled as a warning/error, and the Launcher no longer
+  guesses severity from words in command output.
+- Rust role promotion now reports named developer-setup stages and forwards
+  bounded Rustup output through the shared operation stream. Studio and IDE use
+  the common filterable console model; Studio's console is docked and toggled by
+  F2, IDE's Problems panel includes that console and also toggles by F2, and
+  Launcher opens a separate read-only console on demand.
+- A complete Vapor-managed `client deploy local` compiled and deployed the
+  current Linux GUI, Studio, IDE, CLI, and service binaries. Managed tests and
+  formatting remain blocked because Vapor reports a stale in-progress
+  reservation (`operation 2`) when the interactive Shell or documented script
+  route is opened; no raw Cargo commands were used.
