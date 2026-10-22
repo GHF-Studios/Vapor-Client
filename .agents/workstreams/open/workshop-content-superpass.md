@@ -4284,11 +4284,37 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Added a focused service regression for restoring an installed app root.
   Vapor's managed local deployment compiled and promoted the updated Linux
   service and frontend binaries successfully.
-- Managed tests and Steam dry-run are currently blocked by the installed Vapor
-  shell: requests start the service and report `catalog.refresh` complete, then
-  time out waiting for the next service response. No service process remains
-  running afterward. No Windows build, Steam upload, or Windows runtime proof
-  has been completed in this checkpoint; do not claim the Windows issue fixed
-  until the updated app is released and tested there.
-- Vapor source commit `8259961` was pushed. The parent submodule pointer and
-  this checkpoint still need to be committed and pushed.
+- Initial managed requests appeared blocked: startup source discovery waited
+  for `authoring.list-registered-sources`, but CLI correlated acceptance using
+  the unrelated global primary operation (`catalog.refresh`). The follow-up
+  below fixes and validates that shared-service defect.
+- Vapor source commit `8259961` was pushed. Its app-root boundary guard is
+  included in the all-workspace validation and local deployment below.
+
+### 2026-10-22 Request-scoped operation identity
+
+- Diagnostic dimensions: request and operation identity were conflated because
+  every frontend inferred an accepted request's work from the snapshot's single
+  primary operation, even while the shared scheduler deliberately ran several
+  independent operations. This made CLI commands wait for the wrong operation,
+  report false success, or time out; the same ambiguity existed in Installer.
+- The service protocol now returns the exact `operation_id` accepted for each
+  request, while snapshots continue to show the independently chosen primary
+  operation. Protocol version advanced from 30 to 31. Vapor CLI, Installer, and
+  the scenario simulator now await the returned ID; an accepted response with
+  no identity is converted to a service error.
+- Added service regression coverage with an unrelated Library refresh already
+  primary, coverage for concurrent source-list requests joining the existing
+  operation, and a process-level assertion that the accepted ID matches its
+  terminal event. This proves the shared contract through protocol serialization.
+- Managed `validate --project all` passes format, check, tests, Clippy, and
+  Rustdoc for Vapor, GUI/Launcher/IDE, Studio, CLI, Examples, Installer, and the
+  Steam entrypoint. Validation also surfaced and fixed nearby Clippy issues in
+  toolchain discovery, workspace snapshot initialization, Studio's disabled
+  action message, and the test module layout, plus one missing test import.
+- A managed Linux local deployment succeeded. A no-upload root release dry-run
+  completed after resolving the active source and staged 5,907 files across the
+  Linux host target. This verifies the previously timing-out command path, but
+  is not a cross-platform Steam upload or Windows runtime test.
+- Windows binaries have not yet been built, published, or exercised on the
+  user's laptop. Release and Windows verification remain the next checkpoint.
