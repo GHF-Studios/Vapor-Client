@@ -4272,3 +4272,23 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Live Steam account unsubscribe/re-subscribe behavior and visual review of the
   new operation console remain unverified; no Steam content or app publication
   was performed in this checkpoint.
+
+### 2026-10-22 Installed app root versus source workspace
+
+- The persisted authoring-workspace pointer is shared by all frontends. On
+  startup, the Client service now recognizes an installed app root by
+  `App.vapor.toml` without `Workspace.vapor.toml`; it clears only that stale
+  source pointer and preserves the Steam installation. This prevents an
+  Installer/Launcher startup from treating the Steam app folder as authored
+  source. Studio continues to pass its explicit workspace.
+- Added a focused service regression for restoring an installed app root.
+  Vapor's managed local deployment compiled and promoted the updated Linux
+  service and frontend binaries successfully.
+- Managed tests and Steam dry-run are currently blocked by the installed Vapor
+  shell: requests start the service and report `catalog.refresh` complete, then
+  time out waiting for the next service response. No service process remains
+  running afterward. No Windows build, Steam upload, or Windows runtime proof
+  has been completed in this checkpoint; do not claim the Windows issue fixed
+  until the updated app is released and tested there.
+- Vapor source commit `8259961` was pushed. The parent submodule pointer and
+  this checkpoint still need to be committed and pushed.
