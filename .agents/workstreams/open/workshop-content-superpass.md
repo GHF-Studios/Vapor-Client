@@ -4152,14 +4152,16 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   new pinned console/telemetry revision (28 engine tests).
 - Launcher rows now keep the primary action visible and place unsubscribe,
   local removal, and Auto-Install behind contextual menus where appropriate.
-  Bulk actions remain in the selected-items toolbar. Visual verification at
-  varied window sizes and owner testing of live Steam account behavior remain
-  outstanding.
+  Bulk actions remain in the selected-items toolbar. Review caught and fixed a
+  pagination leak: Discover now renders and acts only on rows in the current
+  local subpage, including subscribed results. A focused regression test passes.
+  Visual verification at varied window sizes and owner testing of live Steam
+  account behavior remain outstanding.
 - The full app root publish was accepted on `vapor-dev` after Linux+Windows
   staging and validation: 5,865 files across the three app depots. `client deploy
   local` then rebuilt and deployed the current refs to the Linux Steam install.
   This slice changed no Workshop item payload, so it did not republish content.
-- Final pushed refs: Vapor `7fc960a`, GUI `b353ec6`, Studio `b0fe641`, CLI
+- Final pushed refs: Vapor `7fc960a`, GUI `583710a`, Studio `b0fe641`, CLI
   `46d16f2`, Installer `4b67992`, Entrypoint `c6e178f`, Loo-Cast `c070bf3`,
   and parent Vapor-Client `2d59284` (tracking the three updated submodules).
   All affected repositories were clean and matched `origin/main` at checkpoint.
