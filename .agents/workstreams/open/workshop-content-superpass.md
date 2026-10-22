@@ -4237,3 +4237,9 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
 - Extended the service fixture lifecycle test: Subscribe adds the content to the
   Library catalog; Unsubscribe removes only the account subscription and leaves
   the local Library copy available. Vapor-managed validation passed again.
+
+- Published the validated Linux and Windows GNU application payload to Steam's
+  `vapor-dev` branch through Vapor's managed release flow. Steam accepted
+  BuildID `26131117`; all three depot logs report successful manifests. This
+  was app publication only; no Workshop content items were changed. The release
+  manifest contains `SetLive = vapor-dev`.
