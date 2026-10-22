@@ -4207,3 +4207,7 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   Vapor-Client `d429915`. Alpha stays at `0.5.0`. Visual review at varied
   resolutions and live-account install/subscribe behavior still need owner
   confirmation.
+- Follow-up UI wording replaces local `Download` actions with `Add to Library`
+  and removes local-cache/download terminology from subscription availability.
+  Vapor-managed GUI validation passed and `client deploy local` rebuilt the
+  Linux install. GUI commit `3532803` contains this wording pass.
