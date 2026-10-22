@@ -4396,3 +4396,25 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   Linux `client deploy local` installed the updated frontends and service.
   Visual interaction and Windows runtime review remain outstanding; this is
   still the initial command set, not full CLI command parity inside the GUI.
+
+
+### 2026-10-22 Shared-console cross-platform Steam release
+
+- Root release validation found that the managed Cargo PATH could omit host
+  utility directories when started from a restricted app environment. This
+  made the service child-process test and native linking fail. The SDK path
+  builder now adds existing Unix host-tool directories; its regression test
+  passed through Vapor after a local deployment refreshed the service.
+- Vapor-managed release validation passed for Linux and Windows GNU across
+  Vapor, GUI/Launcher/IDE, CLI, Installer, and the Steam entrypoint. The Steam
+  preview staged 5,952 files across common, Linux, and Windows depots.
+- Steam accepted BuildID `26144936` for app 2122620 and set `vapor-dev` live.
+  Depot manifests succeeded: common `4938012567065881315`, Linux
+  `5842554345963014808`, Windows `2202123248717947467`. This is the configured
+  beta channel, not the default Steam branch. User runtime checks on Linux and
+  Windows are still pending.
+- Vapor commit `2897a81` and Vapor-Client pointer commit `0d02990` were pushed.
+  New user-reported follow-up: tag/filter logs by originating app or launched
+  composition; restore IDE project file discovery and add standard app menus;
+  prevent Studio from compiling content in the background without an explicit
+  operation.
