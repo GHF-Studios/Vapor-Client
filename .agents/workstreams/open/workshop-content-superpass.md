@@ -4418,3 +4418,31 @@ The source-only content-authoring checkpoint is pushed across Vapor-CLI (`768b66
   composition; restore IDE project file discovery and add standard app menus;
   prevent Studio from compiling content in the background without an explicit
   operation.
+
+### 2026-10-22 Service provenance, IDE file listing, and explicit builds
+
+- Client requests now identify Launcher, Studio, IDE, Installer, CLI, or the
+  product chooser. The service retains that identity with each operation and
+  includes it and the associated composition ID in bounded output events.
+  Shared Console views show and filter both app origin and composition.
+- Launch now forwards the launched process's stdout/stderr through the same
+  bounded operation stream, labeled `launched-composition`; the initiating app
+  and composition remain separate filterable fields.
+- IDE file-list results now match the operation ID returned for that request,
+  rather than the snapshot's primary operation (which can belong to another
+  frontend). Added a File/Edit/View/Run/Help menu bar and About panel.
+- Inspected Studio initialization: it lists registered sources, refreshes the
+  local acquired-content catalog, and discovers workspace repositories. These
+  are service discovery actions; none compile. Studio compilation is reachable
+  only through an explicit Build or “Build and launch project” action. No
+  automatic build hook was found in the startup path.
+- Vapor-managed formatting passed for Vapor, Vapor-GUI, Vapor-Studio, and
+  Vapor-CLI. Managed check passed for Vapor-GUI. Managed tests passed for all
+  four workspaces after one test-fixture omission was corrected. No local
+  deployment, Steam publication, or GUI runtime review was performed.
+- Remaining evidence needed: reproduce the user's observed unsolicited build
+  with the new origin/process/composition tags; inspect whether game stdout is
+  actually emitted by the selected runtime; visually review the IDE menu. The
+  service can now expose the process output when the launched program writes to
+  stdout/stderr, but it does not capture graphical engine logs sent to another
+  logging backend.
