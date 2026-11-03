@@ -1,8 +1,43 @@
 # Vapor Client
 
-Vapor Client is the first-party application source root for Vapor. It assembles
-the Steam-installed Vapor app, SDK, launcher, shell, entrypoint, tools, docs,
-and app/depot payload. It is source, not the Steam installation itself.
+Vapor Client is the source tree for Vapor, the independently installed runtime
+and content manager. Vapor owns its own install, update, repair, uninstall,
+tools, source checkouts, caches, configuration, and state under the user's
+Vapor home. Steam is a source of game products, not Vapor's installation
+authority.
+
+## Product Boundaries
+
+- **Vapor** installs independently from Steam. Local setup has two choices:
+  **Player** (no development toolchain) and **Developer** (the full managed
+  development toolset, including both supported targets; no partial Developer
+  setup). Ecosystem developer authorization is a server-side permission, not a
+  local role.
+- **Loo Cast** is provided by its official Steam depot as one local content
+  artifact containing `App.vapor.toml`, Spacetime Engine, Loo Cast Game, and
+  Loo Cast Packagepack. A small optional Steam locator may open the tools
+  selector in an already installed Vapor; it never bundles or installs Vapor.
+- **Mad Max** is acquired and installed by the user. Vapor treats the local
+  executable and required original runtime files as its Engine source, scripts
+  and mods as the Game layer, and `MadMaxModding` as the Packagepack that
+  prepares the game to accept Vapor content. That Packagepack contains no Mad
+  Max game files.
+- Vapor's servers must not distribute Loo Cast or Mad Max game files. The
+  owning services decide publishability; a local manifest cannot grant itself
+  permission.
+
+This is the approved pre-alpha target, not a claim that migration is complete.
+The current source still has Steam-root packaging, Workshop-era Loo Cast
+metadata, and the old multi-role setup. The standalone home, signed update
+transaction, two-role setup, depot-only Loo Cast products, and Mad Max source
+adapter are being implemented in
+[`docs/superpowers/plans/2026-11-03-vapor-standalone-runtime-and-products.md`](docs/superpowers/plans/2026-11-03-vapor-standalone-runtime-and-products.md).
+
+## Current Source-Tree Operations
+
+The commands below describe the currently checked-in Steam-root workflows.
+They are not the target install or release instructions and will be replaced as
+the standalone migration lands.
 
 Most day-to-day work happens through the installed Vapor Shell. Bootstrap
 installs may start from `bin/vapor`; release app payloads use
@@ -32,7 +67,7 @@ root publish --account ACCOUNT --yes
 
 ## Product Topology
 
-- **Steam installation/app root**: the installed app directory that owns
+- **Current Steam installation/app root**: the installed app directory that owns
   `App.vapor.toml`, `bin/vapor-launch.*`,
   `bin/<target>/vapor-entrypoint[.exe]`, `bin/<target>/vapor[.exe]`,
   optional bootstrap `bin/vapor`, app-local Rust/Cargo, SteamCMD, caches,
@@ -41,8 +76,9 @@ root publish --account ACCOUNT --yes
   the complete Steam app/depot.
 - **Vapor-Registry**: separate registry authority infrastructure. It is not a
   Cargo workspace and not normal content.
-- **Loo-Cast**: first-party custom content workspace. It is normal Workshop
-  content, not app/depot source.
+- **Loo-Cast**: its current local checkout still carries Workshop-era metadata;
+  the approved product model above replaces those first-party uploads with the
+  official Steam depot source.
 
 The current Shell command model is documented in
 [`Vapor-CLI/crates/vapor_cli/docs/commands.md`](Vapor-CLI/crates/vapor_cli/docs/commands.md).

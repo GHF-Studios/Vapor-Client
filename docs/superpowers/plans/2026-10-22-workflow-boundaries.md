@@ -1,5 +1,12 @@
 # Vapor Workflow Boundaries Implementation Plan
 
+> **Status:** Historical plan superseded on 2026-11-03 by
+> [`2026-11-03-vapor-standalone-runtime-and-products-design.md`](../specs/2026-11-03-vapor-standalone-runtime-and-products-design.md)
+> and [`2026-11-03-vapor-standalone-runtime-and-products.md`](2026-11-03-vapor-standalone-runtime-and-products.md).
+> Do not implement the former Player/Composer/Developer role ladder or its
+> persisted-role migration. The current local setup roles are only Player and
+> Developer; this file remains as a historical record of prior work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox syntax.
 
 **Goal:** Separate Player, Composer, and Developer workflows across Vapor while keeping their shared service semantics coherent, separating authored source from usable local content, and preventing long operations from freezing or rejecting unrelated work.

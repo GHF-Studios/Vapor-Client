@@ -1,33 +1,12 @@
 # Workstream — Full-Stack Authoring Superpass
 
-- State: foreground
-- Goal: unify the Vapor Studio launcher, composition management, Workshop,
-  Steam root publishing, in-game IDE, workspace operations, and scripting into
-  one full-stack player/creator pipeline, using Loo-Cast as the proving workspace.
-- Ordered successor: none until the full-stack authoring pipeline reaches a
-  coherent implementation checkpoint; keep this workstream foreground.
+- State: suspended for standalone runtime/product work
+- Goal: unify the Vapor Studio launcher, composition management, Workshop, Steam root publishing, in-game IDE, workspace operations, and scripting into one full-stack player/creator pipeline, using Loo-Cast as the proving workspace.
+- Ordered successor: resume after `standalone-vapor-runtime` reaches a coherent implementation checkpoint.
 - Depends on: owner direction in the current session.
-- Semantic mutation claim: the full authoring path across workspace and content
-  discovery, shared Vapor operations, Workshop lifecycle, in-game IDE and script
-  workbench, Rust-defined content/pack vocabulary, Rhai composition, and app-root
-  tool ownership. Preserve completed Workshop work and integrate it into this goal.
-- Path claims: `Vapor-CLI/**`, `Vapor/crates/**`, `Vapor-GUI/**`,
-  `Vapor-Studio/**`, `Loo-Cast/**` (including
-  `spacetime-engine/src/devtools/script_workbench/**`), `Vapor-Installer/**`,
-  `Vapor-Steam-Entrypoint/**`,
-  `.vapor/launch/**`,
-  `resources/vapor/shell-scripts/**`,
-  `App-Source.vapor.toml`, `README.md`, `AGENTS.md`,
-  `.agents/workstreams/README.md`, `../SuperWorkspace.vapor.toml`,
-  `resources/vapor/tools/**`, `../Vapor-Examples/**`,
-  `.agents/workstreams/open/vapor-studio-launcher-design.md`,
-  `docs/superpowers/specs/2026-10-14-vapor-repository-boundaries-design.md`,
-  `../Vapor-Platform-Server/deploy/scripts/build-vapor-client-docs-bundle.sh`,
-  and this record. Do not claim unrelated local flight changes as part of this
-  workstream. Build/test may run only through Vapor's managed commands at the
-  owning workspace root; no raw Cargo. Deploy, publish, and Steam launch require
-  owner authorization; Steam content and app publishing are authorized here.
-
+- Semantic mutation claim: the full authoring path across workspace and content discovery, shared Vapor operations, Workshop lifecycle, in-game IDE and script workbench, Rust-defined content/pack vocabulary, Rhai composition, and app-root tool ownership. Preserve completed Workshop work and integrate it into this goal.
+- Path claims: `Vapor-GUI/**`, `Vapor-Studio/**`, `Loo-Cast/**` (including `spacetime-engine/src/devtools/script_workbench/**`), `.vapor/launch/**`, `resources/vapor/shell-scripts/**`, `resources/vapor/tools/**` except `resources/vapor/tools/production/app_setup/**` and `resources/vapor/tools/_shared/vapor_tools/app_setup.rs` / `entrypoints.rs`, `../SuperWorkspace.vapor.toml`, `../Vapor-Examples/**`, `.agents/workstreams/open/vapor-studio-launcher-design.md`, `docs/superpowers/specs/2026-10-14-vapor-repository-boundaries-design.md`, `../Vapor-Platform-Server/deploy/scripts/build-vapor-client-docs-bundle.sh`, and this record. `Vapor/**`, `Vapor-CLI/**`, `Vapor-Installer/**`, `Vapor-Steam-Entrypoint/**`, product-root manifests/docs, the shared workstream registry, and the listed shared setup files are transferred to `standalone-vapor-runtime`; no content-authoring changes are included in that transfer.
+- Build/test may run only through Vapor's managed commands at the owning workspace root; no raw Cargo. Deploy, publish, and Steam launch require owner authorization; Steam content and app publishing are authorized here.
 ## Completed
 
 ### 2026-10-20 Studio creator package workflow

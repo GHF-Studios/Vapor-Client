@@ -5,11 +5,25 @@ planning protocol.
 
 ## Product scope orientation
 
-Vapor Client is the application/depot source root. It is not the installed Steam
-application directory and not a normal custom-content workspace. Vapor-Registry
-is separate registry authority infrastructure. Loo-Cast is normal first-party
-custom content and should use the Workshop/content model rather than app/root
-publication paths.
+Vapor Client is the source root for an independently installed Vapor runtime.
+The user's Vapor home owns Vapor binaries, tools, source checkouts, caches,
+configuration, and mutable state; Steam does not own those paths. Official
+Steam products may provide local Vapor content artifacts and a small locator
+that opens the separately installed Vapor, but the locator never bundles or
+installs Vapor.
+
+Loo Cast's official depot is a trusted local source for its first-party
+Engine, Game, and Packagepack products; those products are not community
+Workshop content. Mad Max is different: its licensed executable and original
+game files are detected locally as the Engine source, mods/scripts/content form
+the Game layer, and the MadMaxModding Packagepack prepares the game to accept
+Vapor-managed content without containing Mad Max files. Server-side ecosystem
+authorization is not a local installation role.
+
+The only local setup roles are Player and Developer. Player setup omits
+development tools; Developer setup always installs the complete supported
+toolchain and cannot skip it. This pre-alpha does not preserve the former
+Composer/Ecosystem-Developer local-role model.
 
 User-facing product instructions belong in `README.md` and the Shell docs under
 `Vapor-CLI/crates/vapor_cli/docs/`. Planning docs and this file are agent
