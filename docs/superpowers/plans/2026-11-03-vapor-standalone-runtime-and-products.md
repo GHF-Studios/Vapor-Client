@@ -86,10 +86,10 @@
 
 **Interfaces:** `host_rust_target()` selects the installed toolchain host; `host_runtime_target()` selects the default package ABI. `x86_64-pc-windows-msvc` is the Windows compiler host and `x86_64-pc-windows-gnullvm` is the packaged Windows runtime target.
 
-- [ ] Retain explicit target selection and target-specific build/promotion paths for all runtime targets.
+- [x] Retain explicit target selection and target-specific build/promotion paths for all runtime targets.
 - [ ] Relocate compiler and linker lookup to the sole Vapor home, including Rustup/Cargo homes and LLVM-MinGW.
 - [ ] Copy required Windows runtime DLLs from managed tools into the correct staged package without sourcing them from a stale app-root path.
-- [ ] Ensure selected-workspace deployment cannot select sibling checkout binaries.
+- [x] Ensure selected-workspace deployment cannot select sibling checkout binaries.
 
 ## Task 5: Complete the signed standalone update transaction
 
