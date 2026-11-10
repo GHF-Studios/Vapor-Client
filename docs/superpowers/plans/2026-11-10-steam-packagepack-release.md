@@ -68,6 +68,6 @@
 - [x] Skip Vapor docs generation and app-root runtime asset synchronization only for `Packagepack` releases.
 - [x] Move the Loo Cast `App-Source.vapor.toml` to its source root so its allowlist can reference the Packagepack manifest without escaping the source boundary.
 - [x] Point target includes at the Packagepack executable promoted under the Vapor installation's `bin/<target>` path; allow runtime sidecars only as explicit includes.
-- [x] Move SteamPipe templates to Vapor-installation ownership so external app source roots do not need Vapor tooling files.
+- [x] Embed SteamPipe templates in Vapor's publisher so staging needs neither files in the game checkout nor additional Steam-depot payload.
 - [x] Run a Packagepack staging dry-run: exactly 3 files—shared `Packagepack.vapor.toml`, Linux executable, Windows executable; no Vapor runtime/doc payload.
 - [x] Run all 17 `vapor_client_application` tests and the 5 Packagepack fixture tests; `git diff --check` passes in the Client, Vapor, and Loo-Cast checkouts.
