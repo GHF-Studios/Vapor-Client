@@ -1,15 +1,18 @@
 schema = 1
 
 [root]
-name = "vapor-client"
+name = "loo-cast"
 organization = "ghf-studios"
 version = "0.5.0"
-repository = "https://github.com/GHF-Studios/Vapor-Client"
+repository = "https://github.com/GHF-Studios/Loo-Cast"
 
 [root.steam]
 app-id = 2122620
 development-branch = "vapor-dev"
 
+# Loo-Cast's Steam app owns these first-party product files. The products are
+# staged from the locally installed Vapor content tree into Steam depots; they
+# are not Workshop dependencies or Vapor Artifact Server downloads at runtime.
 [root.steam.depots.common]
 id = 2122621
 
@@ -20,50 +23,47 @@ to = "App.vapor.toml"
 required = true
 
 [[root.steam.depots.common.include]]
-root = "installation"
-from = "metadata/toolchain.toml"
-to = "metadata/toolchain.toml"
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/spacetime-engine"
+to = "content/installed/ghf-studios/loo-cast/spacetime-engine"
 required = true
+exclude = ["lib"]
 
 [[root.steam.depots.common.include]]
-root = "installation"
-from = "docs"
-to = "docs"
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/loo-cast-game"
+to = "content/installed/ghf-studios/loo-cast/loo-cast-game"
 required = true
+exclude = ["lib"]
 
 [[root.steam.depots.common.include]]
-root = "source"
-from = "resources/vapor/vapor-scripts"
-to = "resources/vapor/vapor-scripts"
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack"
+to = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack"
 required = true
-
-[[root.steam.depots.common.include]]
-root = "source"
-from = "resources/vapor/tools"
-to = "resources/vapor/tools"
-exclude = ["target"]
-required = true
-
-[[root.steam.depots.common.include]]
-root = "source"
-from = "Vapor-Examples"
-to = "examples/vapor-examples"
-exclude = [".git", "target"]
-required = true
+exclude = ["bin"]
 
 [root.steam.depots.linux]
 id = 2122622
 
 [[root.steam.depots.linux.include]]
-root = "source"
-from = "resources/vapor/shell-scripts/linux/vapor-launch.sh"
-to = "bin/vapor-launch.sh"
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/spacetime-engine/lib/x86_64-unknown-linux-gnu"
+to = "content/installed/ghf-studios/loo-cast/spacetime-engine/lib/x86_64-unknown-linux-gnu"
+target = "x86_64-unknown-linux-gnu"
 required = true
 
 [[root.steam.depots.linux.include]]
-root = "installation"
-from = "bin/x86_64-unknown-linux-gnu"
-to = "bin/x86_64-unknown-linux-gnu"
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/loo-cast-game/lib/x86_64-unknown-linux-gnu"
+to = "content/installed/ghf-studios/loo-cast/loo-cast-game/lib/x86_64-unknown-linux-gnu"
+target = "x86_64-unknown-linux-gnu"
+required = true
+
+[[root.steam.depots.linux.include]]
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-unknown-linux-gnu"
+to = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-unknown-linux-gnu"
 target = "x86_64-unknown-linux-gnu"
 required = true
 
@@ -71,22 +71,23 @@ required = true
 id = 2122623
 
 [[root.steam.depots.windows.include]]
-root = "source"
-from = "resources/vapor/shell-scripts/windows/vapor-launch.cmd"
-to = "bin/vapor-launch.cmd"
-required = true
-
-[[root.steam.depots.windows.include]]
-root = "installation"
-from = "bin/x86_64-pc-windows-gnullvm"
-to = "bin/x86_64-pc-windows-gnullvm"
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/spacetime-engine/lib/x86_64-pc-windows-gnullvm"
+to = "content/installed/ghf-studios/loo-cast/spacetime-engine/lib/x86_64-pc-windows-gnullvm"
 target = "x86_64-pc-windows-gnullvm"
 required = true
 
 [[root.steam.depots.windows.include]]
-root = "installation"
-from = "bin/x86_64-pc-windows-gnullvm/libunwind.dll"
-to = "bin/x86_64-pc-windows-gnullvm/libunwind.dll"
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/loo-cast-game/lib/x86_64-pc-windows-gnullvm"
+to = "content/installed/ghf-studios/loo-cast/loo-cast-game/lib/x86_64-pc-windows-gnullvm"
+target = "x86_64-pc-windows-gnullvm"
+required = true
+
+[[root.steam.depots.windows.include]]
+root = "product"
+from = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-pc-windows-gnullvm"
+to = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-pc-windows-gnullvm"
 target = "x86_64-pc-windows-gnullvm"
 required = true
 

@@ -7,10 +7,10 @@ id = "ghf-studios/vapor"
 endpoint = "https://vapor.ghf-studios.site/api/registry"
 
 [root]
-name = "vapor-client"
+name = "loo-cast"
 organization = "ghf-studios"
 version = "0.5.0"
-repository = "https://github.com/GHF-Studios/Vapor-Client"
+repository = "https://github.com/GHF-Studios/Loo-Cast"
 
 [root.steam]
 app-id = 2122620

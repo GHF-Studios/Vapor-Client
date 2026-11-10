@@ -5,15 +5,19 @@ work. The governing behavior lives in [`AGENTS.md`](../../AGENTS.md).
 
 ## Ordered work
 
-1. `workshop-content-superpass` (Full-Stack Authoring) — foreground
-2. `source-atomization-raw-info-dump` — suspended
-3. corpus atomization under the unchanged global gate
-4. `vapor-shell-exploration` — suspended
+1. `madmax-vapor-ecosystem` — foreground
+2. `workshop-content-superpass` (Full-Stack Authoring) — suspended after owner
+   pivot; resume only at an explicit checkpoint
+3. `source-atomization-raw-info-dump` — suspended
+4. corpus atomization under the unchanged global gate
+5. `vapor-shell-exploration` — suspended
 
 ## Open workstreams
 
+- [`madmax-vapor-ecosystem`](open/madmax-vapor-ecosystem.md)
+  — standalone Mad Max/Vapor integration, foreground.
 - [`workshop-content-superpass`](open/workshop-content-superpass.md)
-  — Full-Stack Authoring, foreground.
+  — Full-Stack Authoring, suspended.
 - [`source-atomization-raw-info-dump`](open/source-atomization-raw-info-dump.md)
   — suspended.
 - [`planning-assertion-representation`](open/planning-assertion-representation.md)

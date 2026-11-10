@@ -1,10 +1,10 @@
 schema = 1
 
 [root]
-name = "vapor-client"
+name = "loo-cast"
 organization = "ghf-studios"
 version = "0.5.0"
-repository = "https://github.com/GHF-Studios/Vapor-Client"
+repository = "https://github.com/GHF-Studios/Loo-Cast"
 
 [root.steam]
 app-id = 2122620
@@ -13,17 +13,20 @@ app-id = 2122620
 id = "ghf-studios/loo-cast/spacetime-engine"
 kind = "engine"
 app-id = 2122620
-workshop-id = "3762162251"
+source = "steam-depot"
+path = "content/installed/ghf-studios/loo-cast/spacetime-engine"
 
 [[root.content]]
 id = "ghf-studios/loo-cast/loo-cast-game"
 kind = "game"
 app-id = 2122620
-workshop-id = "3762162407"
+source = "steam-depot"
+path = "content/installed/ghf-studios/loo-cast/loo-cast-game"
 
 [[root.content]]
 id = "ghf-studios/loo-cast/loo-cast-packagepack"
 kind = "packagepack"
 app-id = 2122620
-workshop-id = "3762162548"
+source = "steam-depot"
+path = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack"
 default-launch = "default"

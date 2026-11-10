@@ -1,32 +1,38 @@
 # Workstream — Full-Stack Authoring Superpass
 
-- State: foreground
+- State: suspended
 - Goal: unify the Vapor Studio launcher, composition management, Workshop,
   Steam root publishing, in-game IDE, workspace operations, and scripting into
   one full-stack player/creator pipeline, using Loo-Cast as the proving workspace.
-- Ordered successor: none until the full-stack authoring pipeline reaches a
-  coherent implementation checkpoint; keep this workstream foreground.
-- Depends on: owner direction in the current session.
+- Ordered successor: `madmax-vapor-ecosystem` (foreground); resume this workstream
+  only after the standalone Mad Max integration reaches a user-approved
+  checkpoint or the owner explicitly returns to authoring work.
+- Depends on: owner direction in the current session. Suspended by the owner's
+  approved standalone Mad Max/Vapor scope, which excludes Loo-Cast from that
+  product's dependency and install graph.
 - Semantic mutation claim: the full authoring path across workspace and content
   discovery, shared Vapor operations, Workshop lifecycle, in-game IDE and script
   workbench, Rust-defined content/pack vocabulary, Rhai composition, and app-root
   tool ownership. Preserve completed Workshop work and integrate it into this goal.
-- Path claims: `Vapor-CLI/**`, `Vapor/crates/**`, `Vapor-GUI/**`,
-  `Vapor-Studio/**`, `Loo-Cast/**` (including
-  `spacetime-engine/src/devtools/script_workbench/**`), `Vapor-Installer/**`,
+- Path claims: `Vapor-CLI/**`, `Vapor-Studio/**`, `Loo-Cast/**` (including
+  `spacetime-engine/src/devtools/script_workbench/**`),
   `Vapor-Steam-Entrypoint/**`,
   `.vapor/launch/**`,
   `resources/vapor/shell-scripts/**`,
   `App-Source.vapor.toml`, `README.md`, `AGENTS.md`,
-  `.agents/workstreams/README.md`, `../SuperWorkspace.vapor.toml`,
+  `../SuperWorkspace.vapor.toml`,
   `resources/vapor/tools/**`, `../Vapor-Examples/**`,
   `.agents/workstreams/open/vapor-studio-launcher-design.md`,
   `docs/superpowers/specs/2026-10-14-vapor-repository-boundaries-design.md`,
-  `../Vapor-Platform-Server/deploy/scripts/build-vapor-client-docs-bundle.sh`,
   and this record. Do not claim unrelated local flight changes as part of this
   workstream. Build/test may run only through Vapor's managed commands at the
   owning workspace root; no raw Cargo. Deploy, publish, and Steam launch require
   owner authorization; Steam content and app publishing are authorized here.
+
+The standalone Mad Max workstream now owns `Vapor/crates/**`, `Vapor-GUI/**`,
+`Vapor-Installer/**`, and this repository's `.agents/workstreams/README.md` plus
+its new workstream record. Those claims are released from this suspended
+workstream until it resumes; the remaining claims above stay with this record.
 
 ## Completed
 
