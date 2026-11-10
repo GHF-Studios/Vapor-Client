@@ -1,17 +1,15 @@
 # Workstream — Full-Stack Authoring Superpass
 
-- State: foreground
+- State: suspended
 - Goal: unify the Vapor Studio launcher, composition management, Workshop,
   Steam root publishing, in-game IDE, workspace operations, and scripting into
   one full-stack player/creator pipeline, using Loo-Cast as the proving workspace.
-- Ordered successor: none until the full-stack authoring pipeline reaches a
-  coherent implementation checkpoint; keep this workstream foreground.
+- Ordered successor: resume after `vapor-single-home` reaches a coherent
+  migration checkpoint.
 - Depends on: owner direction in the current session.
-- Semantic mutation claim: the full authoring path across workspace and content
-  discovery, shared Vapor operations, Workshop lifecycle, in-game IDE and script
-  workbench, Rust-defined content/pack vocabulary, Rhai composition, and app-root
-  tool ownership. Preserve completed Workshop work and integrate it into this goal.
-- Path claims: `Vapor-CLI/**`, `Vapor/crates/**`, `Vapor-GUI/**`,
+- Semantic mutation claim: suspended. Preserve completed Workshop and authoring
+  work; do not mutate paths owned by the foreground standalone-home workstream.
+- Historical path scope (not an active write claim): `Vapor-CLI/**`, `Vapor/crates/**`, `Vapor-GUI/**`,
   `Vapor-Studio/**`, `Loo-Cast/**` (including
   `spacetime-engine/src/devtools/script_workbench/**`), `Vapor-Installer/**`,
   `Vapor-Steam-Entrypoint/**`,

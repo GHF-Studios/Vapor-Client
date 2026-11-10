@@ -82,13 +82,12 @@ fn teardown_development(app_root: &Path) -> Result<(), String> {
     println!("Teardown Development");
     println!();
     for relative in [
-        "rustup",
-        "rustup-home",
-        "cargo-home",
+        "tools/rustup",
+        "tools/cargo",
         "tools/zig",
         "tools/llvm-mingw",
         "tools/cross",
-        ".vapor/state/installer/dev-env.toml",
+        "data/state/installer/dev-env.toml",
     ] {
         let path = app_root.join(relative);
         ensure_contained(app_root, &path)?;
@@ -109,11 +108,11 @@ fn install_steamcmd(app_root: &Path) -> Result<(), String> {
     let target = app_root.join("tools/steamcmd");
     reset_dir(app_root, &target)?;
     if cfg!(target_os = "windows") {
-        let archive = app_root.join(".vapor/downloads/steamcmd.zip");
+        let archive = app_root.join("cache/downloads/steamcmd.zip");
         download(STEAMCMD_WINDOWS, &archive)?;
         extract_zip(&archive, &target)?;
     } else {
-        let archive = app_root.join(".vapor/downloads/steamcmd_linux.tar.gz");
+        let archive = app_root.join("cache/downloads/steamcmd_linux.tar.gz");
         download(STEAMCMD_LINUX, &archive)?;
         run(Command::new("tar")
             .arg("-xzf")
@@ -127,7 +126,7 @@ fn install_steamcmd(app_root: &Path) -> Result<(), String> {
 fn install_rust(app_root: &Path) -> Result<(), String> {
     println!("installing app-local Rust/Cargo {RUST_TOOLCHAIN}");
     let rustup_init = app_root
-        .join(".vapor/downloads")
+        .join("cache/downloads")
         .join(executable("rustup-init"));
     download(rustup_init_url()?, &rustup_init)?;
     make_executable(&rustup_init)?;
@@ -142,10 +141,10 @@ fn install_rust(app_root: &Path) -> Result<(), String> {
             "--default-host",
             host_rust_target()?,
         ])
-        .env("RUSTUP_HOME", app_root.join("rustup-home"))
-        .env("CARGO_HOME", app_root.join("cargo-home")))?;
-    let source = app_root.join("cargo-home/bin").join(executable("rustup"));
-    let target = app_root.join("rustup/bin").join(executable("rustup"));
+        .env("RUSTUP_HOME", app_root.join("tools/rustup/home"))
+        .env("CARGO_HOME", app_root.join("tools/cargo/home")))?;
+    let source = app_root.join("tools/cargo/home/bin").join(executable("rustup"));
+    let target = app_root.join("tools/rustup/bin").join(executable("rustup"));
     if let Some(parent) = target.parent() {
         fs::create_dir_all(parent).map_err(io("create rustup bin directory", parent))?;
     }
@@ -155,7 +154,7 @@ fn install_rust(app_root: &Path) -> Result<(), String> {
 }
 
 fn install_rust_targets_and_components(app_root: &Path) -> Result<(), String> {
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+    let rustup = app_root.join("tools/rustup/bin").join(executable("rustup"));
     if !is_executable(&rustup) {
         return Err(format!("missing app-local rustup: {}", rustup.display()));
     }
@@ -163,15 +162,15 @@ fn install_rust_targets_and_components(app_root: &Path) -> Result<(), String> {
         println!("installing Rust target {target}");
         run(Command::new(&rustup)
             .args(["target", "add", target])
-            .env("RUSTUP_HOME", app_root.join("rustup-home"))
-            .env("CARGO_HOME", app_root.join("cargo-home")))?;
+            .env("RUSTUP_HOME", app_root.join("tools/rustup/home"))
+            .env("CARGO_HOME", app_root.join("tools/cargo/home")))?;
     }
     for component in RUST_COMPONENTS {
         println!("installing Rust component {component}");
         run(Command::new(&rustup)
             .args(["component", "add", component])
-            .env("RUSTUP_HOME", app_root.join("rustup-home"))
-            .env("CARGO_HOME", app_root.join("cargo-home")))?;
+            .env("RUSTUP_HOME", app_root.join("tools/rustup/home"))
+            .env("CARGO_HOME", app_root.join("tools/cargo/home")))?;
     }
     Ok(())
 }
@@ -182,13 +181,13 @@ fn install_zig(app_root: &Path) -> Result<(), String> {
     reset_dir(app_root, &target)?;
     if cfg!(target_os = "windows") {
         let archive = app_root
-            .join(".vapor/downloads")
+            .join("cache/downloads")
             .join(format!("zig-x86_64-windows-{ZIG_VERSION}.zip"));
         download(ZIG_X86_64_WINDOWS, &archive)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
         let archive = app_root
-            .join(".vapor/downloads")
+            .join("cache/downloads")
             .join(format!("zig-x86_64-linux-{ZIG_VERSION}.tar.xz"));
         download(ZIG_X86_64_LINUX, &archive)?;
         extract_tar_xz_strip(&archive, &target)?;
@@ -202,13 +201,13 @@ fn install_llvm_mingw(app_root: &Path) -> Result<(), String> {
     reset_dir(app_root, &target)?;
     if cfg!(target_os = "windows") {
         let archive = app_root
-            .join(".vapor/downloads")
+            .join("cache/downloads")
             .join(format!("llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-x86_64.zip"));
         download(LLVM_MINGW_X86_64_WINDOWS, &archive)?;
         verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
-        let archive = app_root.join(".vapor/downloads").join(format!(
+        let archive = app_root.join("cache/downloads").join(format!(
             "llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
         ));
         download(LLVM_MINGW_X86_64_LINUX, &archive)?;
@@ -275,7 +274,7 @@ fn steamcmd_status(app_root: &Path) -> ComponentStatus {
 }
 
 fn rust_status(app_root: &Path) -> ComponentStatus {
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+    let rustup = app_root.join("tools/rustup/bin").join(executable("rustup"));
     let required = [
         "cargo",
         "rustc",
@@ -293,7 +292,7 @@ fn rust_status(app_root: &Path) -> ComponentStatus {
                 .collect::<Vec<_>>();
             (bin, missing)
         }
-        Err(error) => (app_root.join("rustup-home/toolchains"), vec![error]),
+        Err(error) => (app_root.join("tools/rustup/home/toolchains"), vec![error]),
     };
     if !is_executable(&rustup) {
         missing.push(format!("rustup at {}", rustup.display()));
@@ -307,7 +306,7 @@ fn rust_status(app_root: &Path) -> ComponentStatus {
 }
 
 fn rust_toolchain_installed(app_root: &Path) -> bool {
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+    let rustup = app_root.join("tools/rustup/bin").join(executable("rustup"));
     if !is_executable(&rustup) {
         return false;
     }

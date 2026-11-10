@@ -66,11 +66,12 @@ fn resolve_app_root(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
     if let Some(path) = candidate_app_root_from_exe() {
         candidates.push(("running executable".to_owned(), path));
     }
-    for path in steam_app_manifest_root_candidates() {
-        candidates.push(("Steam app manifest".to_owned(), path));
-    }
-    for path in common_steam_app_root_candidates() {
-        candidates.push(("common Steam library".to_owned(), path));
+    if let Some(home) = env::var_os("USERPROFILE")
+        .or_else(|| env::var_os("HOME"))
+        .map(PathBuf::from)
+        .map(|home| home.join("Vapor"))
+    {
+        candidates.push(("default Vapor Home".to_owned(), home));
     }
     if let Ok(current) = env::current_dir() {
         candidates.push(("current directory".to_owned(), current.clone()));
@@ -99,7 +100,7 @@ fn resolve_app_root(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
     };
 
     Err(format!(
-        "could not resolve Vapor app root\nchecked:\n  - {}\npass --app-root /path/to/app or run post_install.rs once",
+        "could not resolve Vapor Home\nchecked:\n  - {}\npass --app-root /path/to/Vapor or set VAPOR_HOME",
         checked
     ))
 }
@@ -352,11 +353,13 @@ fn require_app_root(path: &Path) -> Result<(), String> {
     if !marker.is_file() {
         return Err(format!("missing {APP_MANIFEST}"));
     }
-    let source = fs::read_to_string(&marker).map_err(io("read app manifest", &marker))?;
-    if source.lines().any(|line| line.trim() == "[root]") {
+    let source = fs::read_to_string(&marker).map_err(io("read Vapor Home marker", &marker))?;
+    if source.lines().any(|line| line.trim() == "[vapor]")
+        && source.lines().any(|line| line.trim() == "schema = 1")
+    {
         Ok(())
     } else {
-        Err(format!("{} does not declare [root]", marker.display()))
+        Err(format!("{} is not a valid Vapor Home marker", marker.display()))
     }
 }
 
@@ -545,7 +548,7 @@ fn app_root_tool_path(app_root: Option<&Path>, relative: &str) -> PathBuf {
 
 fn expected_rust_bin(app_root: &Path) -> Result<PathBuf, String> {
     Ok(app_root
-        .join("rustup-home/toolchains")
+        .join("tools/rustup/home/toolchains")
         .join(format!("{RUST_TOOLCHAIN}-{}", host_rust_target()?))
         .join("bin"))
 }
@@ -580,7 +583,7 @@ fn host_rust_target() -> Result<&'static str, String> {
     match (env::consts::ARCH, env::consts::OS) {
         ("x86_64", "linux") => Ok("x86_64-unknown-linux-gnu"),
         ("aarch64", "linux") => Ok("aarch64-unknown-linux-gnu"),
-        ("x86_64", "windows") => Ok("x86_64-pc-windows-gnu"),
+        ("x86_64", "windows") => Ok("x86_64-pc-windows-msvc"),
         _ => Err(format!(
             "Rust host target is not configured for {}-{}",
             env::consts::ARCH,

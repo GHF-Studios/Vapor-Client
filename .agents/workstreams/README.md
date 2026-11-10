@@ -5,15 +5,18 @@ work. The governing behavior lives in [`AGENTS.md`](../../AGENTS.md).
 
 ## Ordered work
 
-1. `workshop-content-superpass` (Full-Stack Authoring) — foreground
-2. `source-atomization-raw-info-dump` — suspended
-3. corpus atomization under the unchanged global gate
-4. `vapor-shell-exploration` — suspended
+1. `vapor-single-home` (Standalone Vapor and storage consolidation) — foreground
+2. `workshop-content-superpass` (Full-Stack Authoring) — suspended
+3. `source-atomization-raw-info-dump` — suspended
+4. corpus atomization under the unchanged global gate
+5. `vapor-shell-exploration` — suspended
 
 ## Open workstreams
 
+- [`vapor-single-home`](open/vapor-single-home.md)
+  — Standalone Vapor and storage consolidation, foreground.
 - [`workshop-content-superpass`](open/workshop-content-superpass.md)
-  — Full-Stack Authoring, foreground.
+  — Full-Stack Authoring, suspended.
 - [`source-atomization-raw-info-dump`](open/source-atomization-raw-info-dump.md)
   — suspended.
 - [`planning-assertion-representation`](open/planning-assertion-representation.md)

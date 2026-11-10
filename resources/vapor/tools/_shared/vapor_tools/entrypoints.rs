@@ -232,15 +232,15 @@ pub fn ide_run_main() -> Result<(), String> {
     let entrypoint = app_bin_dir.join(executable("vapor-entrypoint"));
 
     set_env_var(APP_ROOT_ENV, &app_root);
-    set_env_var("RUSTUP_HOME", app_root.join("rustup-home"));
-    set_env_var("CARGO_HOME", app_root.join("cargo-home"));
+    set_env_var("RUSTUP_HOME", app_root.join("tools/rustup/home"));
+    set_env_var("CARGO_HOME", app_root.join("tools/cargo/home"));
     prepend_path(&[
         app_bin_dir.clone(),
         app_root
-            .join("rustup-home/toolchains")
+            .join("tools/rustup/home/toolchains")
             .join(format!("{RUST_TOOLCHAIN}-{host_target}"))
             .join("bin"),
-        app_root.join("rustup/bin"),
+        app_root.join("tools/rustup/bin"),
         app_root.join("tools/zig"),
         app_root.join("tools/llvm-mingw/bin"),
     ]);
@@ -495,7 +495,7 @@ pub fn patch_rustrover_main() -> Result<(), String> {
     let rust_bin = rust.path;
     let cargo = rust_bin.join(executable("cargo"));
     let rustc = rust_bin.join(executable("rustc"));
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+    let rustup = app_root.join("tools/rustup/bin").join(executable("rustup"));
     let stdlib = rust_stdlib_source(&rustc)?;
     let cargo_projects = discover_cargo_project_registrations(&super_root)?;
     let run_configurations = rustrover_run_configurations();

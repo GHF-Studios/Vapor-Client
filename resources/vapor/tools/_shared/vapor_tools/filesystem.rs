@@ -48,7 +48,7 @@ fn remove_empty_dir(root: &Path, path: &Path) -> Result<(), String> {
 
 fn write_receipt(app_root: &Path, name: &str, state: &str) -> Result<(), String> {
     let path = app_root
-        .join(".vapor/state/installer")
+        .join("data/state/installer")
         .join(format!("{name}.toml"));
     let body = format!(
         "schema = 1\nstate = \"{state}\"\ntool = \"resources/vapor/tools/production/app_setup/{name}\"\n"

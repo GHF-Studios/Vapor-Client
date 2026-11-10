@@ -35,7 +35,7 @@ fn clone_source(sources_root: &Path, source: SourcePreset) -> Result<(), String>
             source.branch,
             source.remote,
         ])
-        .arg(&target)
+        .arg(git_worktree_path(&target))
         .status()
         .map_err(|error| format!("failed to run git clone: {error}"))?;
     if status.success() {
@@ -46,6 +46,27 @@ fn clone_source(sources_root: &Path, source: SourcePreset) -> Result<(), String>
             source.name
         ))
     }
+}
+
+fn git_worktree_path(path: &Path) -> PathBuf {
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+
+        let wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+        let extended_unc = r"\\?\UNC\".encode_utf16().collect::<Vec<_>>();
+        if wide.starts_with(&extended_unc) {
+            let mut compatible = r"\\".encode_utf16().collect::<Vec<_>>();
+            compatible.extend_from_slice(&wide[extended_unc.len()..]);
+            return PathBuf::from(std::ffi::OsString::from_wide(&compatible));
+        }
+        let extended = r"\\?\".encode_utf16().collect::<Vec<_>>();
+        if wide.starts_with(&extended) {
+            return PathBuf::from(std::ffi::OsString::from_wide(&wide[extended.len()..]));
+        }
+    }
+
+    path.to_path_buf()
 }
 
 fn record_source_clone(

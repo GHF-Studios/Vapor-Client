@@ -7,9 +7,9 @@ use std::{
     process::{Command, Stdio},
 };
 
-pub const APP_ROOT_ENV: &str = "LOO_CAST_APP_ROOT";
+pub const APP_ROOT_ENV: &str = "VAPOR_HOME";
 pub const SUPER_MANIFEST: &str = "Superworkspace.vapor.toml";
-pub const APP_MANIFEST: &str = "App.vapor.toml";
+pub const APP_MANIFEST: &str = "Vapor-Home.toml";
 pub const APP_SOURCE_MANIFEST: &str = "Vapor-Client.vapor.toml";
 pub const STEAM_APP_ID: &str = "2122620";
 pub const STEAM_APP_DIR_NAME: &str = "Loo Cast";
@@ -40,12 +40,12 @@ const LLVM_MINGW_X86_64_WINDOWS_SHA256: &str =
 const RUST_TARGETS: &[&str] = &["x86_64-unknown-linux-gnu", "x86_64-pc-windows-gnullvm"];
 const RUST_COMPONENTS: &[&str] = &["rustfmt", "clippy", "rust-src", "rust-analyzer"];
 const PLAYER_DIRS: &[&str] = &[
-    ".vapor/state",
-    ".vapor/state/installer",
-    ".vapor/logs",
-    ".vapor/diagnostics/runs",
-    ".vapor/downloads",
-    ".vapor/extract",
+    "data/state",
+    "data/state/installer",
+    "data/logs",
+    "data/diagnostics/runs",
+    "cache/downloads",
+    "cache/extract",
     "content/cache/packages",
     "content/installed",
     "content/workshop/downloads",
@@ -55,19 +55,19 @@ const PLAYER_DIRS: &[&str] = &[
 const PLAYER_TEARDOWN_PATHS: &[&str] = &[
     "tools/git",
     "tools/steamcmd",
-    ".vapor/registry",
-    ".vapor/downloads",
-    ".vapor/extract",
-    ".vapor/state",
-    ".vapor/diagnostics",
-    ".vapor/logs",
+    "data/registry",
+    "cache/downloads",
+    "cache/extract",
+    "data/state",
+    "data/diagnostics",
+    "data/logs",
     "content/cache",
     "content/installed",
     "content/workshop/downloads",
     "output",
 ];
 
-const PLAYER_EMPTY_PARENT_DIRS: &[&str] = &["content/workshop", "content", "tools", ".vapor"];
+const PLAYER_EMPTY_PARENT_DIRS: &[&str] = &["content/workshop", "content", "tools", "data"];
 
 #[derive(Debug, Clone)]
 struct ComponentStatus {
