@@ -53,7 +53,24 @@
   marked standalone Vapor Home, routes Play and the tools selector there, shows
   the official download site if Vapor is absent, and writes no Vapor state to
   Steam. See `docs/superpowers/specs/2026-11-10-steam-entrypoint-home-boundary.md`.
-- Verification: initial filesystem inventory only. No migration or duplicate
-  deletion has run. The requested old Platform Server `target` removal was
-  blocked by automatic review; no files were deleted. The Cleanup install build
-  target remains available under the temporary candidate root.
+- Steam locator implementation (2026-11-10): the Steam Entrypoint source now
+  resolves Vapor Home independently, launches Vapor surfaces from
+  `Vapor Home/bin/<target>`, shows an actionable missing-install message, and
+  logs only to `Vapor Home/data/logs`. The Loo Cast source allowlist and Vapor
+  Packagepack smoke contract now include the matching locator. Windows and
+  Linux locators were built with Vapor Home's managed toolchain, promoted into
+  `Vapor Home/bin`, and the Windows locator was copied from that installed
+  location to the Steam launch path. No Steam launch option targets Cargo
+  output. Source commits pushed: Entrypoint `54e8f2d`, Vapor core/provider
+  `fec1480` and `d6c7af4`, Loo Cast `165d3c8`, Client docs/gitlinks `0c89ff1`.
+- Local deployment blocker: `vapor client deploy local` now discovers the
+  sibling first-party workspaces within the selected Vapor-Client checkout,
+  but full promotion still fails while Cargo compiles `ring` for the Windows
+  MSVC target (`curve25519.c` is rejected by `cl.exe`). The Steam locator itself
+  is already promoted; do not point Steam at a target directory. Repair the
+  general deployment/toolchain environment separately before claiming the
+  entire Vapor runtime has been freshly redeployed.
+- Verification: both locator targets compiled, were copied into the canonical
+  Vapor Home target directories, and the Windows copy matches the Steam launch
+  path byte-for-byte. Full `vapor client deploy local` remains blocked by the
+  MSVC `ring` build error above. No test suite or Steam depot upload was run.
