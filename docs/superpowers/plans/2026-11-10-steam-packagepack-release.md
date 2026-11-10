@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Let Vapor stage and validate the Loo Cast Steam app as one Packagepack product per platform, with only its shared Packagepack manifest and explicitly allowed runtime files.
+**Goal:** Let Vapor stage and validate the Loo Cast Steam app as one Packagepack product per platform, with its shared manifest, Packagepack executable, tiny Steam locator, and explicitly allowed runtime files.
 
 **Architecture:** Add a required product kind to `root.steam`; retain the existing Vapor-runtime smoke contract and add a Packagepack contract. Packagepack app releases skip Vapor-runtime docs and app-root asset synchronization, while continuing to use the current review, fingerprint, depot, and SteamPipe pipeline.
 
@@ -13,14 +13,17 @@
 ## Global Constraints
 
 - Common depot contains `Packagepack.vapor.toml` only.
-- Each platform depot contains one logical Packagepack executable and may contain only explicitly allowlisted required runtime sidecars.
+- Each platform depot contains one logical Packagepack executable, one
+  target-matched `vapor-entrypoint` locator, and explicitly allowlisted runtime
+  sidecars only.
 - Vapor runtime files, `App.vapor.toml`, docs, and the source manifest are excluded from the Packagepack payload.
 - Do not upload to Steam during implementation or local validation.
 
 ## Review Focus
 
 - Missing or unknown product kind fails closed.
-- Packagepack payload missing its common identity or target executable is rejected.
+- Packagepack payload missing its common identity, target executable, or target
+  locator is rejected.
 - A second executable or unrelated file in a Packagepack depot is rejected; required `.dll`/`.so` sidecars remain allowed.
 - Vapor-runtime smoke and staging behavior is unchanged.
 - Packagepack release staging does not build Vapor documentation or synchronize Vapor app assets.
@@ -69,5 +72,7 @@
 - [x] Move the Loo Cast `App-Source.vapor.toml` to its source root so its allowlist can reference the Packagepack manifest without escaping the source boundary.
 - [x] Point target includes at the Packagepack executable promoted under the Vapor installation's `bin/<target>` path; allow runtime sidecars only as explicit includes.
 - [x] Embed SteamPipe templates in Vapor's publisher so staging needs neither files in the game checkout nor additional Steam-depot payload.
-- [x] Run a Packagepack staging dry-run: exactly 3 files—shared `Packagepack.vapor.toml`, Linux executable, Windows executable; no Vapor runtime/doc payload.
+- [ ] Run a Packagepack staging dry-run: shared `Packagepack.vapor.toml`, one
+  Packagepack executable and one Steam locator per target, plus only explicitly
+  allowed runtime sidecars; no Vapor runtime/doc payload.
 - [x] Run all 17 `vapor_client_application` tests and the 5 Packagepack fixture tests; `git diff --check` passes in the Client, Vapor, and Loo-Cast checkouts.

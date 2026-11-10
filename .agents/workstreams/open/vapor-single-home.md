@@ -33,6 +33,26 @@
   writers; preview and migrate Steam-root directories; compare and consolidate
   source/toolchain/cache duplicates; update docs; build supported targets and
   inspect the final Steam Packagepack staging inventory.
+- Current focus (2026-11-10): repair the Windows installer PATH registration,
+  replace its four-role/tab-heavy flow with the agreed Player/Developer
+  lifecycle, and provide a truthful full-erasure path for a clean rebuild.
+  Full erasure is explicitly authorized to include Vapor content and settings;
+  preserve the separate Steam Packagepack/game payload, unrelated user tools,
+  and the USB recovery copy. Do not erase checkouts until their unique changes
+  are committed/pushed or backed up.
+- Evidence: the Windows installer passes root/bin values after PowerShell's
+  `-Command` script text while the script expects `$args`; a local PowerShell
+  reproduction parsed those values as command arguments, and the Windows user
+  PATH currently lacks the Vapor binary directory. The UI still exposes the
+  retired Composer/Content Developer/Ecosystem Developer role set.
+- Steam entrypoint finding (2026-11-10): the Steam locator currently treats its
+  Steam app root as Vapor Home, looks for the CLI/service/GUI/receipt beside
+  itself, forces child `VAPOR_HOME` to that root, and logs under that root.
+  This is why it fails after the standalone move and recreates Vapor folders
+  inside Steam. The agreed repair is a tiny Steam locator that resolves the
+  marked standalone Vapor Home, routes Play and the tools selector there, shows
+  the official download site if Vapor is absent, and writes no Vapor state to
+  Steam. See `docs/superpowers/specs/2026-11-10-steam-entrypoint-home-boundary.md`.
 - Verification: initial filesystem inventory only. No migration or duplicate
   deletion has run. The requested old Platform Server `target` removal was
   blocked by automatic review; no files were deleted. The Cleanup install build

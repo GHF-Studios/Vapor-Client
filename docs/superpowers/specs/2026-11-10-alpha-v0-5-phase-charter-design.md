@@ -34,6 +34,11 @@ tracker or replacing GitHub's ownership and dependency records.
   profiles (`dev`, `test`, `release`), the two Vapor runtime targets, and
   operation-scoped native elevation rather than a persistent privileged
   service. Those decisions remain inputs, subject to current source evidence.
+- Steam remains a Packagepack mount, never Vapor Home. Its only Vapor-owned
+  payload is a small target-specific Steam locator; installed Vapor binaries,
+  logs, settings, tools, caches, and content stay in the canonical user Vapor
+  Home. The locator must find that home, route Steam Play and the tool selector,
+  and show the official download location when Vapor is absent.
 
 ## Phase objective
 

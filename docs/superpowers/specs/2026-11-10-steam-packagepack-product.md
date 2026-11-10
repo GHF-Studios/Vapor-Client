@@ -9,12 +9,15 @@ Vapor remains an independently installed runtime and authoring tool.
 ## Steam payload contract
 
 - The common depot contains `Packagepack.vapor.toml` only.
-- Each platform depot contains the Packagepack executable for that platform.
+- Each platform depot contains the Packagepack executable and its small
+  `vapor-entrypoint[.exe]` Steam locator for that platform.
 - A platform depot may also contain explicitly allowlisted runtime libraries
   required by that executable, such as Windows DLLs. These are runtime
   sidecars of the same product, not additional products.
-- The Steam payload does not contain `App.vapor.toml`, a Vapor launcher or
-  runtime, docs, tools, source checkouts, build caches, or writable state.
+- The Steam payload does not contain `App.vapor.toml`, Vapor's CLI, GUI,
+  service, installer, docs, tools, source checkouts, build caches, or writable
+  state. The locator is only a Steam-to-installed-Vapor adapter; see
+  [`Steam Entrypoint and Vapor Home Boundary`](2026-11-10-steam-entrypoint-home-boundary.md).
 - `App-Source.vapor.toml` describes source-side depot policy and is never
   included in the depots.
 - The Packagepack executable composes the Spacetime Engine and Loo Cast Game;
@@ -29,8 +32,11 @@ validation is product-specific: require the Packagepack manifest and one
 executable per selected platform; accept only explicitly included runtime
 sidecars; do not require Vapor's own `App.vapor.toml` or documentation bundle.
 
-The release is not uploaded during local validation. The owner will verify the
-Steam launch and update behavior on Windows and Linux before the first release.
+The locator resolves the separate canonical Vapor Home and never treats the
+Steam app root as Vapor Home. If Vapor is absent, it shows the official download
+location without silently installing Vapor. The release is not uploaded during
+local validation. The owner will verify Steam launch and update behavior on
+Windows and Linux before release.
 
 ## Approaches considered
 
