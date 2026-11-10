@@ -1,15 +1,78 @@
-# Workstream — Standalone Vapor Runtime and Product Sources
+# Workstream — Standalone Vapor and Packagepack-Only Steam Mount
 
 - State: foreground
-- Goal: make Vapor a truly standalone runtime with one user-owned home, only Player/Developer local setup, complete mandatory Developer tooling, and distinct trusted local source adapters for Loo Cast and Mad Max.
-- Ordered successor: return to `workshop-content-superpass` after the standalone lifecycle and product-source boundaries reach an implementation checkpoint.
-- Depends on: owner-approved standalone Vapor design in `docs/superpowers/specs/2026-11-03-vapor-standalone-runtime-and-products-design.md`, Platform coordination design, Artifact release contract, and Vapor identity/source work.
-- Semantic mutation claim: Vapor-owned install/update/uninstall lifecycle, home paths, local setup role/tool readiness, Steam locator handoff, and generic source/launch contracts. Loo Cast depot implementation belongs to Loo Cast/Steam owners; Mad Max adapter implementation belongs to MM-Building-System.
-- Path claims: `Vapor/**`, `Vapor-CLI/**`, `Vapor-Installer/**`, `Vapor-Steam-Entrypoint/**`, `resources/vapor/tools/production/app_setup/**`, `resources/vapor/tools/_shared/vapor_tools/app_setup.rs`, `resources/vapor/tools/_shared/vapor_tools/entrypoints.rs`, `AGENTS.md`, `README.md`, `App.vapor.toml`, `App-Source.vapor.toml`, `Vapor-Client.vapor.toml`, `.agents/workstreams/README.md`, this record, `docs/superpowers/specs/2026-11-03-vapor-standalone-runtime-and-products-design.md`, and `docs/superpowers/plans/2026-11-03-vapor-standalone-runtime-and-products.md`.
-- Completed: approved product boundaries are written in the Platform and Client design/plan. The Rust compiler-host versus runtime-target distinction is implemented in the Vapor core/provider checkout (`Vapor` commit `2282e6d`, pushed on `codex/explicit-runtime-targets`): runtime targets are always explicit, output/promotion paths are target-scoped, Cargo selection uses the MSVC compiler host, the managed LLVM-MinGW linker is on Cargo's path, and deployment filters projects to the selected Client checkout. The signed app feed/manifest/archive verifier exists in the Installer and is part of the preserved updater work.
-- Verification: `git diff --check` passed for the target change. No managed build was run: the installed Vapor CLI exposes only `client deploy local` for building this workspace, which would promote into the Steam app root. That path was left untouched pending a non-deploying managed build command or a standalone Vapor home. The standalone home/role plan remains unbuilt.
-- Remaining: execute the Client standalone runtime plan; complete verified app extraction/swap/rollback; relocate all Vapor-owned paths; reduce persisted local setup to Player/Developer; make Developer tooling mandatory; keep Loo Cast locator-only; bind generic source identity to Vapor's canonical Context/Subject/Selection; preserve Mad Max adapter ownership externally; add a managed non-deploying build/check path so standalone development never needs to promote into Steam.
-- Blockers: active Vapor #1/#2 identity/source contracts and exact Loo Cast depot/locator release metadata; current app-managed Client endpoint is reported unavailable and needs diagnosis before using Vapor-managed builds.
-- Owned uncommitted changes: the prior standalone-app-updater's uncommitted `Vapor-Installer/crates/vapor_installer/**` implementation and its related Client root tracking changes remain untouched and are now included in this workstream's claim. No other dirty paths are absorbed.
-- External actions: none in this checkpoint. No release published, no Steam metadata changed, and no deployment performed.
-- Smallest resume action: inspect the current Client/Installer local endpoint and Vapor-home layout, then implement Task 2 path ownership and Task 3 two-role semantics using the plan; retain the Windows host/runtime distinction and do not deploy into Steam.
+- Goal: finish Vapor's independent install/update/uninstall lifecycle, move all
+  Vapor-owned files out of the Loo Cast Steam app, and leave only
+  `Packagepack.vapor.toml`, one primary executable per platform, and required
+  runtime sidecars in the Steam depots. Apply the user's `unslop` UI method to
+  the public site,
+  admin, and local Vapor interface without losing their product identity.
+- Semantic owners: Vapor Client owns standalone home, local lifecycle, and
+  product discovery; Loo Cast owns its Packagepack and Steam allowlist;
+  Platform Server coordinates service deployment and admin shell; each service
+  owns its own business logic. Mad Max adapter work remains in MM-Building-System.
+- Current decisions: Steam is not the Vapor installer. Steam launches the Loo
+  Cast Packagepack directly. The common depot contains the Packagepack
+  manifest; Linux and Windows each receive one matching primary executable
+  plus explicitly required runtime sidecars. “One executable” is the product
+  entry-point count, not a one-file restriction.
+  No App manifest, Vapor runtime, locator, loose Engine/Game folders, or
+  writable Vapor state belongs in Steam. Developer setup is mandatory and has
+  the supported cross-target tools; local roles are Player and Developer.
+- Design references: the current coordination contract is in
+  `docs/superpowers/specs/2026-11-10-vapor-standalone-and-operations-realignment.md`
+  and its implementation plan. The 2026-11-03 Client design/plan are historical
+  context and must not override the newer payload decision.
+- Mutating paths: Vapor Client's existing dirty work under `Vapor/`,
+  `Vapor-CLI/`, `Vapor-Installer/`, `Vapor-Steam-Entrypoint/`, `Vapor-Studio/`,
+  and `resources/vapor/tools/**`; root Client docs/manifests; Loo Cast
+  `README.md`, `steam-mount/App-Source.vapor.toml`, and product manifests on
+  its existing local branch. Preserve pre-existing staged and unstaged work.
+- Implemented this pass: the Steam source allowlist now stages only the
+  Packagepack manifest and the correct target executable; the Client installer
+  recognizes that Packagepack layout and migrates the former three-product layout
+  as legacy data; the migration no longer leaves a Steam locator behind. Added
+  positive/negative packagepack-mount tests. Updated the current CLI setup and
+  discovery docs plus the retired entrypoint README. Added the `unslop` compact
+  CSS pass to Platform admin while preserving the current palette. Full-nuke
+  preview now includes the known legacy Vapor directories and `App.vapor.toml`
+  inside the standard Loo Cast Steam library on Windows/Linux, while excluding
+  the Packagepack manifest and executable. Preview/removal accepts exact files
+  as well as directories, and the confirmation copy names the retained product.
+  The nuke inventory now reads Steam's `libraryfolders.vdf` so custom Steam
+  libraries are included in the same exact-path preview. A read-only machine
+  inventory confirmed the current Loo Cast Steam root still contains the old
+  Vapor directories and `App.vapor.toml`; it has not been modified.
+- Current clarification: each OS gets one primary Steam executable entry
+  point, with required DLLs or other declared runtime sidecars allowed. This is
+  not a one-file restriction. The Packagepack manifest belongs in the shared
+  Steam depot; `App.vapor.toml` and the Vapor runtime do not.
+- This pass repaired Windows fixture path containment so long and 8.3 user
+  profile paths compare through their nearest existing canonical ancestor. The
+  check still rejects paths that resolve outside the temporary fixture root.
+  The legacy import/restart process test now uses production mode while only
+  exercising Player-safe selection, so it tests the real importer without
+  requiring Developer installation state.
+- Verification: full Vapor Client workspace `cargo test --workspace --locked`
+  passes; the Installer workspace passes all 8 UI tests; the docs publishing
+  suite passes all 10 tests. The service emits one existing Rust deprecation
+  warning (`AtomicUsize::fetch_update`). No Steam staging, local file migration,
+  install, publish, or deployment has run.
+- Added a read-only `vapor storage` command for the canonical Vapor home only;
+  it reports top-level category sizes and cleanup priority without scanning
+  legacy paths or deleting files. It has not been built in this pass. A requested
+  bulk deletion of generated Cargo targets, old output, and duplicate caches was
+  rejected by automatic review before any deletion occurred.
+- Open: inspect exact Steam staging output after building Packagepack for both
+  targets; verify required runtime dependencies are explicitly staged
+  (especially Windows GNullVM/libunwind); audit additional historical Vapor
+  roots; complete migration fixtures
+  including a legacy three-root install and transactional rollback; wire the
+  standalone Vapor UI and source
+  resolver to identify the Steam Packagepack mount without resurrecting an
+  App-root or locator contract; complete the explicit full-nuke preview and
+  known-path inventory; audit/delete only confirmed obsolete local artifacts;
+  finish the admin and Studio `unslop` passes; build both supported targets.
+- Never run the local migration or full-nuke operation automatically. Review
+  its exact path list first. No repository cleanup may overwrite or discard
+  existing user changes.

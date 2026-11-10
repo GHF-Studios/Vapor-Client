@@ -9,7 +9,9 @@ fn download(url: &str, destination: &Path) -> Result<(), String> {
             .arg(format!(
                 "Invoke-WebRequest -Uri '{}' -OutFile '{}'",
                 powershell_quote(url),
-                powershell_quote(&destination.to_string_lossy())
+                powershell_quote(&powershell_compatible_path_text(
+                    &destination.to_string_lossy()
+                ))
             )))
     } else {
         run(Command::new("curl")
@@ -20,21 +22,23 @@ fn download(url: &str, destination: &Path) -> Result<(), String> {
 }
 
 fn verify_sha256(path: &Path, expected: &str) -> Result<(), String> {
-    if cfg!(windows) {
+    let (actual, status, stderr) = if cfg!(windows) {
         let output = Command::new("powershell")
             .args(["-NoProfile", "-Command"])
             .arg(format!(
-                "(Get-FileHash -Algorithm SHA256 '{}').Hash",
-                powershell_quote(&path.to_string_lossy())
+                "$sha = [System.Security.Cryptography.SHA256]::Create(); $stream = [System.IO.File]::OpenRead('{}'); try {{ [System.BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }} finally {{ $stream.Dispose(); $sha.Dispose() }}",
+                powershell_quote(&powershell_compatible_path_text(&path.to_string_lossy()))
             ))
             .output()
             .map_err(|error| format!("failed to start PowerShell sha256 check: {error}"))?;
         let actual = String::from_utf8_lossy(&output.stdout)
             .trim()
             .to_ascii_lowercase();
-        if output.status.success() && actual == expected {
-            return Ok(());
-        }
+        (
+            actual,
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+        )
     } else {
         let output = Command::new("sha256sum")
             .arg(path)
@@ -45,13 +49,21 @@ fn verify_sha256(path: &Path, expected: &str) -> Result<(), String> {
             .next()
             .unwrap_or_default()
             .to_ascii_lowercase();
-        if output.status.success() && actual == expected {
-            return Ok(());
-        }
+        (
+            actual,
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+        )
+    };
+    if status.success() && actual == expected {
+        return Ok(());
     }
     Err(format!(
-        "checksum mismatch for {}; expected {expected}",
-        path.display()
+        "checksum mismatch for {}; expected {expected}, received '{}', command status {}, stderr: {}",
+        path.display(),
+        actual,
+        status,
+        stderr
     ))
 }
 
@@ -70,9 +82,9 @@ fn extract_zip(archive: &Path, target: &Path) -> Result<(), String> {
     run(Command::new("powershell")
         .args(["-NoProfile", "-Command"])
         .arg(format!(
-            "Expand-Archive -LiteralPath '{}' -DestinationPath '{}' -Force",
-            powershell_quote(&archive.to_string_lossy()),
-            powershell_quote(&target.to_string_lossy())
+            "Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory('{}', '{}')",
+            powershell_quote(&powershell_compatible_path_text(&archive.to_string_lossy())),
+            powershell_quote(&powershell_compatible_path_text(&target.to_string_lossy()))
         )))
 }
 
@@ -165,7 +177,7 @@ where
     V: AsRef<std::ffi::OsStr>,
 {
     // These tools are single-threaded command-line entrypoints. Environment
-    // mutation happens before child commands are spawned so app-root tools and
+    // mutation happens before child commands are spawned so Vapor-home tools and
     // toolchains are resolved consistently.
     unsafe {
         env::set_var(key, value);
@@ -187,5 +199,32 @@ fn command_stdout(command: &mut Command) -> Result<String, String> {
             "{rendered} exited with {}\nstdout:\n{}\nstderr:\n{}",
             output.status, stdout, stderr
         ))
+    }
+}
+
+#[cfg(all(test, windows))]
+mod process_io_tests {
+    use super::verify_sha256;
+    use std::{
+        fs,
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    static NEXT_FILE: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn powershell_checksum_accepts_a_canonical_extended_path() {
+        let path = std::env::temp_dir().join(format!(
+            "vapor-checksum-{}-{}.txt",
+            std::process::id(),
+            NEXT_FILE.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::write(&path, b"hello").expect("write checksum fixture");
+        let canonical = fs::canonicalize(&path).expect("canonicalize checksum fixture");
+        let expected = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
+        let result = verify_sha256(&canonical, expected);
+        let _ = fs::remove_file(PathBuf::from(&canonical));
+        result.expect("PowerShell checksum should match");
     }
 }

@@ -44,39 +44,51 @@ fn find_upward(start: &Path, marker: &str) -> Option<PathBuf> {
     None
 }
 
-fn resolve_app_root(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
+fn resolve_vapor_home(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
     let mut candidates = Vec::<(String, PathBuf)>::new();
     if let Some(path) = explicit {
-        candidates.push(("--app-root".to_owned(), path));
+        let path = canonical_dir(path).map_err(|error| {
+            format!("the explicit --vapor-home path is invalid: {error}")
+        })?;
+        require_vapor_home(&path).map_err(|error| {
+            format!("the explicit --vapor-home path is not a Vapor home: {error}")
+        })?;
+        return Ok(path);
     }
-    if let Ok(value) = env::var(APP_ROOT_ENV) {
+    if let Ok(value) = env::var(VAPOR_HOME_ENV) {
         if !value.trim().is_empty() {
-            candidates.push((APP_ROOT_ENV.to_owned(), PathBuf::from(value.trim())));
+            let path = canonical_dir(PathBuf::from(value.trim())).map_err(|error| {
+                format!("{VAPOR_HOME_ENV} points to an invalid Vapor home: {error}")
+            })?;
+            require_vapor_home(&path).map_err(|error| {
+                format!("{VAPOR_HOME_ENV} does not identify a Vapor home: {error}")
+            })?;
+            return Ok(path);
         }
     }
-    let anchor = app_root_anchor_file();
+    let anchor = vapor_home_anchor_file();
     if let Ok(value) = fs::read_to_string(&anchor) {
         if !value.trim().is_empty() {
             candidates.push((anchor.display().to_string(), PathBuf::from(value.trim())));
         }
     }
-    for path in candidate_app_roots_from_tool_source() {
+    for path in candidate_vapor_homes_from_tool_source() {
         candidates.push(("deployed setup script".to_owned(), path));
     }
-    if let Some(path) = candidate_app_root_from_exe() {
+    if let Some(path) = candidate_vapor_home_from_exe() {
         candidates.push(("running executable".to_owned(), path));
     }
-    for path in steam_app_manifest_root_candidates() {
-        candidates.push(("Steam app manifest".to_owned(), path));
-    }
-    for path in common_steam_app_root_candidates() {
-        candidates.push(("common Steam library".to_owned(), path));
+    if let Some(home) = env::var_os("USERPROFILE")
+        .or_else(|| env::var_os("HOME"))
+        .map(PathBuf::from)
+    {
+        candidates.push(("default Vapor home".to_owned(), home.join("Vapor")));
     }
     if let Ok(current) = env::current_dir() {
         candidates.push(("current directory".to_owned(), current.clone()));
-        if let Some(path) = find_upward(&current, APP_MANIFEST) {
+        if let Some(path) = find_upward(&current, "Vapor-Home.toml") {
             candidates.push((
-                "nearest app manifest above current directory".to_owned(),
+                "nearest Vapor home above current directory".to_owned(),
                 path,
             ));
         }
@@ -85,7 +97,7 @@ fn resolve_app_root(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
     let mut rejected = Vec::new();
     for (source, candidate) in dedupe_candidates(candidates) {
         match canonical_dir(candidate.clone()) {
-            Ok(path) => match require_app_root(&path) {
+            Ok(path) => match require_vapor_home(&path) {
                 Ok(()) => return Ok(path),
                 Err(error) => rejected.push(format!("{source}: {} ({error})", candidate.display())),
             },
@@ -99,15 +111,22 @@ fn resolve_app_root(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
     };
 
     Err(format!(
-        "could not resolve Vapor app root\nchecked:\n  - {}\npass --app-root /path/to/app or run post_install.rs once",
+        "could not resolve Vapor home\nchecked:\n  - {}\npass --vapor-home /path/to/Vapor or install Vapor",
         checked
     ))
 }
 
-fn candidate_app_roots_from_tool_source() -> Vec<PathBuf> {
+fn candidate_vapor_homes_from_tool_source() -> Vec<PathBuf> {
     let mut candidates = Vec::new();
     for path in tool_source_path_candidates() {
-        candidates.extend(candidate_app_roots_from_path(&path));
+        let Some(path) = existing_absolute_path(&path) else {
+            continue;
+        };
+        candidates.extend(
+            path.ancestors()
+                .filter(|ancestor| ancestor.join("Vapor-Home.toml").is_file())
+                .map(Path::to_path_buf),
+        );
     }
     dedupe_paths(candidates)
 }
@@ -130,32 +149,6 @@ fn tool_source_path_candidates() -> Vec<PathBuf> {
     dedupe_paths(expanded)
 }
 
-fn candidate_app_roots_from_path(path: &Path) -> Vec<PathBuf> {
-    let mut candidates = Vec::new();
-    let Some(path) = existing_absolute_path(path) else {
-        return candidates;
-    };
-    for ancestor in path.ancestors() {
-        if is_resources_tools_dir(ancestor) {
-            if let Some(app_root) = ancestor
-                .parent()
-                .and_then(Path::parent)
-                .and_then(Path::parent)
-            {
-                candidates.push(app_root.to_path_buf());
-            }
-        }
-        if ancestor.file_name().is_some_and(|name| name == "tools") {
-            if let Some(parent) = ancestor.parent() {
-                if parent.join(APP_MANIFEST).is_file() {
-                    candidates.push(parent.to_path_buf());
-                }
-            }
-        }
-    }
-    candidates
-}
-
 fn existing_absolute_path(path: &Path) -> Option<PathBuf> {
     if let Ok(path) = fs::canonicalize(path) {
         return Some(path);
@@ -170,20 +163,7 @@ fn existing_absolute_path(path: &Path) -> Option<PathBuf> {
     None
 }
 
-fn is_resources_tools_dir(path: &Path) -> bool {
-    path.file_name().is_some_and(|name| name == "tools")
-        && path
-            .parent()
-            .and_then(Path::file_name)
-            .is_some_and(|name| name == "vapor")
-        && path
-            .parent()
-            .and_then(Path::parent)
-            .and_then(Path::file_name)
-            .is_some_and(|name| name == "resources")
-}
-
-fn candidate_app_root_from_exe() -> Option<PathBuf> {
+fn candidate_vapor_home_from_exe() -> Option<PathBuf> {
     let executable = env::current_exe().ok()?;
     let directory = executable.parent()?;
     if directory.file_name().is_some_and(|name| name == "bin") {
@@ -202,161 +182,22 @@ fn candidate_app_root_from_exe() -> Option<PathBuf> {
     None
 }
 
-fn steam_app_manifest_root_candidates() -> Vec<PathBuf> {
-    let mut roots = Vec::new();
-    for steam_root in steam_root_candidates() {
-        let steamapps = steam_root.join("steamapps");
-        let mut library_roots = vec![steam_root];
-        let library_folders = steamapps.join("libraryfolders.vdf");
-        if let Ok(source) = fs::read_to_string(&library_folders) {
-            library_roots.extend(vdf_values(&source, "path").into_iter().map(PathBuf::from));
-        }
-        for library_root in dedupe_paths(library_roots) {
-            let steamapps = library_root.join("steamapps");
-            let manifest = steamapps.join(format!("appmanifest_{STEAM_APP_ID}.acf"));
-            if let Ok(source) = fs::read_to_string(&manifest) {
-                if let Some(install_dir) = first_vdf_value(&source, "installdir") {
-                    roots.push(steamapps.join("common").join(install_dir));
-                }
-            }
-        }
-    }
-    dedupe_paths(roots)
-}
-
-fn steam_root_candidates() -> Vec<PathBuf> {
-    let mut roots = Vec::new();
-    if cfg!(windows) {
-        for root in [
-            env::var_os("PROGRAMFILES(X86)").map(PathBuf::from),
-            env::var_os("PROGRAMFILES").map(PathBuf::from),
-        ]
-        .into_iter()
-        .flatten()
-        {
-            roots.push(root.join("Steam"));
-        }
-    } else {
-        if let Some(path) = env::var_os("XDG_DATA_HOME") {
-            roots.push(PathBuf::from(path).join("Steam"));
-        }
-        if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
-            roots.push(home.join(".local/share/Steam"));
-            roots.push(home.join(".steam/steam"));
-            roots.push(home.join(".steam/root"));
-        }
-    }
-    dedupe_paths(roots)
-}
-
-fn first_vdf_value(source: &str, key: &str) -> Option<String> {
-    vdf_values(source, key).into_iter().next()
-}
-
-fn vdf_values(source: &str, key: &str) -> Vec<String> {
-    source
-        .lines()
-        .filter_map(|line| {
-            let tokens = quoted_tokens(line);
-            if tokens.len() >= 2 && tokens[0] == key {
-                Some(tokens[1].clone())
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-fn quoted_tokens(line: &str) -> Vec<String> {
-    let mut tokens = Vec::new();
-    let mut current = String::new();
-    let mut in_quote = false;
-    let mut escaped = false;
-    for ch in line.chars() {
-        if !in_quote {
-            if ch == '"' {
-                in_quote = true;
-                current.clear();
-            }
-            continue;
-        }
-        if escaped {
-            current.push(ch);
-            escaped = false;
-            continue;
-        }
-        match ch {
-            '\\' => escaped = true,
-            '"' => {
-                tokens.push(current.clone());
-                current.clear();
-                in_quote = false;
-            }
-            _ => current.push(ch),
-        }
-    }
-    tokens
-}
-
-fn common_steam_app_root_candidates() -> Vec<PathBuf> {
-    let mut roots = Vec::new();
-    if let Some(path) = env::var_os("STEAM_COMPAT_INSTALL_PATH") {
-        roots.push(PathBuf::from(path));
-    }
-    if cfg!(windows) {
-        for root in [
-            env::var_os("PROGRAMFILES(X86)").map(PathBuf::from),
-            env::var_os("PROGRAMFILES").map(PathBuf::from),
-        ]
-        .into_iter()
-        .flatten()
-        {
-            roots.push(
-                root.join("Steam")
-                    .join("steamapps")
-                    .join("common")
-                    .join(STEAM_APP_DIR_NAME),
-            );
-        }
-    } else {
-        if let Some(path) = env::var_os("XDG_DATA_HOME") {
-            roots.push(
-                PathBuf::from(path)
-                    .join("Steam")
-                    .join("steamapps")
-                    .join("common")
-                    .join(STEAM_APP_DIR_NAME),
-            );
-        }
-        if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
-            roots.push(
-                home.join(".local/share/Steam/steamapps/common")
-                    .join(STEAM_APP_DIR_NAME),
-            );
-            roots.push(
-                home.join(".steam/steam/steamapps/common")
-                    .join(STEAM_APP_DIR_NAME),
-            );
-        }
-    }
-    dedupe_paths(roots)
-}
-
-fn require_app_root(path: &Path) -> Result<(), String> {
-    if path.join(APP_SOURCE_MANIFEST).is_file() {
-        return Err(format!(
-            "found {APP_SOURCE_MANIFEST}; this looks like the app source root, not the installed app root"
-        ));
-    }
-    let marker = path.join(APP_MANIFEST);
+fn require_vapor_home(path: &Path) -> Result<(), String> {
+    let marker = path.join("Vapor-Home.toml");
     if !marker.is_file() {
-        return Err(format!("missing {APP_MANIFEST}"));
+        return Err("missing Vapor-Home.toml".to_owned());
     }
-    let source = fs::read_to_string(&marker).map_err(io("read app manifest", &marker))?;
-    if source.lines().any(|line| line.trim() == "[root]") {
+    let source = fs::read_to_string(&marker).map_err(io("read Vapor home marker", &marker))?;
+    let mut lines = source.lines().map(str::trim);
+    if lines.next() == Some("schema = 1")
+        && lines.next() == Some("")
+        && lines.next() == Some("[vapor]")
+        && lines.next() == Some("id = \"ghf-studios/vapor\"")
+        && lines.next().is_none()
+    {
         Ok(())
     } else {
-        Err(format!("{} does not declare [root]", marker.display()))
+        Err(format!("{} does not identify the supported Vapor home", marker.display()))
     }
 }
 
@@ -386,33 +227,33 @@ fn dedupe_paths(paths: Vec<PathBuf>) -> Vec<PathBuf> {
     deduped
 }
 
-fn write_app_root_anchor(app_root: &Path) -> Result<(), String> {
-    let anchor = app_root_anchor_file();
+fn write_vapor_home_anchor(vapor_home: &Path) -> Result<(), String> {
+    let anchor = vapor_home_anchor_file();
     if let Some(parent) = anchor.parent() {
-        fs::create_dir_all(parent).map_err(io("create app-root anchor directory", parent))?;
+        fs::create_dir_all(parent).map_err(io("create Vapor home anchor directory", parent))?;
     }
-    fs::write(&anchor, app_root.to_string_lossy().as_bytes())
-        .map_err(io("write app-root anchor", &anchor))?;
+    fs::write(&anchor, vapor_home.to_string_lossy().as_bytes())
+        .map_err(io("write Vapor home anchor", &anchor))?;
     if cfg!(windows) {
         let _ = Command::new("setx")
-            .arg(APP_ROOT_ENV)
-            .arg(app_root.to_string_lossy().as_ref())
+            .arg(VAPOR_HOME_ENV)
+            .arg(vapor_home.to_string_lossy().as_ref())
             .status();
     }
     Ok(())
 }
 
-fn remove_app_root_anchor() -> Result<bool, String> {
-    let anchor = app_root_anchor_file();
+fn remove_vapor_home_anchor() -> Result<bool, String> {
+    let anchor = vapor_home_anchor_file();
     if anchor.exists() {
-        fs::remove_file(&anchor).map_err(io("remove app-root anchor", &anchor))?;
+        fs::remove_file(&anchor).map_err(io("remove Vapor-home anchor", &anchor))?;
         Ok(true)
     } else {
         Ok(false)
     }
 }
 
-fn app_root_anchor_file() -> PathBuf {
+fn vapor_home_anchor_file() -> PathBuf {
     if cfg!(windows) {
         env::var_os("APPDATA")
             .map(PathBuf::from)
@@ -420,13 +261,13 @@ fn app_root_anchor_file() -> PathBuf {
                 env::var_os("USERPROFILE").map(|home| PathBuf::from(home).join("AppData/Roaming"))
             })
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("loo_cast/app_root.path")
+            .join("Vapor/home.path")
     } else {
         env::var_os("XDG_CONFIG_HOME")
             .map(PathBuf::from)
             .or_else(|| env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
             .unwrap_or_else(|| PathBuf::from(".config"))
-            .join("loo_cast/app_root.path")
+            .join("Vapor/home.path")
     }
 }
 
@@ -466,7 +307,7 @@ fn positional_values() -> Vec<String> {
             if matches!(
                 arg.as_str(),
                 "--path"
-                    | "--app-root"
+                    | "--vapor-home"
                     | "--super-workspace"
                     | "--workflow"
                     | "--workdir"
@@ -510,48 +351,48 @@ fn absolute_from_current(path: PathBuf) -> Result<PathBuf, String> {
     Ok(current.join(path))
 }
 
-fn tool_command(relative: &str, app_root: Option<&Path>) -> String {
-    let path = find_tool_script(relative, app_root)
-        .unwrap_or_else(|| app_root_tool_path(app_root, relative));
+fn tool_command(relative: &str, vapor_home: Option<&Path>) -> String {
+    let path = find_tool_script(relative, vapor_home)
+        .unwrap_or_else(|| app_root_tool_path(vapor_home, relative));
     format!("rust-script --force {}", shell_arg(&path))
 }
 
-fn find_tool_script(relative: &str, app_root: Option<&Path>) -> Option<PathBuf> {
+fn find_tool_script(relative: &str, vapor_home: Option<&Path>) -> Option<PathBuf> {
     let relative = Path::new(relative);
-    tool_root_candidates(app_root)
+    tool_root_candidates(vapor_home)
         .into_iter()
         .map(|root| root.join(relative))
         .find(|path| path.is_file())
 }
 
-fn tool_root_candidates(app_root: Option<&Path>) -> Vec<PathBuf> {
+fn tool_root_candidates(vapor_home: Option<&Path>) -> Vec<PathBuf> {
     let mut candidates = Vec::new();
-    if let Some(app_root) = app_root {
-        candidates.push(app_root.join("resources/vapor/tools"));
-    } else if let Ok(app_root) = resolve_app_root(None) {
-        candidates.push(app_root.join("resources/vapor/tools"));
+    if let Some(vapor_home) = vapor_home {
+        candidates.push(vapor_home.join("resources/vapor/tools"));
+    } else if let Ok(vapor_home) = resolve_vapor_home(None) {
+        candidates.push(vapor_home.join("resources/vapor/tools"));
     }
     dedupe_paths(candidates)
 }
 
-fn app_root_tool_path(app_root: Option<&Path>, relative: &str) -> PathBuf {
-    app_root
+fn app_root_tool_path(vapor_home: Option<&Path>, relative: &str) -> PathBuf {
+    vapor_home
         .map(Path::to_path_buf)
-        .or_else(|| resolve_app_root(None).ok())
-        .unwrap_or_else(|| PathBuf::from("<app-root>"))
+        .or_else(|| resolve_vapor_home(None).ok())
+        .unwrap_or_else(|| PathBuf::from("<Vapor-home>"))
         .join("resources/vapor/tools")
         .join(relative)
 }
 
-fn expected_rust_bin(app_root: &Path) -> Result<PathBuf, String> {
-    Ok(app_root
-        .join("rustup-home/toolchains")
+fn expected_rust_bin(vapor_home: &Path) -> Result<PathBuf, String> {
+    Ok(vapor_home
+        .join("tools/rustup/home/toolchains")
         .join(format!("{RUST_TOOLCHAIN}-{}", host_rust_target()?))
         .join("bin"))
 }
 
-fn steamcmd_path(app_root: &Path) -> PathBuf {
-    let directory = app_root.join("tools/steamcmd");
+fn steamcmd_path(vapor_home: &Path) -> PathBuf {
+    let directory = vapor_home.join("tools/steamcmd");
     let candidates = if cfg!(windows) {
         vec![directory.join("steamcmd.exe")]
     } else {
@@ -580,7 +421,7 @@ fn host_rust_target() -> Result<&'static str, String> {
     match (env::consts::ARCH, env::consts::OS) {
         ("x86_64", "linux") => Ok("x86_64-unknown-linux-gnu"),
         ("aarch64", "linux") => Ok("aarch64-unknown-linux-gnu"),
-        ("x86_64", "windows") => Ok("x86_64-pc-windows-gnu"),
+        ("x86_64", "windows") => Ok("x86_64-pc-windows-msvc"),
         _ => Err(format!(
             "Rust host target is not configured for {}-{}",
             env::consts::ARCH,

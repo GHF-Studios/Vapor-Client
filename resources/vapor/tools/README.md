@@ -1,83 +1,44 @@
-# Vapor app-root tools
+# Vapor home tools
 
-This tree is source payload for tools shipped into:
-
-```text
-<app-root>/resources/vapor/tools/
-```
-
-At runtime, the app-root copy is canonical. A SuperWorkspace does not own tools
-and should not contain a `tools/` implementation tree. Source repositories are
-cloned into `sources/` by the app-root source clone tool.
-
-## Reproducible SuperWorkspace flow
-
-Run these from the installed app-root tool tree:
+This source payload is installed under:
 
 ```text
-rust-script --force <app-root>/resources/vapor/tools/development/superworkspace/create.rs --path /path/to/SuperWorkspace
-rust-script --force <app-root>/resources/vapor/tools/development/source_setup/clone.rs --super-workspace /path/to/SuperWorkspace --all
-rust-script --force <app-root>/resources/vapor/tools/development/ide_setup/patch_rustrover.rs --super-workspace /path/to/SuperWorkspace
+<vapor-home>/resources/vapor/tools/
 ```
 
-Then open `/path/to/SuperWorkspace` in RustRover.
+The Vapor home owns the runtime, managed tools, source checkouts, caches, and
+mutable state. A SuperWorkspace is authored separately and does not own Vapor
+tools or the runtime.
 
-The order matters: patch RustRover before opening it. The patcher writes
-repairable `.idea` metadata and run configurations; it does not rely on
-RustRover already having a valid project model.
+## SuperWorkspace setup
 
-## Shape
+Run these from the installed Vapor home:
 
 ```text
-SuperWorkspace/
-  SuperWorkspace.vapor.toml
-  sources/
-    Vapor-Client/
-    Loo-Cast/
-    Vapor-Registry/
-    Vapor-Platform-Server/
-  .idea/
+<vapor-home>/bin/<target>/vapor-installer superworkspace create --path /path/to/SuperWorkspace
+<vapor-home>/bin/<target>/vapor-installer source clone Vapor-Client --super-workspace /path/to/SuperWorkspace
+<vapor-home>/bin/<target>/vapor-installer ide patch-rustrover --super-workspace /path/to/SuperWorkspace
 ```
 
-`clone.rs` performs the source clone operation internally. Git is the transport,
-not the public workflow.
+Clone only the sources needed for the current task. The SuperWorkspace stores
+checkouts under `sources/`; its manifest records the independently installed
+Vapor home that owns the toolchain and generated state.
 
-## App root and toolchain
-
-App setup and toolchain operations also run from the app-root tool tree:
+## Player and Developer setup
 
 ```text
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/status.rs
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/setup_player.rs
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/setup_development.rs
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardown_development.rs
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardown_player.rs
+<vapor-home>/bin/<target>/vapor-installer status
+<vapor-home>/bin/<target>/vapor-installer install
+<vapor-home>/bin/<target>/vapor-installer dev-env install
 ```
 
-`setup_player.rs` creates app-root generated directories and installs SteamCMD.
-`setup_development.rs` installs/reconciles app-local Rust/Cargo/rustup, Rust
-targets/components, Zig, llvm-mingw, and cross-linker wrappers.
+Player setup creates Vapor-owned runtime state and content directories.
+Developer setup is mandatory for the Developer role and provisions the pinned
+Rust toolchain, both supported Rust targets, the required cross-linkers, and
+authoring tools. Neither role setup installs or modifies a Steam game.
 
 ## RustRover
 
-`patch_rustrover.rs` writes:
-
-- `.idea/cargoProjects.xml`;
-- `.idea/workspace.xml` Cargo/Rust project components;
-- `.idea/rust.xml`;
-- `.idea/vapor.xml`;
-- `.idea/vapor-toolchain/bin/*` wrappers;
-- `.idea/runConfigurations/*.xml`.
-
-It does not generate workflow scripts under `.idea`. Run configurations are
-thin XML launchers into:
-
-```text
-<app-root>/resources/vapor/tools/development/ide_run/run.rs
-```
-
-The IDE runner then calls app-root `vapor`, app-root tools, and the app-root
-toolchain.
-
-Publishing workflows prompt inside the terminal and require typed confirmation
-before passing `--yes` to Vapor Shell.
+`patch_rustrover.rs` writes repairable `.idea` metadata and run configurations
+inside the selected SuperWorkspace. Its runner, binaries, Rust toolchain, and
+cross-linkers are resolved from the Vapor home.

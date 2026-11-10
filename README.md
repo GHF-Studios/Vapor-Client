@@ -13,10 +13,13 @@ authority.
   development toolset, including both supported targets; no partial Developer
   setup). Ecosystem developer authorization is a server-side permission, not a
   local role.
-- **Loo Cast** is provided by its official Steam depot as one local content
-  artifact containing `App.vapor.toml`, Spacetime Engine, Loo Cast Game, and
-  Loo Cast Packagepack. A small optional Steam locator may open the tools
-  selector in an already installed Vapor; it never bundles or installs Vapor.
+- **Loo Cast** ships from its official Steam depot as a Packagepack mount. The
+  common depot contains `Packagepack.vapor.toml`; Linux and Windows depots each
+  contain one matching primary Packagepack executable plus only the runtime
+  DLLs or shared libraries it declares as required. That executable composes
+  the Engine and Game. No Vapor runtime or Vapor-managed files are part of the
+  Steam app. The candidate still needs both target builds and exact depot
+  inventory verification.
 - **Mad Max** is acquired and installed by the user. Vapor treats the local
   executable and required original runtime files as its Engine source, scripts
   and mods as the Game layer, and `MadMaxModding` as the Packagepack that
@@ -27,58 +30,36 @@ authority.
   permission.
 
 This is the approved pre-alpha target, not a claim that migration is complete.
-The current source still has Steam-root packaging, Workshop-era Loo Cast
-metadata, and the old multi-role setup. The standalone home, signed update
-transaction, two-role setup, depot-only Loo Cast products, and Mad Max source
-adapter are being implemented in
+The source now has separate standalone Vapor metadata and Loo Cast Steam-mount
+metadata. The unified `root package` route selects standalone bundles and/or
+Steam depot staging from the selected source root; `root deploy` is limited to
+standalone Vapor releases. The code has compile-level verification on Windows,
+but actual Loo Cast package generation and depot staging, Linux target builds,
+and the first-run Steam-root migration have not been verified. The installed
+Steam app is still untouched and remains in its old layout. The implementation
+is tracked in
 [`docs/superpowers/plans/2026-11-03-vapor-standalone-runtime-and-products.md`](docs/superpowers/plans/2026-11-03-vapor-standalone-runtime-and-products.md).
 
-## Current Source-Tree Operations
+## Repository Ownership
 
-The commands below describe the currently checked-in Steam-root workflows.
-They are not the target install or release instructions and will be replaced as
-the standalone migration lands.
+- **Vapor Client** owns the standalone runtime, its independent installer and
+  updater, local Player/Developer setup, and generic Engine/Game/Packagepack
+  source handling.
+- **Loo Cast** owns its Steam application manifest and the depot composition
+  containing the Spacetime Engine, Loo Cast Game, and Loo Cast Packagepack.
+  Those licensed files are acquired through the official Steam app and are not
+  published as public community content.
+- **MM-Building-System** owns the Mad Max-specific adapter and Packagepack. The
+  user supplies the game files; Vapor's servers never include them.
+- **Vapor's Platform services** own publication policy. A local manifest does
+  not grant permission to publish content.
 
-Most day-to-day work happens through the installed Vapor Shell. Bootstrap
-installs may start from `bin/vapor`; release app payloads use
-`bin/<target>/vapor-entrypoint[.exe]`, which opens the platform terminal and
-runs the matching `bin/vapor-launch.*` script. Source repositories stay outside
-the Steam app root and are opened explicitly:
-
-```text
-source open /path/to/Vapor-Client
-metadata
-validate
-root package
-root publish --dry-run
-```
-
-Release app/depot workflows consume the target matrix declared in
-`App-Source.vapor.toml` by default, such as Linux plus Windows GNU/LLVM. Use
-`--host-only` for quick local smoke passes that should not build or stage every
-runtime target. Real app publication rejects host-only/custom target subsets
-and publishes the complete declared Linux+Windows matrix.
-
-Real app/depot publication still requires manual interactive confirmation:
-
-```text
-root publish --account ACCOUNT --yes
-```
-
-## Product Topology
-
-- **Current Steam installation/app root**: the installed app directory that owns
-  `App.vapor.toml`, `bin/vapor-launch.*`,
-  `bin/<target>/vapor-entrypoint[.exe]`, `bin/<target>/vapor[.exe]`,
-  optional bootstrap `bin/vapor`, app-local Rust/Cargo, SteamCMD, caches,
-  generated output, installed content, indexes, locks, and receipts.
-- **Vapor Client**: this source-stage application root. It packages and publishes
-  the complete Steam app/depot.
-- **Vapor-Registry**: separate registry authority infrastructure. It is not a
-  Cargo workspace and not normal content.
-- **Loo-Cast**: its current local checkout still carries Workshop-era metadata;
-  the approved product model above replaces those first-party uploads with the
-  official Steam depot source.
+Use the source-controlled Vapor CLI for packaging work. `root package` stages
+the products declared by the selected source; it does not itself publish them.
+Do not use the old installed CLI or run the Steam-root migration until the
+candidate is installed and the first-run migration path has been reviewed. A
+real standalone release/deploy remains unverified, and Loo Cast depot upload
+still requires its own reviewed app-source staging and publication step.
 
 The current Shell command model is documented in
 [`Vapor-CLI/crates/vapor_cli/docs/commands.md`](Vapor-CLI/crates/vapor_cli/docs/commands.md).
@@ -126,18 +107,21 @@ for layout, receipts, fingerprints, and repair behavior.
 
 ## Setup And Recovery
 
-App-root tools own installed setup:
+Vapor-home tools own installed setup:
 
 ```text
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/setup_player.rs
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardown_player.rs
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/setup_development.rs
-rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardown_development.rs
+rust-script --force <vapor-home>/resources/vapor/tools/production/app_setup/setup_player.rs
+rust-script --force <vapor-home>/resources/vapor/tools/production/app_setup/teardown_player.rs
+rust-script --force <vapor-home>/resources/vapor/tools/production/app_setup/setup_development.rs
+rust-script --force <vapor-home>/resources/vapor/tools/production/app_setup/teardown_development.rs
 ```
 
-The default player setup prepares SteamCMD and generated `.vapor/` state.
-Developer setup is an explicit upgrade. `vapor-installer` is the compiled
-Steam/app-root launcher for the same setup implementation.
+The standalone Installer owns the Player or Developer choice and applies the
+matching setup inside Vapor home. Developer always receives the complete
+supported toolchain; there is no partial Developer option. Steam does not
+install Vapor. Loo Cast's Play action runs its default composition through the
+installed Vapor runtime; its Tools action opens Vapor's selector. Both give
+install guidance if Vapor is absent.
 
 ## Planning
 

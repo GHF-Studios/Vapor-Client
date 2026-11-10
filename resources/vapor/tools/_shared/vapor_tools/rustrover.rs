@@ -45,7 +45,7 @@ struct RustRoverToolchainShim {
 
 fn install_rustrover_toolchain_shim(
     idea: &Path,
-    app_root: &Path,
+    vapor_home: &Path,
     rust_bin: &Path,
     rustup: &Path,
 ) -> Result<RustRoverToolchainShim, String> {
@@ -75,7 +75,7 @@ fn install_rustrover_toolchain_shim(
 
         for (name, target) in wrappers {
             let path = shim_bin.join(name);
-            write_toolchain_shim(&path, app_root, rust_bin, rustup, name, &target)?;
+            write_toolchain_shim(&path, vapor_home, rust_bin, rustup, name, &target)?;
             make_executable(&path)?;
         }
 
@@ -90,7 +90,7 @@ fn install_rustrover_toolchain_shim(
 
 fn write_toolchain_shim(
     path: &Path,
-    app_root: &Path,
+    vapor_home: &Path,
     rust_bin: &Path,
     rustup: &Path,
     tool_name: &str,
@@ -98,13 +98,13 @@ fn write_toolchain_shim(
 ) -> Result<(), String> {
     let source = format!(
         "#!/usr/bin/env bash\nset -euo pipefail\n\nexport {}={}\nexport RUSTUP_HOME={}\nexport CARGO_HOME={}\nexport PATH={}:{}:{}:\"$PATH\"\n\nTOOL_NAME={}\nREAL_TOOL={}\nREAL_RUSTUP={}\n\ncase \"${{1:-}}\" in\n    +*)\n        REQUESTED_TOOLCHAIN=\"${{1#+}}\"\n        shift\n        exec \"$REAL_RUSTUP\" run \"$REQUESTED_TOOLCHAIN\" \"$TOOL_NAME\" \"$@\"\n        ;;\nesac\n\nexec \"$REAL_TOOL\" \"$@\"\n",
-        APP_ROOT_ENV,
-        shell_string(app_root),
-        shell_string(&app_root.join("rustup-home")),
-        shell_string(&app_root.join("cargo-home")),
+        VAPOR_HOME_ENV,
+        shell_string(vapor_home),
+        shell_string(&vapor_home.join("tools/rustup/home")),
+        shell_string(&vapor_home.join("tools/cargo/home")),
         shell_string(rust_bin),
-        shell_string(&app_root.join("rustup/bin")),
-        shell_string(&app_root.join("cargo-home/bin")),
+        shell_string(&vapor_home.join("tools/rustup/bin")),
+        shell_string(&vapor_home.join("tools/cargo/home/bin")),
         shell_string_text(tool_name),
         shell_string(target),
         shell_string(rustup),
@@ -115,7 +115,7 @@ fn write_toolchain_shim(
 fn verify_rustrover_setup(
     super_root: &Path,
     idea: &Path,
-    app_root: &Path,
+    vapor_home: &Path,
     toolchain_shim: &RustRoverToolchainShim,
     cargo_projects: &[CargoProjectRegistration],
 ) -> Result<Vec<String>, String> {
@@ -140,7 +140,7 @@ fn verify_rustrover_setup(
         &cargo_wrapper,
         &format!(
             "export CARGO_HOME={}",
-            shell_string(&app_root.join("cargo-home"))
+            shell_string(&vapor_home.join("tools/cargo/home"))
         ),
         "cargo shim must export app-local CARGO_HOME",
     )?;
@@ -148,7 +148,7 @@ fn verify_rustrover_setup(
         &cargo_wrapper,
         &format!(
             "export RUSTUP_HOME={}",
-            shell_string(&app_root.join("rustup-home"))
+            shell_string(&vapor_home.join("tools/rustup/home"))
         ),
         "cargo shim must export app-local RUSTUP_HOME",
     )?;
@@ -163,8 +163,8 @@ fn verify_rustrover_setup(
     )?;
     checks.push("RustRover settings point at the shim toolchain".to_owned());
 
-    verify_app_root_centered_run_configurations(idea, app_root)?;
-    checks.push("generated operational workflows use precompiled app-root binaries".to_owned());
+    verify_app_root_centered_run_configurations(idea, vapor_home)?;
+    checks.push("generated operational workflows use precompiled Vapor-home binaries".to_owned());
 
     let iml_path = idea.join("Loo-Cast-Repos.iml");
     let iml_source = read_required(&iml_path)?;
@@ -273,7 +273,7 @@ fn cargo_metadata_no_deps(
     )
 }
 
-fn verify_app_root_centered_run_configurations(idea: &Path, app_root: &Path) -> Result<(), String> {
+fn verify_app_root_centered_run_configurations(idea: &Path, vapor_home: &Path) -> Result<(), String> {
     let generated_scripts = idea.join("vapor-run");
     if generated_scripts.exists() {
         return Err(format!(
@@ -282,7 +282,7 @@ fn verify_app_root_centered_run_configurations(idea: &Path, app_root: &Path) -> 
         ));
     }
     let generated_configurations = rustrover_run_configurations();
-    let app_control_runner = app_control_runner(app_root);
+    let app_control_runner = app_control_runner(vapor_home);
     for configuration in &generated_configurations {
         if matches!(configuration.kind, RunConfigurationKind::Cargo) {
             continue;
@@ -305,7 +305,7 @@ fn verify_app_root_centered_run_configurations(idea: &Path, app_root: &Path) -> 
         require_contains(
             &xml,
             &xml_escape(&app_control_runner.to_string_lossy()),
-            "generated workflow must launch the precompiled app-root control runner",
+            "generated workflow must launch the precompiled Vapor-home control runner",
         )?;
         require_contains(
             &xml,
@@ -347,9 +347,9 @@ fn verify_app_root_centered_run_configurations(idea: &Path, app_root: &Path) -> 
             &xml,
             &format!(
                 "<option name=\"SCRIPT_WORKING_DIRECTORY\" value=\"{}\" />",
-                xml_escape(&app_root.to_string_lossy())
+                xml_escape(&vapor_home.to_string_lossy())
             ),
-            "app-root workflow run configuration must start in the app root",
+            "Vapor-home workflow run configuration must start in the Vapor home",
         )?;
     }
 
@@ -474,7 +474,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "10 Sources",
             file_stem: "10_Sources_Create_Basic_Content_Workspace",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "source-init-basic-content",
         },
         RunConfiguration {
@@ -482,7 +482,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "20 Run",
             file_stem: "20_Run_Open_Vapor_Shell",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "vapor-shell-interactive",
         },
         RunConfiguration {
@@ -490,7 +490,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "20 Run",
             file_stem: "20_Run_Check_App_Binaries",
             kind: Shell,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "app-binaries-status",
         },
         RunConfiguration {
@@ -498,7 +498,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "20 Run",
             file_stem: "20_Run_Check_Content",
             kind: Shell,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "content-status",
         },
         RunConfiguration {
@@ -506,7 +506,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "30 Build",
             file_stem: "30_Build_App",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "root-build-host",
         },
         RunConfiguration {
@@ -514,7 +514,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "40 Stage",
             file_stem: "40_Stage_App",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "root-deploy-host",
         },
         RunConfiguration {
@@ -522,7 +522,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "30 Build",
             file_stem: "30_Build_Content",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "content-build-host",
         },
         RunConfiguration {
@@ -530,7 +530,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "40 Stage",
             file_stem: "40_Stage_Content",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "content-deploy-artifact",
         },
         RunConfiguration {
@@ -538,7 +538,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "50 Publish",
             file_stem: "50_Publish_App",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "root-publish",
         },
         RunConfiguration {
@@ -546,7 +546,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
             folder: "50 Publish",
             file_stem: "50_Publish_Content",
             kind: Konsole,
-            working_directory: "$APP_ROOT",
+            working_directory: "$vapor_home",
             command: "content-publish",
         },
     ]
@@ -650,7 +650,7 @@ fn upsert_project_component(source: &str, name: &str, replacement: &str) -> Resu
 fn write_run_configurations(
     idea: &Path,
     super_root: &Path,
-    app_root: &Path,
+    vapor_home: &Path,
     configurations: &[RunConfiguration],
 ) -> Result<(), String> {
     let run_config_dir = idea.join("runConfigurations");
@@ -671,13 +671,13 @@ fn write_run_configurations(
             RunConfigurationKind::Cargo => {
                 write(
                     &xml_path,
-                    &cargo_run_configuration_xml(configuration, app_root),
+                    &cargo_run_configuration_xml(configuration, vapor_home),
                 )?;
             }
             RunConfigurationKind::Shell | RunConfigurationKind::Konsole => {
                 write(
                     &xml_path,
-                    &shell_run_configuration_xml(configuration, super_root, app_root),
+                    &shell_run_configuration_xml(configuration, super_root, vapor_home),
                 )?;
             }
         }
@@ -705,29 +705,29 @@ fn remove_stale_generated_run_configurations(
     Ok(())
 }
 
-fn cargo_run_configuration_xml(configuration: &RunConfiguration, app_root: &Path) -> String {
+fn cargo_run_configuration_xml(configuration: &RunConfiguration, vapor_home: &Path) -> String {
     format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<component name=\"ProjectRunConfigurationManager\">\n  <configuration default=\"false\" name=\"{}\" type=\"CargoCommandRunConfiguration\" factoryName=\"Cargo Command\" folderName=\"{}\">\n    <option name=\"command\" value=\"{}\" />\n    <option name=\"workingDirectory\" value=\"file://$PROJECT_DIR$/{}\" />\n{}\n    <option name=\"emulateTerminal\" value=\"true\" />\n    <option name=\"channel\" value=\"DEFAULT\" />\n    <option name=\"requiredFeatures\" value=\"true\" />\n    <option name=\"allFeatures\" value=\"false\" />\n    <option name=\"withSudo\" value=\"false\" />\n    <option name=\"buildTarget\" value=\"REMOTE\" />\n    <option name=\"backtrace\" value=\"SHORT\" />\n    <option name=\"isRedirectInput\" value=\"false\" />\n    <option name=\"redirectInputPath\" value=\"\" />\n    <method v=\"2\">\n      <option name=\"CARGO.BUILD_TASK_PROVIDER\" enabled=\"true\" />\n    </method>\n  </configuration>\n</component>\n",
         xml_escape(configuration.name),
         xml_escape(configuration.folder),
         xml_escape(configuration.command),
         xml_escape(configuration.working_directory),
-        run_config_envs_xml(app_root),
+        run_config_envs_xml(vapor_home),
     )
 }
 
 fn shell_run_configuration_xml(
     configuration: &RunConfiguration,
     super_root: &Path,
-    app_root: &Path,
+    vapor_home: &Path,
 ) -> String {
-    let working_directory = run_configuration_xml_working_directory(configuration, app_root);
-    let script_path = app_control_runner(app_root);
+    let working_directory = run_configuration_xml_working_directory(configuration, vapor_home);
+    let script_path = app_control_runner(vapor_home);
     let options = format!(
-        "ide run --workflow {} --super-workspace {} --app-root {} --workdir {} --config-name {} --open-konsole {}",
+        "ide run --workflow {} --super-workspace {} --vapor-home {} --workdir {} --config-name {} --open-konsole {}",
         shell_arg_text(configuration.command),
         shell_arg(super_root),
-        shell_arg(app_root),
+        shell_arg(vapor_home),
         shell_arg(Path::new(&working_directory)),
         shell_arg_text(configuration.name),
         if matches!(configuration.kind, RunConfigurationKind::Konsole) {
@@ -748,10 +748,10 @@ fn shell_run_configuration_xml(
 
 fn run_configuration_xml_working_directory(
     configuration: &RunConfiguration,
-    app_root: &Path,
+    vapor_home: &Path,
 ) -> String {
-    if configuration.working_directory == "$APP_ROOT" {
-        app_root.to_string_lossy().into_owned()
+    if configuration.working_directory == "$vapor_home" {
+        vapor_home.to_string_lossy().into_owned()
     } else if configuration.working_directory == "." {
         "$PROJECT_DIR$".to_owned()
     } else {
@@ -759,19 +759,19 @@ fn run_configuration_xml_working_directory(
     }
 }
 
-fn run_config_envs_xml(app_root: &Path) -> String {
+fn run_config_envs_xml(vapor_home: &Path) -> String {
     format!(
         "    <envs>\n      <env name=\"{}\" value=\"{}\" />\n      <env name=\"RUSTUP_HOME\" value=\"{}\" />\n      <env name=\"CARGO_HOME\" value=\"{}\" />\n    </envs>",
-        APP_ROOT_ENV,
-        xml_escape(&app_root.to_string_lossy()),
-        xml_escape(&app_root.join("rustup-home").to_string_lossy()),
-        xml_escape(&app_root.join("cargo-home").to_string_lossy()),
+        VAPOR_HOME_ENV,
+        xml_escape(&vapor_home.to_string_lossy()),
+        xml_escape(&vapor_home.join("tools/rustup/home").to_string_lossy()),
+        xml_escape(&vapor_home.join("tools/cargo/home").to_string_lossy()),
     )
 }
 
 fn vapor_xml(
     super_root: &Path,
-    app_root: &Path,
+    vapor_home: &Path,
     cargo: &Path,
     rustc: &Path,
     rustup: &Path,
@@ -781,9 +781,9 @@ fn vapor_xml(
     format!(
         "<project version=\"4\">\n  <component name=\"VaporSuperWorkspaceSettings\">\n    <option name=\"schemaVersion\" value=\"1\" />\n    <option name=\"superWorkspaceRoot\" value=\"$PROJECT_DIR$\" />\n    <option name=\"superWorkspaceManifest\" value=\"{}\" />\n    <option name=\"appRoot\" value=\"{}\" />\n    <option name=\"cargoHome\" value=\"{}\" />\n    <option name=\"rustupHome\" value=\"{}\" />\n    <option name=\"cargoPath\" value=\"{}\" />\n    <option name=\"rustcPath\" value=\"{}\" />\n    <option name=\"rustupPath\" value=\"{}\" />\n    <option name=\"rustStdlibSource\" value=\"{}\" />\n    <option name=\"rustRoverToolchainBin\" value=\"{}\" />\n    <option name=\"rustRoverCargoPath\" value=\"{}\" />\n    <option name=\"rustRoverRustcPath\" value=\"{}\" />\n    <option name=\"rustRoverRustupPath\" value=\"{}\" />\n  </component>\n</project>\n",
         xml_escape(&super_root.join(SUPER_MANIFEST).to_string_lossy()),
-        xml_escape(&app_root.to_string_lossy()),
-        xml_escape(&app_root.join("cargo-home").to_string_lossy()),
-        xml_escape(&app_root.join("rustup-home").to_string_lossy()),
+        xml_escape(&vapor_home.to_string_lossy()),
+        xml_escape(&vapor_home.join("tools/cargo/home").to_string_lossy()),
+        xml_escape(&vapor_home.join("tools/rustup/home").to_string_lossy()),
         xml_escape(&cargo.to_string_lossy()),
         xml_escape(&rustc.to_string_lossy()),
         xml_escape(&rustup.to_string_lossy()),

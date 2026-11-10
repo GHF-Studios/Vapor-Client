@@ -1,66 +1,66 @@
-fn setup_player(app_root: &Path) -> Result<(), String> {
-    require_app_root(app_root)?;
+fn setup_player(vapor_home: &Path) -> Result<(), String> {
+    require_vapor_home(vapor_home)?;
     println!("Setup Player");
     println!();
-    println!("App root: {}", app_root.display());
+    println!("Vapor home: {}", vapor_home.display());
     for relative in PLAYER_DIRS {
-        let path = app_root.join(relative);
-        ensure_contained(app_root, &path)?;
-        fs::create_dir_all(&path).map_err(io("create app-root directory", &path))?;
+        let path = vapor_home.join(relative);
+        ensure_contained(vapor_home, &path)?;
+        fs::create_dir_all(&path).map_err(io("create Vapor-home directory", &path))?;
         println!("ensured {relative}");
     }
-    if !steamcmd_status(app_root).ready {
-        install_steamcmd(app_root)?;
-    } else {
-        println!("kept app-local SteamCMD");
-    }
-    write_app_root_anchor(app_root)?;
-    write_receipt(app_root, "player", "ready")?;
+    write_vapor_home_anchor(vapor_home)?;
+    write_receipt(vapor_home, "player", "ready")?;
     println!();
     println!("Status: player setup ready");
     Ok(())
 }
 
-/// Prepare a specific Steam installation for player use.
-pub fn setup_player_for(app_root: &Path) -> Result<(), String> {
-    setup_player(app_root)
+/// Prepare the standalone Vapor home for Player use.
+pub fn setup_player_for(vapor_home: &Path) -> Result<(), String> {
+    setup_player(vapor_home)
 }
 
-fn setup_development(app_root: &Path) -> Result<(), String> {
-    setup_player(app_root)?;
+fn setup_development(vapor_home: &Path) -> Result<(), String> {
+    setup_player(vapor_home)?;
     println!();
     println!("Setup Development");
-    if !rust_toolchain_installed(app_root) {
-        install_rust(app_root)?;
+    if !steamcmd_status(vapor_home).ready {
+        install_steamcmd(vapor_home)?;
     } else {
-        install_rust_targets_and_components(app_root)?;
+        println!("kept Vapor-managed SteamCMD");
+    }
+    if !rust_toolchain_installed(vapor_home) {
+        install_rust(vapor_home)?;
+    } else {
+        install_rust_targets_and_components(vapor_home)?;
         println!("kept app-local Rust/Cargo");
     }
-    if !cross_status(app_root).ready {
-        install_zig(app_root)?;
-        install_llvm_mingw(app_root)?;
-        write_cross_wrappers(app_root)?;
+    if !cross_status(vapor_home).ready {
+        install_zig(vapor_home)?;
+        install_llvm_mingw(vapor_home)?;
+        write_cross_wrappers(vapor_home)?;
     } else {
         println!("kept app-local cross-build tools");
     }
-    write_receipt(app_root, "dev-env", "ready")?;
+    write_receipt(vapor_home, "dev-env", "ready")?;
     println!();
     println!("Status: development setup ready");
     Ok(())
 }
 
-fn teardown_player(app_root: &Path) -> Result<(), String> {
-    require_app_root(app_root)?;
+fn teardown_player(vapor_home: &Path) -> Result<(), String> {
+    require_vapor_home(vapor_home)?;
     println!("Teardown Player");
     println!();
-    println!("App root: {}", app_root.display());
+    println!("Vapor home: {}", vapor_home.display());
     println!();
-    teardown_development(app_root)?;
+    teardown_development(vapor_home)?;
     println!();
     println!("Player-mode state");
     for relative in PLAYER_TEARDOWN_PATHS {
-        let path = app_root.join(relative);
-        ensure_contained(app_root, &path)?;
+        let path = vapor_home.join(relative);
+        ensure_contained(vapor_home, &path)?;
         if path.exists() || fs::symlink_metadata(&path).is_ok() {
             remove_path(&path).map_err(io("remove player path", &path))?;
             println!("removed {relative}");
@@ -69,29 +69,28 @@ fn teardown_player(app_root: &Path) -> Result<(), String> {
         }
     }
     for relative in PLAYER_EMPTY_PARENT_DIRS {
-        let path = app_root.join(relative);
-        remove_empty_dir(app_root, &path)?;
+        let path = vapor_home.join(relative);
+        remove_empty_dir(vapor_home, &path)?;
     }
     println!();
     println!("Status: player setup removed");
     Ok(())
 }
 
-fn teardown_development(app_root: &Path) -> Result<(), String> {
-    require_app_root(app_root)?;
+fn teardown_development(vapor_home: &Path) -> Result<(), String> {
+    require_vapor_home(vapor_home)?;
     println!("Teardown Development");
     println!();
     for relative in [
-        "rustup",
-        "rustup-home",
-        "cargo-home",
+        "tools/rustup",
+        "tools/cargo",
         "tools/zig",
         "tools/llvm-mingw",
         "tools/cross",
-        ".vapor/state/installer/dev-env.toml",
+        "data/state/installer/dev-env.toml",
     ] {
-        let path = app_root.join(relative);
-        ensure_contained(app_root, &path)?;
+        let path = vapor_home.join(relative);
+        ensure_contained(vapor_home, &path)?;
         if path.exists() {
             remove_path(&path).map_err(io("remove developer tool path", &path))?;
             println!("removed {relative}");
@@ -104,16 +103,16 @@ fn teardown_development(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn install_steamcmd(app_root: &Path) -> Result<(), String> {
-    println!("installing app-local SteamCMD");
-    let target = app_root.join("tools/steamcmd");
-    reset_dir(app_root, &target)?;
+fn install_steamcmd(vapor_home: &Path) -> Result<(), String> {
+    println!("installing Vapor-managed SteamCMD");
+    let target = vapor_home.join("tools/steamcmd");
+    reset_dir(vapor_home, &target)?;
     if cfg!(target_os = "windows") {
-        let archive = app_root.join(".vapor/downloads/steamcmd.zip");
+        let archive = vapor_home.join("data/downloads/steamcmd.zip");
         download(STEAMCMD_WINDOWS, &archive)?;
         extract_zip(&archive, &target)?;
     } else {
-        let archive = app_root.join(".vapor/downloads/steamcmd_linux.tar.gz");
+        let archive = vapor_home.join("data/downloads/steamcmd_linux.tar.gz");
         download(STEAMCMD_LINUX, &archive)?;
         run(Command::new("tar")
             .arg("-xzf")
@@ -124,10 +123,10 @@ fn install_steamcmd(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn install_rust(app_root: &Path) -> Result<(), String> {
-    println!("installing app-local Rust/Cargo {RUST_TOOLCHAIN}");
-    let rustup_init = app_root
-        .join(".vapor/downloads")
+fn install_rust(vapor_home: &Path) -> Result<(), String> {
+    println!("installing Vapor-managed Rust/Cargo {RUST_TOOLCHAIN}");
+    let rustup_init = vapor_home
+        .join("data/downloads")
         .join(executable("rustup-init"));
     download(rustup_init_url()?, &rustup_init)?;
     make_executable(&rustup_init)?;
@@ -142,20 +141,20 @@ fn install_rust(app_root: &Path) -> Result<(), String> {
             "--default-host",
             host_rust_target()?,
         ])
-        .env("RUSTUP_HOME", app_root.join("rustup-home"))
-        .env("CARGO_HOME", app_root.join("cargo-home")))?;
-    let source = app_root.join("cargo-home/bin").join(executable("rustup"));
-    let target = app_root.join("rustup/bin").join(executable("rustup"));
+        .env("RUSTUP_HOME", vapor_home.join("tools/rustup/home"))
+        .env("CARGO_HOME", vapor_home.join("tools/cargo/home")))?;
+    let source = vapor_home.join("tools/cargo/home/bin").join(executable("rustup"));
+    let target = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
     if let Some(parent) = target.parent() {
         fs::create_dir_all(parent).map_err(io("create rustup bin directory", parent))?;
     }
-    fs::copy(&source, &target).map_err(io("copy rustup into app root", &target))?;
+    fs::copy(&source, &target).map_err(io("copy rustup into Vapor home", &target))?;
     make_executable(&target)?;
-    install_rust_targets_and_components(app_root)
+    install_rust_targets_and_components(vapor_home)
 }
 
-fn install_rust_targets_and_components(app_root: &Path) -> Result<(), String> {
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+fn install_rust_targets_and_components(vapor_home: &Path) -> Result<(), String> {
+    let rustup = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
     if !is_executable(&rustup) {
         return Err(format!("missing app-local rustup: {}", rustup.display()));
     }
@@ -163,32 +162,32 @@ fn install_rust_targets_and_components(app_root: &Path) -> Result<(), String> {
         println!("installing Rust target {target}");
         run(Command::new(&rustup)
             .args(["target", "add", target])
-            .env("RUSTUP_HOME", app_root.join("rustup-home"))
-            .env("CARGO_HOME", app_root.join("cargo-home")))?;
+            .env("RUSTUP_HOME", vapor_home.join("tools/rustup/home"))
+            .env("CARGO_HOME", vapor_home.join("tools/cargo/home")))?;
     }
     for component in RUST_COMPONENTS {
         println!("installing Rust component {component}");
         run(Command::new(&rustup)
             .args(["component", "add", component])
-            .env("RUSTUP_HOME", app_root.join("rustup-home"))
-            .env("CARGO_HOME", app_root.join("cargo-home")))?;
+            .env("RUSTUP_HOME", vapor_home.join("tools/rustup/home"))
+            .env("CARGO_HOME", vapor_home.join("tools/cargo/home")))?;
     }
     Ok(())
 }
 
-fn install_zig(app_root: &Path) -> Result<(), String> {
+fn install_zig(vapor_home: &Path) -> Result<(), String> {
     println!("installing Zig {ZIG_VERSION}");
-    let target = app_root.join("tools/zig");
-    reset_dir(app_root, &target)?;
+    let target = vapor_home.join("tools/zig");
+    reset_dir(vapor_home, &target)?;
     if cfg!(target_os = "windows") {
-        let archive = app_root
-            .join(".vapor/downloads")
+        let archive = vapor_home
+            .join("data/downloads")
             .join(format!("zig-x86_64-windows-{ZIG_VERSION}.zip"));
         download(ZIG_X86_64_WINDOWS, &archive)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
-        let archive = app_root
-            .join(".vapor/downloads")
+        let archive = vapor_home
+            .join("data/downloads")
             .join(format!("zig-x86_64-linux-{ZIG_VERSION}.tar.xz"));
         download(ZIG_X86_64_LINUX, &archive)?;
         extract_tar_xz_strip(&archive, &target)?;
@@ -196,19 +195,19 @@ fn install_zig(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn install_llvm_mingw(app_root: &Path) -> Result<(), String> {
+fn install_llvm_mingw(vapor_home: &Path) -> Result<(), String> {
     println!("installing llvm-mingw {LLVM_MINGW_VERSION}");
-    let target = app_root.join("tools/llvm-mingw");
-    reset_dir(app_root, &target)?;
+    let target = vapor_home.join("tools/llvm-mingw");
+    reset_dir(vapor_home, &target)?;
     if cfg!(target_os = "windows") {
-        let archive = app_root
-            .join(".vapor/downloads")
+        let archive = vapor_home
+            .join("data/downloads")
             .join(format!("llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-x86_64.zip"));
         download(LLVM_MINGW_X86_64_WINDOWS, &archive)?;
         verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
-        let archive = app_root.join(".vapor/downloads").join(format!(
+        let archive = vapor_home.join("data/downloads").join(format!(
             "llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
         ));
         download(LLVM_MINGW_X86_64_LINUX, &archive)?;
@@ -224,8 +223,8 @@ fn install_llvm_mingw(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn write_cross_wrappers(app_root: &Path) -> Result<(), String> {
-    let bin = app_root.join("tools/cross/bin");
+fn write_cross_wrappers(vapor_home: &Path) -> Result<(), String> {
+    let bin = vapor_home.join("tools/cross/bin");
     fs::create_dir_all(&bin).map_err(io("create cross-wrapper bin", &bin))?;
     if cfg!(windows) {
         let path = bin.join("x86_64-unknown-linux-gnu-zig-cc.cmd");
@@ -241,26 +240,26 @@ fn write_cross_wrappers(app_root: &Path) -> Result<(), String> {
         )?;
         make_executable(&path)?;
     }
-    println!("wrote app-local cross-linker wrappers");
+    println!("wrote Vapor-managed cross-linker wrappers");
     Ok(())
 }
 
-fn directories_status(app_root: &Path) -> ComponentStatus {
+fn directories_status(vapor_home: &Path) -> ComponentStatus {
     let missing = PLAYER_DIRS
         .iter()
-        .filter(|relative| !app_root.join(relative).is_dir())
+        .filter(|relative| !vapor_home.join(relative).is_dir())
         .map(|relative| (*relative).to_owned())
         .collect::<Vec<_>>();
     ComponentStatus {
         label: "Generated directories",
         ready: missing.is_empty(),
-        path: app_root.join(".vapor"),
+        path: vapor_home.join("data"),
         missing,
     }
 }
 
-fn steamcmd_status(app_root: &Path) -> ComponentStatus {
-    let path = steamcmd_path(app_root);
+fn steamcmd_status(vapor_home: &Path) -> ComponentStatus {
+    let path = steamcmd_path(vapor_home);
     let ready = is_executable(&path);
     ComponentStatus {
         label: "SteamCMD",
@@ -274,8 +273,8 @@ fn steamcmd_status(app_root: &Path) -> ComponentStatus {
     }
 }
 
-fn rust_status(app_root: &Path) -> ComponentStatus {
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+fn rust_status(vapor_home: &Path) -> ComponentStatus {
+    let rustup = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
     let required = [
         "cargo",
         "rustc",
@@ -284,7 +283,7 @@ fn rust_status(app_root: &Path) -> ComponentStatus {
         "rustdoc",
         "rust-analyzer",
     ];
-    let (path, mut missing) = match expected_rust_bin(app_root) {
+    let (path, mut missing) = match expected_rust_bin(vapor_home) {
         Ok(bin) => {
             let missing = required
                 .iter()
@@ -293,7 +292,7 @@ fn rust_status(app_root: &Path) -> ComponentStatus {
                 .collect::<Vec<_>>();
             (bin, missing)
         }
-        Err(error) => (app_root.join("rustup-home/toolchains"), vec![error]),
+        Err(error) => (vapor_home.join("tools/rustup/home/toolchains"), vec![error]),
     };
     if !is_executable(&rustup) {
         missing.push(format!("rustup at {}", rustup.display()));
@@ -306,29 +305,29 @@ fn rust_status(app_root: &Path) -> ComponentStatus {
     }
 }
 
-fn rust_toolchain_installed(app_root: &Path) -> bool {
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+fn rust_toolchain_installed(vapor_home: &Path) -> bool {
+    let rustup = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
     if !is_executable(&rustup) {
         return false;
     }
-    expected_rust_bin(app_root).is_ok_and(|bin| {
+    expected_rust_bin(vapor_home).is_ok_and(|bin| {
         ["cargo", "rustc"]
             .into_iter()
             .all(|name| is_executable(&bin.join(executable(name))))
     })
 }
 
-fn cross_status(app_root: &Path) -> ComponentStatus {
+fn cross_status(vapor_home: &Path) -> ComponentStatus {
     let mut missing = Vec::new();
-    let zig = app_root.join("tools/zig").join(executable("zig"));
+    let zig = vapor_home.join("tools/zig").join(executable("zig"));
     if !is_executable(&zig) {
         missing.push(format!("zig at {}", zig.display()));
     }
-    let llvm_bin = app_root.join("tools/llvm-mingw/bin");
-    if !llvm_mingw_ucrt_marker_ready(app_root) {
+    let llvm_bin = vapor_home.join("tools/llvm-mingw/bin");
+    if !llvm_mingw_ucrt_marker_ready(vapor_home) {
         missing.push(format!(
             "UCRT toolchain marker at {}",
-            app_root
+            vapor_home
                 .join("tools/llvm-mingw/vapor-toolchain.toml")
                 .display()
         ));
@@ -344,15 +343,11 @@ fn cross_status(app_root: &Path) -> ComponentStatus {
             missing.push(format!("{name} at {}", path.display()));
         }
     }
-    let runtime = app_root.join("tools/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll");
+    let runtime = vapor_home.join("tools/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll");
     if !runtime.is_file() {
         missing.push(format!("libunwind.dll at {}", runtime.display()));
     }
-    let runtime = app_root.join("tools/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll");
-    if !runtime.is_file() {
-        missing.push(format!("libunwind.dll at {}", runtime.display()));
-    }
-    let wrapper = app_root.join("tools/cross/bin").join(if cfg!(windows) {
+    let wrapper = vapor_home.join("tools/cross/bin").join(if cfg!(windows) {
         "x86_64-unknown-linux-gnu-zig-cc.cmd"
     } else {
         "x86_64-unknown-linux-gnu-zig-cc"
@@ -371,8 +366,8 @@ fn cross_status(app_root: &Path) -> ComponentStatus {
     }
 }
 
-fn llvm_mingw_ucrt_marker_ready(app_root: &Path) -> bool {
-    let marker = app_root.join("tools/llvm-mingw/vapor-toolchain.toml");
+fn llvm_mingw_ucrt_marker_ready(vapor_home: &Path) -> bool {
+    let marker = vapor_home.join("tools/llvm-mingw/vapor-toolchain.toml");
     let Ok(source) = fs::read_to_string(marker) else {
         return false;
     };

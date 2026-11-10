@@ -11,6 +11,6 @@
 mod vapor_tools;
 
 fn main() {
-    let _cache_buster = "source-clone-v1";
+    let _cache_buster = "standalone-home-v4";
     vapor_tools::exit(vapor_tools::clone_source_main());
 }

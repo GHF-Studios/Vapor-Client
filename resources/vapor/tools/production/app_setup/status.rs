@@ -1,6 +1,6 @@
 #!/usr/bin/env -S rust-script --force
 
-//! Show app-root, player-tool, Rust/Cargo, and cross-toolchain readiness.
+//! Show Vapor-home, player-tool, Rust/Cargo, and cross-toolchain readiness.
 //!
 //! ```cargo
 //! [package]
@@ -11,6 +11,6 @@
 mod vapor_tools;
 
 fn main() {
-    let _cache_buster = "app-root-discovery-v2";
+    let _cache_buster = "standalone-home-v4";
     vapor_tools::exit(vapor_tools::status_main());
 }

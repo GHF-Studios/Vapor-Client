@@ -1,6 +1,6 @@
 #!/usr/bin/env -S rust-script --force
 
-//! Run a RustRover workflow through app-root Vapor tools.
+//! Run a RustRover workflow through Vapor-home Vapor tools.
 //!
 //! ```cargo
 //! [package]
@@ -11,6 +11,6 @@
 mod vapor_tools;
 
 fn main() {
-    let _cache_buster = "ide-run-app-root-tools-v1";
+    let _cache_buster = "standalone-home-v4";
     vapor_tools::exit(vapor_tools::ide_run_main());
 }

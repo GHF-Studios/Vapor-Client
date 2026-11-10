@@ -1,5 +1,5 @@
-fn reset_dir(app_root: &Path, path: &Path) -> Result<(), String> {
-    ensure_contained(app_root, path)?;
+fn reset_dir(vapor_home: &Path, path: &Path) -> Result<(), String> {
+    ensure_contained(vapor_home, path)?;
     reset_plain_dir(path)
 }
 
@@ -46,9 +46,9 @@ fn remove_empty_dir(root: &Path, path: &Path) -> Result<(), String> {
     }
 }
 
-fn write_receipt(app_root: &Path, name: &str, state: &str) -> Result<(), String> {
-    let path = app_root
-        .join(".vapor/state/installer")
+fn write_receipt(vapor_home: &Path, name: &str, state: &str) -> Result<(), String> {
+    let path = vapor_home
+        .join("data/state/installer")
         .join(format!("{name}.toml"));
     let body = format!(
         "schema = 1\nstate = \"{state}\"\ntool = \"resources/vapor/tools/production/app_setup/{name}\"\n"
@@ -97,9 +97,9 @@ fn executable(name: &str) -> String {
     format!("{name}{}", env::consts::EXE_SUFFIX)
 }
 
-fn app_control_runner(app_root: &Path) -> PathBuf {
+fn app_control_runner(vapor_home: &Path) -> PathBuf {
     let host_target = host_rust_target().unwrap_or("x86_64-unknown-linux-gnu");
-    app_root
+    vapor_home
         .join("bin")
         .join(host_target)
         .join(executable("vapor-installer"))
@@ -185,6 +185,45 @@ fn shell_string_text(value: &str) -> String {
 
 fn powershell_quote(value: &str) -> String {
     value.replace('\'', "''")
+}
+
+fn powershell_compatible_path_text(value: &str) -> String {
+    if let Some(unc_path) = value.strip_prefix(r"\\?\UNC\") {
+        return format!(r"\\{unc_path}");
+    }
+
+    let bytes = value.as_bytes();
+    if bytes.len() >= 7
+        && value.starts_with(r"\\?\")
+        && bytes[4].is_ascii_alphabetic()
+        && bytes[5] == b':'
+        && matches!(bytes[6], b'\\' | b'/')
+    {
+        return value[4..].to_owned();
+    }
+
+    value.to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::powershell_compatible_path_text;
+
+    #[test]
+    fn powershell_paths_drop_extended_drive_prefixes() {
+        assert_eq!(
+            powershell_compatible_path_text(r"\\?\C:\Users\Leslie\Vapor\data\downloads\tool.zip"),
+            r"C:\Users\Leslie\Vapor\data\downloads\tool.zip"
+        );
+    }
+
+    #[test]
+    fn powershell_paths_convert_extended_unc_prefixes() {
+        assert_eq!(
+            powershell_compatible_path_text(r"\\?\UNC\server\share\Vapor\tool.zip"),
+            r"\\server\share\Vapor\tool.zip"
+        );
+    }
 }
 
 fn xml_escape(value: &str) -> String {

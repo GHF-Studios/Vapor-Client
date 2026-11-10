@@ -5,25 +5,3 @@ name = "vapor-client"
 organization = "ghf-studios"
 version = "0.5.0"
 repository = "https://github.com/GHF-Studios/Vapor-Client"
-
-[root.steam]
-app-id = 2122620
-
-[[root.content]]
-id = "ghf-studios/loo-cast/spacetime-engine"
-kind = "engine"
-app-id = 2122620
-workshop-id = "3762162251"
-
-[[root.content]]
-id = "ghf-studios/loo-cast/loo-cast-game"
-kind = "game"
-app-id = 2122620
-workshop-id = "3762162407"
-
-[[root.content]]
-id = "ghf-studios/loo-cast/loo-cast-packagepack"
-kind = "packagepack"
-app-id = 2122620
-workshop-id = "3762162548"
-default-launch = "default"

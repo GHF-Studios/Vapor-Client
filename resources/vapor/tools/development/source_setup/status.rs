@@ -11,6 +11,6 @@
 mod vapor_tools;
 
 fn main() {
-    let _cache_buster = "app-root-discovery-v2";
+    let _cache_buster = "standalone-home-v4";
     vapor_tools::exit(vapor_tools::source_status_main());
 }

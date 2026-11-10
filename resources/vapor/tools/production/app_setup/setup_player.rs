@@ -1,6 +1,6 @@
 #!/usr/bin/env -S rust-script --force
 
-//! Install or reconcile the app-root player tooling layer.
+//! Install or reconcile the Vapor-home player tooling layer.
 //!
 //! ```cargo
 //! [package]
@@ -11,6 +11,6 @@
 mod vapor_tools;
 
 fn main() {
-    let _cache_buster = "app-root-discovery-v2";
+    let _cache_buster = "standalone-home-v4";
     vapor_tools::exit(vapor_tools::setup_player_main());
 }
