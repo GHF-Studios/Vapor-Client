@@ -40,11 +40,11 @@
 - Keep the existing public install/uninstall functions.
 - Add private PowerShell literal/verification helpers as needed.
 
-- [ ] Pass `root` and `bin` as explicitly bound script-block parameters, not loose values after a `-Command` string.
-- [ ] Verify the user PATH and `VAPOR_HOME` values after writing; fail the operation on mismatch.
-- [ ] Broadcast the Windows environment change.
-- [ ] Remove Vapor PATH entries for all supported Windows target directories under this installation root.
-- [ ] Build Vapor Core through the managed Vapor command and verify the real user PATH after invoking the new installer.
+- [x] Pass `root` and `bin` as explicitly bound script-block parameters, not loose values after a `-Command` string.
+- [x] Verify the user PATH and `VAPOR_HOME` values after writing; fail the operation on mismatch.
+- [x] Broadcast the Windows environment change.
+- [x] Remove Vapor PATH entries for all supported Windows target directories under this installation root.
+- [x] Build Vapor Core through the managed Vapor command and verify the real user PATH after invoking the new installer.
 
 ### Task 2: Reduce local roles and installer navigation
 
@@ -57,10 +57,10 @@
 - `VaporRole` exposes only `Player` and `Developer`.
 - Developer promotion reconciles the full developer environment; Player setup does not.
 
-- [ ] Replace the four-option role enum, labels, parser, and policy with Player/Developer.
-- [ ] Replace the Overview/Role/Installation tab flow with one lifecycle view and one destructive section.
-- [ ] Show the current role, developer-tool readiness, one contextual primary action, and actual operation result.
-- [ ] Treat existing old role-state versions as unsupported; do not add compatibility aliases.
+- [x] Replace the four-option role enum, labels, parser, and policy with Player/Developer.
+- [x] Replace the Overview/Role/Installation tab flow with one lifecycle view and one destructive section.
+- [x] Show the current role, developer-tool readiness, one contextual primary action, and actual operation result.
+- [x] Treat existing old role-state versions as unsupported; do not add compatibility aliases.
 
 ### Task 3: Add preflighted full erasure
 
@@ -85,8 +85,10 @@
 **Files:**
 - Update the workstream record and operator-facing installer documentation.
 
-- [ ] Commit/push the core and installer branches, then update the Client submodule pins.
-- [ ] Preserve or publish unique dirty work from every checkout before wiping any checkout; all retained checkouts are then created under the canonical `Vapor Home/sources` root.
+- [x] Commit/push the core and installer branches, then update the Client submodule pins.
+- [x] Preserve or publish unique dirty work from every checkout before wiping any checkout; all retained checkouts are then created under the canonical `Vapor Home/sources` root.
 - [x] Run the installer inventory and inspect its exact path list.
-- [ ] Execute the authorized full erase and reinstall from the built standalone installer/package source.
+- [x] Execute the authorized full erase and reinstall from the built standalone installer/package source. The clean wipe was followed by the verified normal install/uninstall/install cycle, which preserves Home and source while removing and restoring the Windows user PATH integration.
 - [ ] Verify a fresh Player install and a Developer install through the installer UI; report any handoff that still requires manual action.
+
+The UI verification remains open: the Developer toolchain is ready and the installed CLI has been exercised, but a full first-launch Player/Developer walkthrough in the GUI has not been confirmed.

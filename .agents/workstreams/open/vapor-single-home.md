@@ -23,12 +23,14 @@
 - Completed: storage inventory across the known Vapor roots; measured duplicate
   Cargo/Rustup homes and target outputs; inspected checkout states; documented
   the single-home layout and migration plan.
-- Current checkout evidence: the Vapor home source checkout, Documents checkout,
-  and Codex worktree each contain distinct staged/unstaged/untracked work. Do
-  not delete any of them until each change is committed, transferred, or
-  explicitly abandoned. Canonical source destination is
-  `%USERPROFILE%\\Vapor\\sources\\Vapor-Client` on Windows and
-  `$HOME/Vapor/sources/Vapor-Client` on Linux.
+- Current checkout evidence (2026-11-11): authored checkouts are now under
+  `C:\\Users\\David Jackson\\Vapor\\sources`; the Client, Loo-Cast,
+  Registry, and Platform checkouts report clean working trees. The two old
+  `Documents\\GitHub` folders and two Codex worktree folders have no source
+  files (the Codex folders contain only worktree marker files). There is no
+  remaining 40 GiB Codex checkout/build output to delete. The repository's
+  `git worktree list` reports only the canonical Client checkout. Keep new
+  authored checkouts under `Vapor Home/sources` on both platforms.
 - Remaining: implement and build the home path contract; route all managed
   writers; preview and migrate Steam-root directories; compare and consolidate
   source/toolchain/cache duplicates; update docs; build supported targets and
@@ -74,3 +76,22 @@
   Vapor Home target directories, and the Windows copy matches the Steam launch
   path byte-for-byte. Full `vapor client deploy local` remains blocked by the
   MSVC `ring` build error above. No test suite or Steam depot upload was run.
+
+- Clean-rebuild follow-through (2026-11-11): committed Core/Installer fixes
+  and updated Client submodule pins are present in the canonical checkout.
+  Vapor Installer's normal install → uninstall → install cycle was exercised;
+  uninstall removed the user PATH/VAPOR_HOME integration while preserving
+  Vapor Home and source, and reinstall restored the integration. The user PATH
+  contains one canonical app-local command directory. The installed `vapor`
+  executable runs, and `vapor-installer dev-env status` reports the managed
+  Developer toolchain ready. The recovery USB kit's Windows installer and one
+  support script were refreshed from Vapor Home; their hashes match the
+  regenerated 44-entry checksum manifest. A fresh Player/Developer walkthrough
+  through the Installer GUI remains unverified.
+- Storage snapshot (2026-11-11): Codex worktree markers contain zero file bytes;
+  Documents GitHub stubs contain no source files; `C:\\VaporTools` is absent.
+  Vapor Home is about 6.7 GiB, of which 1.85 GiB is generated `cache/build`
+  output. A deletion attempt was rejected by the host policy and made no
+  change. The Loo Cast Steam directory still has about 4 GiB under `content`
+  plus `.vapor` and other generated files; relocating it requires the
+  Steam-mount/content path migration, so it remains an open item.
