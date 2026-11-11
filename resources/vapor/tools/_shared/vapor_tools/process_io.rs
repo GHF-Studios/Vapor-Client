@@ -87,12 +87,10 @@ fn extract_zip_single_root(archive: &Path, target: &Path) -> Result<(), String> 
     entries.sort_by_key(|entry| entry.path());
     if entries.len() == 1 && entries[0].file_type().is_ok_and(|kind| kind.is_dir()) {
         let single_root = entries[0].path();
-        reset_plain_dir(target)?;
-        for entry in fs::read_dir(&single_root).map_err(io("read zip single root", &single_root))? {
-            let entry = entry.map_err(|error| format!("failed to read zip entry: {error}"))?;
-            fs::rename(entry.path(), target.join(entry.file_name()))
-                .map_err(|error| format!("failed to move extracted file: {error}"))?;
+        if target.exists() {
+            remove_path(target).map_err(io("remove old extract target", target))?;
         }
+        fs::rename(&single_root, target).map_err(io("promote zip single root", target))?;
         remove_path(&staging).map_err(io("remove zip staging", &staging))?;
         Ok(())
     } else {

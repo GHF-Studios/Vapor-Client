@@ -184,7 +184,15 @@ fn shell_string_text(value: &str) -> String {
 }
 
 fn powershell_quote(value: &str) -> String {
-    value.replace('\'', "''")
+    // `canonicalize` produces Windows verbatim paths (`\\?\C:\...`).
+    // Windows PowerShell 5.1's filesystem provider rejects those in commands
+    // such as Invoke-WebRequest -OutFile even though Rust's filesystem APIs
+    // accept them. Keep the long-path form for Rust I/O, but normalize paths
+    // whenever they cross this PowerShell boundary.
+    value
+        .strip_prefix(r"\\?\")
+        .unwrap_or(value)
+        .replace('\'', "''")
 }
 
 fn xml_escape(value: &str) -> String {
