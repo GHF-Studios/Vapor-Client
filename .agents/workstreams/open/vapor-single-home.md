@@ -137,3 +137,20 @@
   omitted `vapor-linux-cc.exe`; a Linux-target Cargo check of `vapor_installer_ui`
   passed using the Vapor-managed Rust/Cargo toolchain and target cache. A visible
   GUI walkthrough remains unverified.
+
+- Recovery payload refresh (2026-11-11): `E:\VaporRecovery\Bootstrap\20261111-clean-rebuild`
+  now records Client commit `96e3ff9611e2140ea9f7f9c2ee27b82542d0c8ed` and its
+  pinned submodules. Its payload contains the 14-file managed Windows runtime,
+  Linux `vapor-installer`, `vapor-installer-gui`, and `vapor-linux-cc` artifacts,
+  the current 22-file Vapor tools resource tree, and current Home/Packagepack/
+  toolchain manifests. All 17 binary files match their Vapor Home/build-cache
+  source hashes, the resource file set matches, and all 46 snapshot checksum
+  entries verify. The Linux artifacts were cross-built from Windows and were
+  not runtime-tested on Linux. Snapshot size is about 1.60 GiB.
+- Checkout cleanup recheck (2026-11-11): the two Codex worktree attachment
+  directories contain only zero-byte marker files (no source or build output).
+  Codex's archive operation and direct cleanup were blocked by host policy, so
+  those negligible metadata remnants remain. `Documents\GitHub` contains no
+  source content in its old Client/MM folders and only 2.7 KB of `.idea` files
+  in the old Platform folder. C: has about 152.5 GiB free; the claimed ~40 GiB
+  of duplicate Codex checkout data is not present.
