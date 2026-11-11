@@ -95,3 +95,20 @@
   change. The Loo Cast Steam directory still has about 4 GiB under `content`
   plus `.vapor` and other generated files; relocating it requires the
   Steam-mount/content path migration, so it remains an open item.
+- Clean-room reinstall (2026-11-11): used the USB recovery payload to erase all
+  Vapor Home data, reinstall the Player app, install the Developer toolchain,
+  and recreate the four locked first-party checkouts under `Vapor Home/sources`.
+  Installer and Developer status both report ready; Rust, the two supported
+  targets, Zig, LLVM-MinGW, and SteamCMD are managed under Vapor Home. The
+  global `%USERPROFILE%/.cargo` and `.rustup` copies remain because the host
+  rejected the requested deletion; no alternate deletion path was used.
+- Steam/Home boundary fix (2026-11-11): Steam launch wrappers now resolve the
+  independent Vapor Home, route GUI/game/shell launches there, and put logs in
+  `Vapor Home/data/logs`; the installer and entrypoint now read the Player
+  receipt from `data/state/installer/player.toml`. The source-built deployment
+  initially hit a Windows executable lock when it tried to replace the CLI
+  that launched it. Re-running from the separate installed `vapor-next.exe`
+  succeeded and promoted all ten client binaries into Vapor Home. Next: sync
+  the Steam locator/wrapper from those installed files and exercise the Steam
+  wrapper without launching a game; the old Steam `.vapor`/runtime/content
+  directories are not yet migrated or removed.

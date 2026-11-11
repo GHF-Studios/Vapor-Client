@@ -2,27 +2,16 @@
 setlocal EnableExtensions
 
 set "TARGET=x86_64-pc-windows-gnullvm"
-
 set "SCRIPT_DIR=%~dp0"
-pushd "%SCRIPT_DIR%\.." >nul 2>nul
-if errorlevel 1 goto app_root_from_script_fallback
-set "APP_ROOT=%CD%"
-popd >nul 2>nul
-goto app_root_ready
+for %%I in ("%SCRIPT_DIR%..") do set "STEAM_ROOT=%%~fI"
 
-:app_root_from_script_fallback
-set "APP_ROOT=%SCRIPT_DIR%\.."
-goto app_root_ready
-
-:app_root_ready
-
+if not defined VAPOR_HOME set "VAPOR_HOME=%USERPROFILE%\Vapor"
+set "APP_ROOT=%VAPOR_HOME%"
 set "VAPOR=%APP_ROOT%\bin\%TARGET%\vapor.exe"
-set "INSTALLER=%APP_ROOT%\bin\%TARGET%\vapor-installer.exe"
-set "ENTRYPOINT=%APP_ROOT%\bin\%TARGET%\vapor-entrypoint.exe"
-set "LOG_DIR=%APP_ROOT%\.vapor\logs"
+set "ENTRYPOINT=%STEAM_ROOT%\bin\%TARGET%\vapor-entrypoint.exe"
+if not exist "%ENTRYPOINT%" set "ENTRYPOINT=%APP_ROOT%\bin\%TARGET%\vapor-entrypoint.exe"
+set "LOG_DIR=%APP_ROOT%\data\logs"
 set "LAUNCH_LOG=%LOG_DIR%\launch-wrapper.log"
-
-if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>nul
 
 set "HOLD_TERMINAL=0"
 if /I "%~1"=="--hold" goto hold_arg
@@ -42,7 +31,8 @@ goto launch_target_ready
 set "LAUNCH_TARGET=shell"
 
 :launch_target_ready
-
+if not exist "%APP_ROOT%\Vapor-Home.toml" goto missing_vapor
+if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>nul
 set "PATH=%APP_ROOT%\bin\%TARGET%;%APP_ROOT%\bin;%PATH%"
 
 set "FORWARD_ARGS="
@@ -53,20 +43,18 @@ shift /1
 goto collect_args
 
 :args_done
-if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: launch_target=%LAUNCH_TARGET% app_root="%APP_ROOT%" hold=%HOLD_TERMINAL%
+if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: launch_target=%LAUNCH_TARGET% vapor_home="%APP_ROOT%" steam_root="%STEAM_ROOT%" hold=%HOLD_TERMINAL%
 pushd "%APP_ROOT%" >nul 2>nul
-if errorlevel 1 if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: could not change directory to app root
+if errorlevel 1 if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: could not change directory to Vapor Home
 
 echo Vapor launch wrapper
 echo   launch target: %LAUNCH_TARGET%
-echo   app root: "%APP_ROOT%"
+echo   Vapor Home: "%APP_ROOT%"
 echo   log: "%LAUNCH_LOG%"
 echo.
 
-if /I "%LAUNCH_TARGET%"=="installer" goto installer
-if /I "%LAUNCH_TARGET%"=="vapor-installer" goto installer
-if not exist "%VAPOR%" goto missing_vapor
-
+if /I "%LAUNCH_TARGET%"=="installer" goto gui
+if /I "%LAUNCH_TARGET%"=="vapor-installer" goto gui
 if /I "%LAUNCH_TARGET%"=="play" goto play
 if /I "%LAUNCH_TARGET%"=="shell" goto shell
 if /I "%LAUNCH_TARGET%"=="vapor-shell" goto shell
@@ -82,22 +70,14 @@ if not exist "%ENTRYPOINT%" goto missing_entrypoint
 set "STATUS=%ERRORLEVEL%"
 goto done
 
-:installer
-if not exist "%INSTALLER%" goto missing_installer
-if defined FORWARD_ARGS (
-    "%INSTALLER%" %FORWARD_ARGS%
-) else (
-    "%INSTALLER%" install
-)
-set "STATUS=%ERRORLEVEL%"
-goto done
-
 :play
-"%VAPOR%" --startup-script default %FORWARD_ARGS%
+if not exist "%ENTRYPOINT%" goto missing_entrypoint
+"%ENTRYPOINT%" play %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
 :shell
+if not exist "%VAPOR%" goto missing_cli
 set "VAPOR_PLAIN_INPUT=1"
 "%VAPOR%" %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
@@ -105,39 +85,37 @@ set "VAPOR_PLAIN_INPUT="
 goto done
 
 :command
+if not exist "%VAPOR%" goto missing_cli
 "%VAPOR%" "%LAUNCH_TARGET%" %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
 :missing_vapor
-echo error: expected Vapor executable is missing
-echo   target:  %TARGET%
-echo   checked: %VAPOR%
-echo.
-echo This Steam install is missing the platform binary for this launch option.
-echo Update or reinstall the app on the selected Steam branch, then try again.
+if exist "%ENTRYPOINT%" (
+    "%ENTRYPOINT%" chooser
+    set "STATUS=%ERRORLEVEL%"
+    goto done_no_hold_message
+)
+echo error: Vapor is not installed for this user.
+echo Download Vapor from https://vapor.ghf-studios.site/ and then launch this app again.
 set "STATUS=9009"
-goto done
+goto done_no_hold_message
 
-:missing_installer
-echo error: expected Vapor Installer executable is missing
-echo   target:  %TARGET%
-echo   checked: %INSTALLER%
-echo.
-echo This Steam install is missing the platform installer for this launch option.
-echo Update or reinstall the app on the selected Steam branch, then try again.
+:missing_cli
+echo error: the Vapor command is missing from Vapor Home.
+echo Checked: "%VAPOR%"
+echo Repair Vapor from its installer, then try again.
 set "STATUS=9009"
 goto done
 
 :missing_entrypoint
-echo error: expected Vapor app entrypoint is missing
-echo   target:  %TARGET%
-echo   checked: %ENTRYPOINT%
+echo error: the Vapor launch helper is missing.
+echo Checked: "%ENTRYPOINT%"
 set "STATUS=9009"
 goto done
 
 :done
-if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: vapor exited with status %STATUS%
+if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: exited with status %STATUS%
 if not "%HOLD_TERMINAL%"=="1" goto done_no_hold_message
 echo.
 echo Vapor exited with status %STATUS%.
