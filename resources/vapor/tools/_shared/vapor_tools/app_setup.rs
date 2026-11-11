@@ -103,6 +103,10 @@ fn teardown_development(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
+pub fn teardown_development_for(app_root: &Path) -> Result<(), String> {
+    teardown_development(app_root)
+}
+
 fn install_steamcmd(app_root: &Path) -> Result<(), String> {
     println!("installing app-local SteamCMD");
     let target = app_root.join("tools/steamcmd");
