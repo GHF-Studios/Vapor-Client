@@ -396,12 +396,6 @@ fn write_app_root_anchor(app_root: &Path) -> Result<(), String> {
     }
     fs::write(&anchor, app_root.to_string_lossy().as_bytes())
         .map_err(io("write app-root anchor", &anchor))?;
-    if cfg!(windows) {
-        let _ = Command::new("setx")
-            .arg(APP_ROOT_ENV)
-            .arg(app_root.to_string_lossy().as_ref())
-            .status();
-    }
     Ok(())
 }
 
