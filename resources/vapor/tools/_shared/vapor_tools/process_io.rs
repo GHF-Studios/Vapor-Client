@@ -21,16 +21,19 @@ fn download(url: &str, destination: &Path) -> Result<(), String> {
 
 fn verify_sha256(path: &Path, expected: &str) -> Result<(), String> {
     if cfg!(windows) {
-        let output = Command::new("powershell")
-            .args(["-NoProfile", "-Command"])
-            .arg(format!(
-                "(Get-FileHash -Algorithm SHA256 '{}').Hash",
-                powershell_quote(&path.to_string_lossy())
-            ))
+        let path_text = path.to_string_lossy();
+        let path_text = path_text.strip_prefix(r"\\?\").unwrap_or(&path_text);
+        let output = Command::new("certutil")
+            .args(["-hashfile"])
+            .arg(path_text)
+            .arg("SHA256")
             .output()
-            .map_err(|error| format!("failed to start PowerShell sha256 check: {error}"))?;
+            .map_err(|error| format!("failed to start certutil sha256 check: {error}"))?;
         let actual = String::from_utf8_lossy(&output.stdout)
-            .trim()
+            .lines()
+            .map(str::trim)
+            .find(|line| line.len() == 64 && line.bytes().all(|byte| byte.is_ascii_hexdigit()))
+            .unwrap_or_default()
             .to_ascii_lowercase();
         if output.status.success() && actual == expected {
             return Ok(());

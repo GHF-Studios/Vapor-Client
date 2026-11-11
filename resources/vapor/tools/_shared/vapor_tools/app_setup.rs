@@ -180,8 +180,22 @@ fn install_rust_targets_and_components(app_root: &Path) -> Result<(), String> {
 }
 
 fn install_zig(app_root: &Path) -> Result<(), String> {
-    println!("installing Zig {ZIG_VERSION}");
     let target = app_root.join("tools/zig");
+    let zig = target.join(executable("zig"));
+    if zig.is_file()
+        && Command::new(&zig)
+            .arg("version")
+            .output()
+            .is_ok_and(|output| {
+                output.status.success()
+                    && String::from_utf8_lossy(&output.stdout).trim() == ZIG_VERSION
+            })
+    {
+        println!("kept app-local Zig {ZIG_VERSION}");
+        return Ok(());
+    }
+
+    println!("installing Zig {ZIG_VERSION}");
     reset_dir(app_root, &target)?;
     if cfg!(target_os = "windows") {
         let archive = app_root
@@ -200,21 +214,44 @@ fn install_zig(app_root: &Path) -> Result<(), String> {
 }
 
 fn install_llvm_mingw(app_root: &Path) -> Result<(), String> {
-    println!("installing llvm-mingw {LLVM_MINGW_VERSION}");
     let target = app_root.join("tools/llvm-mingw");
+    let marker = target.join("vapor-toolchain.toml");
+    let marker_matches = fs::read_to_string(&marker).is_ok_and(|contents| {
+        contents.contains(&format!("version = \"{LLVM_MINGW_VERSION}\""))
+            && contents.contains("runtime = \"ucrt\"")
+    });
+    if marker_matches
+        && target
+            .join("bin")
+            .join(executable("x86_64-w64-mingw32-clang"))
+            .is_file()
+    {
+        println!("kept app-local llvm-mingw {LLVM_MINGW_VERSION}");
+        return Ok(());
+    }
+
+    println!("installing llvm-mingw {LLVM_MINGW_VERSION}");
     reset_dir(app_root, &target)?;
     if cfg!(target_os = "windows") {
         let archive = app_root
             .join("cache/downloads")
             .join(format!("llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-x86_64.zip"));
-        download(LLVM_MINGW_X86_64_WINDOWS, &archive)?;
+        if !archive.is_file()
+            || verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256).is_err()
+        {
+            download(LLVM_MINGW_X86_64_WINDOWS, &archive)?;
+        }
         verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
         let archive = app_root.join("cache/downloads").join(format!(
             "llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
         ));
-        download(LLVM_MINGW_X86_64_LINUX, &archive)?;
+        if !archive.is_file()
+            || verify_sha256(&archive, LLVM_MINGW_X86_64_LINUX_SHA256).is_err()
+        {
+            download(LLVM_MINGW_X86_64_LINUX, &archive)?;
+        }
         verify_sha256(&archive, LLVM_MINGW_X86_64_LINUX_SHA256)?;
         extract_tar_xz_strip(&archive, &target)?;
     }
