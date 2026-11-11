@@ -74,10 +74,11 @@
 - Erasure accepts only inventoried, canonical, Vapor-owned paths.
 - Windows post-exit helper accepts the installer process ID and the preflighted path set.
 
-- [ ] Inventory canonical Home, Vapor Local/Roaming state, and confirmed external legacy tool roots.
-- [ ] Show exact paths and irreversibility in the UI before execution.
-- [ ] Stage a hidden helper outside the home, wait for GUI exit, revalidate marker/path containment, erase owned roots, and remove the helper script.
-- [ ] Preserve Steam-owned game/Packagepack files and unrelated user tools.
+- [x] Inventory canonical Home, Vapor Local/Roaming state, and confirmed external legacy tool roots.
+- [x] Show exact paths and irreversibility in the UI before execution.
+- [x] Stage a hidden helper outside the home, wait for installer exit, revalidate marker/path containment, erase owned roots, and remove the helper script.
+- [x] Preserve Steam-owned game/Packagepack files and unrelated user tools.
+- [x] Expose the same inventory and erase operation through `vapor-installer erase`, with explicit app root and `ERASE VAPOR` confirmation.
 
 ### Task 4: Prepare the clean rebuild
 
@@ -86,6 +87,6 @@
 
 - [ ] Commit/push the core and installer branches, then update the Client submodule pins.
 - [ ] Preserve or publish unique dirty work from every checkout before wiping any checkout; all retained checkouts are then created under the canonical `Vapor Home/sources` root.
-- [ ] Run the installer inventory and inspect its exact path list.
+- [x] Run the installer inventory and inspect its exact path list.
 - [ ] Execute the authorized full erase and reinstall from the built standalone installer/package source.
 - [ ] Verify a fresh Player install and a Developer install through the installer UI; report any handoff that still requires manual action.
