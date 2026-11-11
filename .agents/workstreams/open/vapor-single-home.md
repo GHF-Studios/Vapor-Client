@@ -122,3 +122,18 @@
   locator into the Steam launch path, then ran `client --help` through that
   wrapper. It invoked the Home CLI and wrote its log under Home `data/logs`;
   no Steam-local log was created. Their SHA-256 hashes match their Home copies.
+- Developer setup UI progress (2026-11-11): the first-launch and role-promotion
+  paths now forward the Client service's live operation stage into the
+  Installer status line while the Developer toolset installs. The Windows
+  source-authoritative deployment compiled and promoted all ten client
+  binaries after this change. A visible first-launch GUI walkthrough remains
+  unverified; do not equate the build with a completed UI interaction check.
+- Developer provisioning convergence (2026-11-11): GUI first-launch and role
+  promotion now call the same app-root Developer setup routine as the CLI,
+  including both Rust targets, Zig, LLVM-MinGW, and cross-wrapper setup; its
+  stage messages are forwarded into the Installer status line. The Client
+  service then performs its role reconciliation and Tracy setup. The managed
+  Windows deployment promoted all eleven binaries, including the previously
+  omitted `vapor-linux-cc.exe`; a Linux-target Cargo check of `vapor_installer_ui`
+  passed using the Vapor-managed Rust/Cargo toolchain and target cache. A visible
+  GUI walkthrough remains unverified.

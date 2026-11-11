@@ -27,22 +27,38 @@ pub fn setup_player_for(app_root: &Path) -> Result<(), String> {
 }
 
 fn setup_development(app_root: &Path) -> Result<(), String> {
+    setup_development_with_progress(app_root, |_| {})
+}
+
+/// Prepare the complete app-local developer toolchain while reporting the
+/// current setup stage to GUI callers. The CLI uses the same implementation
+/// without a progress receiver.
+pub fn setup_development_with_progress(
+    app_root: &Path,
+    mut report_progress: impl FnMut(&str),
+) -> Result<(), String> {
+    report_progress("Preparing Player prerequisites");
     setup_player(app_root)?;
     println!();
     println!("Setup Development");
     if !rust_toolchain_installed(app_root) {
-        install_rust(app_root)?;
+        report_progress("Installing the pinned Rust toolchain");
+        install_rust(app_root, &mut report_progress)?;
     } else {
-        install_rust_targets_and_components(app_root)?;
+        install_rust_targets_and_components(app_root, &mut report_progress)?;
         println!("kept app-local Rust/Cargo");
     }
     if !cross_status(app_root).ready {
+        report_progress("Installing Zig for Linux builds");
         install_zig(app_root)?;
+        report_progress("Installing the Windows GNU linker");
         install_llvm_mingw(app_root)?;
+        report_progress("Preparing cross-compiler wrappers");
         write_cross_wrappers(app_root)?;
     } else {
         println!("kept app-local cross-build tools");
     }
+    report_progress("Saving Developer setup status");
     write_receipt(app_root, "dev-env", "ready")?;
     println!();
     println!("Status: development setup ready");
@@ -127,7 +143,7 @@ fn install_steamcmd(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn install_rust(app_root: &Path) -> Result<(), String> {
+fn install_rust(app_root: &Path, report_progress: &mut impl FnMut(&str)) -> Result<(), String> {
     println!("installing app-local Rust/Cargo {RUST_TOOLCHAIN}");
     let rustup_init = app_root
         .join("cache/downloads")
@@ -154,15 +170,19 @@ fn install_rust(app_root: &Path) -> Result<(), String> {
     }
     fs::copy(&source, &target).map_err(io("copy rustup into app root", &target))?;
     make_executable(&target)?;
-    install_rust_targets_and_components(app_root)
+    install_rust_targets_and_components(app_root, report_progress)
 }
 
-fn install_rust_targets_and_components(app_root: &Path) -> Result<(), String> {
+fn install_rust_targets_and_components(
+    app_root: &Path,
+    report_progress: &mut impl FnMut(&str),
+) -> Result<(), String> {
     let rustup = app_root.join("tools/rustup/bin").join(executable("rustup"));
     if !is_executable(&rustup) {
         return Err(format!("missing app-local rustup: {}", rustup.display()));
     }
     for target in RUST_TARGETS {
+        report_progress(&format!("Installing Rust target {target}"));
         println!("installing Rust target {target}");
         run(Command::new(&rustup)
             .args(["target", "add", target])
@@ -170,6 +190,7 @@ fn install_rust_targets_and_components(app_root: &Path) -> Result<(), String> {
             .env("CARGO_HOME", app_root.join("tools/cargo/home")))?;
     }
     for component in RUST_COMPONENTS {
+        report_progress(&format!("Installing Rust component {component}"));
         println!("installing Rust component {component}");
         run(Command::new(&rustup)
             .args(["component", "add", component])
