@@ -112,3 +112,13 @@
   the Steam locator/wrapper from those installed files and exercise the Steam
   wrapper without launching a game; the old Steam `.vapor`/runtime/content
   directories are not yet migrated or removed.
+- Source-index correction (2026-11-11): the Superworkspace root had also been
+  persisted as an authored source, producing an “unavailable source” row after
+  reinstall. Core now keeps the Superworkspace identity separate from its
+  authored workspaces. Repaired the Home state to retain the Superworkspace
+  root and only the valid Vapor and Loo-Cast workspaces; `vapor source status`
+  and `source list` now report that clean state.
+- Steam wrapper smoke check (2026-11-11): copied the promoted Home wrapper and
+  locator into the Steam launch path, then ran `client --help` through that
+  wrapper. It invoked the Home CLI and wrote its log under Home `data/logs`;
+  no Steam-local log was created. Their SHA-256 hashes match their Home copies.
