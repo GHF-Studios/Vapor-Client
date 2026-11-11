@@ -31,12 +31,21 @@
 - Verification: Vapor, Vapor GUI, and Vapor CLI Windows development builds
   passed through Vapor Shell. No tests were run. Linux-native build remains a
   CI/Ubuntu-worker validation item; this Windows machine only built its host
-  target.
-- Owned uncommitted changes: this vertical slice is compiled but not yet
-  committed or pushed.
-- Remaining: inspect final diff and demo run-configuration discovery; commit
-  and push each submodule and the parent gitlinks; then deploy locally for the
-  owner’s visual walkthrough.
-- Smallest resume action: review and commit the built vertical slice.
+  target. The deployed CLI `journey status` command ran and showed the shared
+  Player/Developer catalog and progress.
+- Deployment: all quest sources and lockfiles were committed/pushed to their
+  submodule branches and pinned by the Client branch. Vapor's local deploy
+  completed after invoking its staged Vapor-home deployment helper with no
+  live `vapor.exe` parent. The normal self-deploy path still fails on Windows
+  because its running parent holds `bin/<target>/vapor.exe` open; this needs a
+  proper exit-and-resume update handoff. The detailed child error is now
+  surfaced by source, but the executable lock is the remaining defect.
+- Owned uncommitted changes: none intended; the current checkpoint should be
+  committed after this status update.
+- Remaining: design/implement the Windows self-update handoff; run the full
+  empty-install recovery drill; validate the Linux-native build on the Ubuntu
+  worker; have the owner visually review the installed Launcher page.
+- Smallest resume action: make `client deploy local` on Windows release the
+  current executable before promotion, then repeat the install flow.
 - Pending external actions: owner must visually inspect the installed
   Launcher flow; no other authorization is pending.
