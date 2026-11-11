@@ -1,6 +1,6 @@
 # Workstream — Standalone Vapor Single Home
 
-- State: foreground
+- State: suspended
 - Goal: make `C:\Users\David Jackson\Vapor` the single Windows Vapor root and
   `$HOME/Vapor` the single Linux Vapor root; move Vapor-owned Steam app files
   into it, route all Vapor operations to it, consolidate verified duplicates,
@@ -8,13 +8,10 @@
 - Ordered successor: resume `workshop-content-superpass` after a coherent
   standalone-home migration checkpoint.
 - Depends on: owner-approved single-root layout in the current conversation.
-- Semantic mutation claim: the Vapor home marker/path contract, managed
-  toolchain and build cache paths, standalone install/update/uninstall,
-  Steam-root migration, and duplicate checkout/cache consolidation.
-- Path claims: `Vapor/crates/vapor_core/src/{installation,toolchain,development,cargo,run}.rs`,
-  `Vapor-CLI/**`, `Vapor-Installer/**`, `Vapor-GUI/**`,
-  `Vapor-Steam-Entrypoint/**`, `Vapor-Studio/**`, `resources/vapor/tools/**`,
-  root setup manifests/docs, Loo Cast Steam staging inputs, and this record.
+- Semantic mutation claim: none active; completed code claims are released.
+- Remaining path claim: none. The only remaining item is a visible manual
+  Player/Developer GUI walkthrough by the owner; source follow-up may reopen
+  this workstream if that walkthrough reveals a defect.
 - Decisions: one `VAPOR_HOME` root; `bin`, `tools`, `sources`, `cache`,
   `content`, `config`, `data`, and `output` are children of that root. Cargo and
   Rustup use homes under `tools`; one shared Cargo target cache lives under
@@ -154,3 +151,9 @@
   source content in its old Client/MM folders and only 2.7 KB of `.idea` files
   in the old Platform folder. C: has about 152.5 GiB free; the claimed ~40 GiB
   of duplicate Codex checkout data is not present.
+
+- Alpha v0.5 handoff (2026-11-11): single-home implementation is paused at a
+  reviewable checkpoint. The clean reinstall has been executed through the
+  CLI/recovery path; the visible GUI walkthrough remains unverified and is
+  retained as a manual follow-up. Overlapping source claims are released to
+  the Alpha v0.5 journey workstream.

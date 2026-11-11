@@ -1,8 +1,6 @@
 # Alpha v0.5 Phase Charter and Tutorial Game Design
 
-**Status:** Proposed for owner approval. This records the current PRE-ALPHA
-operating contract and the next milestone; it does not authorize implementation
-of the tutorial runtime before the design is approved.
+**Status:** Owner-approved; implementation in progress (2026-11-11).
 
 ## Intent
 
@@ -187,3 +185,25 @@ automation boundary.
 
 These are implementation-plan decisions unless live source inspection shows
 that one changes the architecture above.
+
+## Implementation decisions (2026-11-11)
+
+- The first Player journey uses the existing installed-composition lifecycle:
+  inspect the library, install a selected Packagepack, then launch it. A quest
+  is completed from the matching successful Client operation or the observed
+  installed state, not from clicking the button or accepting an operation.
+- The first Developer journey uses the existing Developer role/tool status and
+  the Vapor Examples `hello-world-packagepack` Wheel Salvage Demo. Tool
+  readiness is observed from the shared installation role snapshot. Opening,
+  building, or running a demo is only credited after the existing typed Client
+  operation reports success; explanatory-only guidance uses an explicit
+  “I’ve done this” confirmation.
+- The target clean-reinstall environments are the owner’s supported Windows
+  10/11 and Linux installations. The existing recovery kit and installer
+  operations remain the lifecycle authority. This implementation will not
+  silently widen their erase inventory; the visible GUI walkthrough remains a
+  separate manual validation item.
+- The first deliverable is a shared application-layer journey catalog and
+  progress store, consumed by Launcher and the Vapor CLI. Progress lives under
+  `Vapor Home/data/state/journeys/` and is removed by the already-authorized
+  full-erasure operation.
