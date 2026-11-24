@@ -47,7 +47,7 @@
 
 - [x] Add focused coverage showing registered source checkouts are erased while unrelated neighboring files are preserved; validate canonical containment during preflight.
 - [x] Implement a combined erase-all operation that preflights user data, registered source state, and machine integration before mutation. It deletes registered checkout directories (including local work) but preserves unknown Superworkspace neighbors.
-- [x] Add separate CLI and Installer UI erase-all actions, with exact affected roots shown before confirmation. Ordinary removal still preserves user data/source.
+- [x] Add separate CLI and Installer UI erase-all actions, with exact affected roots shown before confirmation. The standalone bootstrap can invoke this after program removal; the reviewed path set is rechecked before deletion. Ordinary removal still preserves user data/source.
 - [x] Run Vapor-managed verification for the Vapor workspace and Vapor Installer workspace. Both passed; one earlier client process test run transiently failed with `Text file busy` and passed on rerun.
 
 ### Task 2: Signed standalone release verification and app version lifecycle
@@ -67,10 +67,16 @@
 - Add installer operations for install/latest, update, list/select version, repair, and uninstall that target an explicit standalone app root.
 - Keep authored source and mutable user data outside versioned program directories.
 
-- [ ] Confirm verifier presence against current source; where absent, implement bounded manifest/signature retrieval and archive verification using the existing Artifact API and trust contract.
-- [ ] Implement staged download/extraction and activation that leaves the prior version intact on every failure path; retain the previous immutable release for rollback.
-- [ ] Implement current-version and explicit rollback to a published version. A version history/list endpoint is not in the current Artifact API; resolve an Artifact-owned signed history surface before claiming a complete version picker.
-- [ ] Keep the installed bootstrapper stable across app version swaps and route GUI/CLI lifecycle actions through it.
+- [x] Identify the release signer format and pin the dedicated production app-release public key in the Installer verifier (`vapor-release-2026-11-24`, SHA-256 `6560933ce5adeb11362cb01b070d6a5142d430d51de867c79e1c4bb2b9a8dd63`). Its private Ed25519 key file remains in the local Vapor home with mode `0600`, outside repositories and the VPS.
+- [x] Wire the bounded manifest and archive verifier into HTTPS acquisition using only the offline-pinned release key set (source written; no Artifact release exists to exercise it).
+- [x] Implement bounded archive download, digest verification, safe same-volume extraction, runtime-closure checks, immutable version placement, and atomic active-pointer replacement (source written; not compiled or runtime-verified).
+- [x] Add installed-version listing and explicit activation of an already installed release. A version history/list endpoint for available published releases is still absent from the current Artifact API.
+- [x] Expose local installed-version selection in the standalone Installer panel; switching updates the active pointer for the next launch without deleting versions.
+- [x] Add a setup-only `vapor-setup` GUI mode that installs, updates, repairs, opens, and normally removes the standalone app without requiring Steam or an installed app instance. The GUI source build is still blocked by its stale ignored lockfile.
+- [x] Normal standalone removal clears its managed PATH/environment integration while preserving canonical User Data and source.
+- [x] Extend the signed release manifest, Artifact immutable routes, release preparation/publication scripts, and Homepage download link for a separate setup executable. No release bundle has been assembled or published.
+- [ ] Build and publish the setup bootstrap and signed app bundle for Windows and Linux. Vapor's managed build currently refuses to refresh the `Vapor-GUI` lockfile under `--locked`.
+- [ ] Add signed available-version history so the GUI can select an older published release; current selection covers versions already installed locally.
 - [ ] Build/check with Vapor for Linux and Windows targets; no raw Cargo invocation.
 
 ### Task 3: Standalone distribution artifacts and website download surface
@@ -78,17 +84,20 @@
 **Files:**
 - Modify: `App-Source.vapor.toml` or add a dedicated standalone distribution manifest
 - Modify: Vapor Client root release packaging/provider files that own staged artifact assembly
+- Create: `release/package-vapor-standalone-archive.sh`
 - Modify: `Vapor-Platform-Server/Vapor-Homepage-Server/src/main.rs`
 - Modify: `Vapor-Platform-Server/Vapor-Homepage-Server/README.md`
 - Test: release package review and Homepage route checks
 
 **Interfaces:**
-- Produce stable platform artifact names for Windows x86_64 and Linux x86_64 and a release catalog consumed by Task 2.
+- Produce stable platform artifact names for Windows x86_64 and Linux x86_64 using the existing signed Artifact manifest and latest-feed contract consumed by Task 2.
 - Homepage already exposes a download page that reads Artifact's stable feed for Linux and Windows; finish the user flow only when the signed app archive is accompanied by a real guided installer/bootstrap artifact.
 - Do not alter Homepage Server deployment orchestration or embed large binaries in its image.
 
-- [ ] Assemble a standalone payload that excludes Loo-Cast game assets and Steam-only content.
-- [x] Homepage reads the Artifact stable feed and validates returned platform, version, size, digest, and canonical artifact URL; it does not fabricate a download while no stable artifact exists.
+- [x] Add a separate archive assembler that copies only the selected target runtime, tool resources, toolchain metadata, and the Vapor-only app manifest from a completed app instance (source written; no live build root was available to produce an archive).
+- [x] Define a separate app-instance manifest template in `Standalone-App.vapor.toml`; the release archive must install it as `App.vapor.toml`, not copy the Steam-owned Loo-Cast manifest.
+- [x] Extend the Artifact release preparation guard to accept both current target IDs and require the documented standalone runtime closure, reject unsafe/duplicate/Steam/game payload paths, and require the Vapor-only app manifest (source changed; bundle preparation remains unverified).
+- [x] Homepage validates release platform/version, setup/archive size and digest metadata, and canonical URLs; the setup binary is the primary download.
 - [ ] Verify signed manifest platform IDs, bootstrap package contents, and Homepage links agree.
 - [ ] Confirm repository release write access before publishing public assets; do not claim downloads live without a successful fetch.
 
@@ -107,9 +116,11 @@
 - Add a distinct creator handoff that starts the installed standalone Vapor GUI or opens the download page if absent.
 - Pass the canonical Vapor user-data root to every game process; all app-specific writable data is namespaced below it.
 
-- [ ] Add focused route coverage for installed and absent Vapor cases while keeping `play` as direct game launch.
+- [x] Implement a distinct `creator` handoff that resolves the active release under the canonical Vapor User Data root, removes inherited Steam `VAPOR_HOME`, and opens Downloads when no active release exists. The `play` route remains direct.
+- [x] Narrow Linux and Windows Steam depot allowlists to the player entrypoint, Vapor CLI, Client service bootstrap, required runtime libraries, and packaged Loo-Cast closure; omit Vapor GUI and Installer executables.
+- [x] Wire Installer acquisition/activation source to write this versioned product layout; the pointer writer and creator reader are present but uncompiled and unverified together.
 - [ ] Confirm all currently writable Loo-Cast runtime paths use `VAPOR_USER_DATA_ROOT` and never fall back to the Steam directory in packaged mode.
-- [ ] Build through Vapor and perform bounded runtime path verification without deleting the user's Steam installation.
+- [ ] Compile and perform bounded runtime path verification without deleting the user's Steam installation. User explicitly asked to skip tests; no build or runtime result is claimed here.
 
 ### Task 5: Integrate documentation and issue/workstream state
 
