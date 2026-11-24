@@ -112,7 +112,7 @@ fn superworkspace_manifest(name: &str, app_root: &Path, mounted: &[SourcePreset]
     source.push_str("[super-workspace]\n");
     source.push_str(&format!("name = \"{}\"\n", toml_escape(name)));
     source.push_str("sources-directory = \"sources\"\n");
-    source.push_str("tools = \"app-root\"\n\n");
+    source.push_str("tools = \"user-data\"\n\n");
     source.push_str("[app-root]\n");
     source.push_str(&format!("name = \"{}\"\n", STEAM_APP_DIR_NAME));
     source.push_str(&format!("steam-app-id = {STEAM_APP_ID}\n"));
@@ -122,8 +122,8 @@ fn superworkspace_manifest(name: &str, app_root: &Path, mounted: &[SourcePreset]
         toml_escape(&app_root.to_string_lossy())
     ));
     source.push_str("[tooling]\n");
-    source.push_str("location = \"app-root/resources/vapor/tools\"\n");
-    source.push_str("rust-toolchain-owner = \"app-root\"\n\n");
+    source.push_str("location = \"user-data/resources/vapor/tools\"\n");
+    source.push_str("rust-toolchain-owner = \"user-data\"\n\n");
     for source_clone in mounted {
         source.push_str("[[sources]]\n");
         source.push_str(&format!("name = \"{}\"\n", source_clone.name));

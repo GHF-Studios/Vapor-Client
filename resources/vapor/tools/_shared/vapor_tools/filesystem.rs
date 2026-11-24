@@ -46,9 +46,24 @@ fn remove_empty_dir(root: &Path, path: &Path) -> Result<(), String> {
     }
 }
 
-fn write_receipt(app_root: &Path, name: &str, state: &str) -> Result<(), String> {
-    let path = app_root
-        .join(".vapor/state/installer")
+fn user_data_root() -> Result<PathBuf, String> {
+    let root = if cfg!(windows) {
+        env::var_os("LOCALAPPDATA")
+            .or_else(|| env::var_os("USERPROFILE").map(|home| PathBuf::from(home).join("AppData/Local").into_os_string()))
+            .map(|base| PathBuf::from(base).join("Vapor"))
+    } else if cfg!(target_os = "macos") {
+        env::var_os("HOME").map(|home| PathBuf::from(home).join("Library/Application Support/Vapor"))
+    } else {
+        env::var_os("XDG_DATA_HOME").filter(|value| !value.is_empty())
+            .or_else(|| env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share").into_os_string()))
+            .map(|base| PathBuf::from(base).join("vapor"))
+    };
+    root.ok_or_else(|| "cannot locate Vapor User Data; set the platform home directory".to_owned())
+}
+
+fn write_receipt(_app_root: &Path, name: &str, state: &str) -> Result<(), String> {
+    let path = user_data_root()?
+        .join("state/installer")
         .join(format!("{name}.toml"));
     let body = format!(
         "schema = 1\nstate = \"{state}\"\ntool = \"resources/vapor/tools/production/app_setup/{name}\"\n"

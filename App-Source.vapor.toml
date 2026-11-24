@@ -25,30 +25,30 @@ from = "metadata/toolchain.toml"
 to = "metadata/toolchain.toml"
 required = true
 
+# The default App is a depot-owned runtime closure, assembled from reviewed
+# content packages. Source and mutable Library/index state are excluded.
 [[root.steam.depots.common.include]]
-root = "installation"
-from = "docs"
-to = "docs"
+root = "output"
+from = "content/packages/ghf-studios_loo-cast_spacetime-engine/Engine.vapor.toml"
+to = "content/default/ghf-studios/loo-cast/spacetime-engine/Engine.vapor.toml"
 required = true
 
 [[root.steam.depots.common.include]]
-root = "source"
-from = "resources/vapor/vapor-scripts"
-to = "resources/vapor/vapor-scripts"
+root = "output"
+from = "content/packages/ghf-studios_loo-cast_spacetime-engine/assets"
+to = "content/default/ghf-studios/loo-cast/spacetime-engine/assets"
 required = true
 
 [[root.steam.depots.common.include]]
-root = "source"
-from = "resources/vapor/tools"
-to = "resources/vapor/tools"
-exclude = ["target"]
+root = "output"
+from = "content/packages/ghf-studios_loo-cast_loo-cast-game/Game.vapor.toml"
+to = "content/default/ghf-studios/loo-cast/loo-cast-game/Game.vapor.toml"
 required = true
 
 [[root.steam.depots.common.include]]
-root = "source"
-from = "Vapor-Examples"
-to = "examples/vapor-examples"
-exclude = [".git", "target"]
+root = "output"
+from = "content/packages/ghf-studios_loo-cast_loo-cast-packagepack/Packagepack.vapor.toml"
+to = "content/default/ghf-studios/loo-cast/loo-cast-packagepack/Packagepack.vapor.toml"
 required = true
 
 [root.steam.depots.linux]
@@ -64,6 +64,14 @@ required = true
 root = "installation"
 from = "bin/x86_64-unknown-linux-gnu"
 to = "bin/x86_64-unknown-linux-gnu"
+target = "x86_64-unknown-linux-gnu"
+exclude = ["vapor-launcher", "vapor-studio", "vapor-ide", "vapor-installer-gui"]
+required = true
+
+[[root.steam.depots.linux.include]]
+root = "output"
+from = "content/packages/ghf-studios_loo-cast_loo-cast-packagepack/bin/x86_64-unknown-linux-gnu"
+to = "content/default/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-unknown-linux-gnu"
 target = "x86_64-unknown-linux-gnu"
 required = true
 
@@ -81,12 +89,20 @@ root = "installation"
 from = "bin/x86_64-pc-windows-gnullvm"
 to = "bin/x86_64-pc-windows-gnullvm"
 target = "x86_64-pc-windows-gnullvm"
+exclude = ["vapor-launcher.exe", "vapor-studio.exe", "vapor-ide.exe", "vapor-installer-gui.exe"]
 required = true
 
 [[root.steam.depots.windows.include]]
 root = "installation"
 from = "bin/x86_64-pc-windows-gnullvm/libunwind.dll"
 to = "bin/x86_64-pc-windows-gnullvm/libunwind.dll"
+target = "x86_64-pc-windows-gnullvm"
+required = true
+
+[[root.steam.depots.windows.include]]
+root = "output"
+from = "content/packages/ghf-studios_loo-cast_loo-cast-packagepack/bin/x86_64-pc-windows-gnullvm"
+to = "content/default/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-pc-windows-gnullvm"
 target = "x86_64-pc-windows-gnullvm"
 required = true
 

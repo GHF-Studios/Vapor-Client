@@ -42,9 +42,9 @@ SuperWorkspace/
 `clone.rs` performs the source clone operation internally. Git is the transport,
 not the public workflow.
 
-## App root and toolchain
+## App root and Vapor toolchain
 
-App setup and toolchain operations also run from the app-root tool tree:
+App setup commands run from the shipped app-root tool tree:
 
 ```text
 rust-script --force <app-root>/resources/vapor/tools/production/app_setup/status.rs
@@ -54,9 +54,10 @@ rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardo
 rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardown_player.rs
 ```
 
-`setup_player.rs` creates app-root generated directories and installs SteamCMD.
-`setup_development.rs` installs/reconciles app-local Rust/Cargo/rustup, Rust
-targets/components, Zig, llvm-mingw, and cross-linker wrappers.
+`setup_player.rs` creates Player state in Vapor User Data; it needs no developer toolchain.
+`setup_development.rs` installs/reconciles Rust/Cargo/rustup, Rust
+targets/components, SteamCMD, Zig, llvm-mingw, and cross-linker wrappers in
+Vapor User Data. The Steam app root contains the launch and setup entry points.
 
 ## RustRover
 

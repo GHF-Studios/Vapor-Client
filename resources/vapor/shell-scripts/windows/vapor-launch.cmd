@@ -19,7 +19,12 @@ goto app_root_ready
 set "VAPOR=%APP_ROOT%\bin\%TARGET%\vapor.exe"
 set "INSTALLER=%APP_ROOT%\bin\%TARGET%\vapor-installer.exe"
 set "ENTRYPOINT=%APP_ROOT%\bin\%TARGET%\vapor-entrypoint.exe"
-set "LOG_DIR=%APP_ROOT%\.vapor\logs"
+if defined LOCALAPPDATA (
+    set "VAPOR_DATA_HOME=%LOCALAPPDATA%\Vapor"
+) else (
+    set "VAPOR_DATA_HOME=%USERPROFILE%\AppData\Local\Vapor"
+)
+set "LOG_DIR=%VAPOR_DATA_HOME%\logs"
 set "LAUNCH_LOG=%LOG_DIR%\launch-wrapper.log"
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>nul
@@ -67,7 +72,7 @@ if /I "%LAUNCH_TARGET%"=="installer" goto installer
 if /I "%LAUNCH_TARGET%"=="vapor-installer" goto installer
 if not exist "%VAPOR%" goto missing_vapor
 
-if /I "%LAUNCH_TARGET%"=="play" goto play
+if /I "%LAUNCH_TARGET%"=="play" goto gui
 if /I "%LAUNCH_TARGET%"=="shell" goto shell
 if /I "%LAUNCH_TARGET%"=="vapor-shell" goto shell
 if /I "%LAUNCH_TARGET%"=="launcher" goto gui
@@ -89,11 +94,6 @@ if defined FORWARD_ARGS (
 ) else (
     "%INSTALLER%" install
 )
-set "STATUS=%ERRORLEVEL%"
-goto done
-
-:play
-"%VAPOR%" --startup-script default %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 

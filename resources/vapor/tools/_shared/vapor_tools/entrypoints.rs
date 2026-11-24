@@ -1,5 +1,6 @@
 pub fn status_main() -> Result<(), String> {
     let app_root = resolve_app_root(arg_path("--app-root"))?;
+    let tools_root = user_data_root()?;
     println!("Vapor App Tool Status");
     println!();
     println!("App root");
@@ -10,18 +11,21 @@ pub fn status_main() -> Result<(), String> {
     }
     println!();
     print_component(&directories_status(&app_root));
-    print_component(&steamcmd_status(&app_root));
-    print_component(&rust_status(&app_root));
-    print_component(&cross_status(&app_root));
+    print_component(&steamcmd_status(&tools_root));
+    print_component(&rust_status(&tools_root));
+    print_component(&cross_status(&tools_root));
     println!();
     println!("Next");
-    if !steamcmd_status(&app_root).ready {
+    if !directories_status(&app_root).ready {
         println!(
             "  {} install --app-root {}",
             shell_arg(&app_control_runner(&app_root)),
             shell_arg(&app_root)
         );
-    } else if !rust_status(&app_root).ready || !cross_status(&app_root).ready {
+    } else if !steamcmd_status(&tools_root).ready
+        || !rust_status(&tools_root).ready
+        || !cross_status(&tools_root).ready
+    {
         println!(
             "  {} dev-env install --app-root {}",
             shell_arg(&app_control_runner(&app_root)),
@@ -226,23 +230,24 @@ pub fn ide_run_main() -> Result<(), String> {
     }
 
     let host_target = host_rust_target().unwrap_or("x86_64-unknown-linux-gnu");
+    let tools_root = user_data_root()?;
     let app_bin_dir = app_root.join("bin").join(host_target);
     let vapor = app_bin_dir.join(executable("vapor"));
     let installer = app_control_runner(&app_root);
     let entrypoint = app_bin_dir.join(executable("vapor-entrypoint"));
 
     set_env_var(APP_ROOT_ENV, &app_root);
-    set_env_var("RUSTUP_HOME", app_root.join("rustup-home"));
-    set_env_var("CARGO_HOME", app_root.join("cargo-home"));
+    set_env_var("RUSTUP_HOME", tools_root.join("rustup-home"));
+    set_env_var("CARGO_HOME", tools_root.join("cargo-home"));
     prepend_path(&[
         app_bin_dir.clone(),
-        app_root
+        tools_root
             .join("rustup-home/toolchains")
             .join(format!("{RUST_TOOLCHAIN}-{host_target}"))
             .join("bin"),
-        app_root.join("rustup/bin"),
-        app_root.join("tools/zig"),
-        app_root.join("tools/llvm-mingw/bin"),
+        tools_root.join("rustup/bin"),
+        tools_root.join("tools/zig"),
+        tools_root.join("tools/llvm-mingw/bin"),
     ]);
 
     println!("== {config_name} ==");
@@ -482,10 +487,11 @@ fn ide_runner_executable() -> Result<PathBuf, String> {
 pub fn patch_rustrover_main() -> Result<(), String> {
     let super_root = super_workspace_root()?;
     let app_root = resolve_app_root(arg_path("--app-root"))?;
-    let rust = rust_status(&app_root);
+    let tools_root = user_data_root()?;
+    let rust = rust_status(&tools_root);
     if !rust.ready {
         return Err(format!(
-            "app-local Rust/Cargo is not ready at {}\nmissing:\n  - {}\nrun: {} dev-env install --app-root {}",
+            "Vapor Rust/Cargo is not ready at {}\nmissing:\n  - {}\nrun: {} dev-env install --app-root {}",
             rust.path.display(),
             rust.missing.join("\n  - "),
             shell_arg(&app_control_runner(&app_root)),
@@ -495,7 +501,7 @@ pub fn patch_rustrover_main() -> Result<(), String> {
     let rust_bin = rust.path;
     let cargo = rust_bin.join(executable("cargo"));
     let rustc = rust_bin.join(executable("rustc"));
-    let rustup = app_root.join("rustup/bin").join(executable("rustup"));
+    let rustup = tools_root.join("rustup/bin").join(executable("rustup"));
     let stdlib = rust_stdlib_source(&rustc)?;
     let cargo_projects = discover_cargo_project_registrations(&super_root)?;
     let run_configurations = rustrover_run_configurations();
@@ -527,9 +533,8 @@ pub fn patch_rustrover_main() -> Result<(), String> {
         &vapor_xml(
             &super_root,
             &app_root,
-            &cargo,
-            &rustc,
-            &rustup,
+            &tools_root,
+            &rust_bin,
             &stdlib,
             &toolchain_shim,
         ),
@@ -540,7 +545,7 @@ pub fn patch_rustrover_main() -> Result<(), String> {
         &rust_workspace_component(&toolchain_shim.bin, &stdlib),
         &run_manager_component(&run_configurations),
     )?;
-    write_run_configurations(&idea, &super_root, &app_root, &run_configurations)?;
+    write_run_configurations(&idea, &super_root, &app_root, &tools_root, &run_configurations)?;
     let verification = verify_rustrover_setup(
         &super_root,
         &idea,

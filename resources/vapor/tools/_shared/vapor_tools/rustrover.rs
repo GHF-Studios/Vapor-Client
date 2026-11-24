@@ -96,15 +96,16 @@ fn write_toolchain_shim(
     tool_name: &str,
     target: &Path,
 ) -> Result<(), String> {
+    let tools_root = user_data_root()?;
     let source = format!(
         "#!/usr/bin/env bash\nset -euo pipefail\n\nexport {}={}\nexport RUSTUP_HOME={}\nexport CARGO_HOME={}\nexport PATH={}:{}:{}:\"$PATH\"\n\nTOOL_NAME={}\nREAL_TOOL={}\nREAL_RUSTUP={}\n\ncase \"${{1:-}}\" in\n    +*)\n        REQUESTED_TOOLCHAIN=\"${{1#+}}\"\n        shift\n        exec \"$REAL_RUSTUP\" run \"$REQUESTED_TOOLCHAIN\" \"$TOOL_NAME\" \"$@\"\n        ;;\nesac\n\nexec \"$REAL_TOOL\" \"$@\"\n",
         APP_ROOT_ENV,
         shell_string(app_root),
-        shell_string(&app_root.join("rustup-home")),
-        shell_string(&app_root.join("cargo-home")),
+        shell_string(&tools_root.join("rustup-home")),
+        shell_string(&tools_root.join("cargo-home")),
         shell_string(rust_bin),
-        shell_string(&app_root.join("rustup/bin")),
-        shell_string(&app_root.join("cargo-home/bin")),
+        shell_string(&tools_root.join("rustup/bin")),
+        shell_string(&tools_root.join("cargo-home/bin")),
         shell_string_text(tool_name),
         shell_string(target),
         shell_string(rustup),
@@ -119,6 +120,7 @@ fn verify_rustrover_setup(
     toolchain_shim: &RustRoverToolchainShim,
     cargo_projects: &[CargoProjectRegistration],
 ) -> Result<Vec<String>, String> {
+    let tools_root = user_data_root()?;
     let mut checks = Vec::new();
 
     for executable_path in [
@@ -140,19 +142,19 @@ fn verify_rustrover_setup(
         &cargo_wrapper,
         &format!(
             "export CARGO_HOME={}",
-            shell_string(&app_root.join("cargo-home"))
+            shell_string(&tools_root.join("cargo-home"))
         ),
-        "cargo shim must export app-local CARGO_HOME",
+        "cargo shim must export Vapor CARGO_HOME",
     )?;
     require_contains(
         &cargo_wrapper,
         &format!(
             "export RUSTUP_HOME={}",
-            shell_string(&app_root.join("rustup-home"))
+            shell_string(&tools_root.join("rustup-home"))
         ),
-        "cargo shim must export app-local RUSTUP_HOME",
+        "cargo shim must export Vapor RUSTUP_HOME",
     )?;
-    checks.push("toolchain shim exports app-local Cargo/Rustup homes".to_owned());
+    checks.push("toolchain shim exports Vapor Cargo/Rustup homes".to_owned());
 
     let rust_xml_path = idea.join("rust.xml");
     let rust_xml_source = read_required(&rust_xml_path)?;
@@ -651,6 +653,7 @@ fn write_run_configurations(
     idea: &Path,
     super_root: &Path,
     app_root: &Path,
+    tools_root: &Path,
     configurations: &[RunConfiguration],
 ) -> Result<(), String> {
     let run_config_dir = idea.join("runConfigurations");
@@ -671,7 +674,7 @@ fn write_run_configurations(
             RunConfigurationKind::Cargo => {
                 write(
                     &xml_path,
-                    &cargo_run_configuration_xml(configuration, app_root),
+                    &cargo_run_configuration_xml(configuration, app_root, tools_root),
                 )?;
             }
             RunConfigurationKind::Shell | RunConfigurationKind::Konsole => {
@@ -705,14 +708,14 @@ fn remove_stale_generated_run_configurations(
     Ok(())
 }
 
-fn cargo_run_configuration_xml(configuration: &RunConfiguration, app_root: &Path) -> String {
+fn cargo_run_configuration_xml(configuration: &RunConfiguration, app_root: &Path, tools_root: &Path) -> String {
     format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<component name=\"ProjectRunConfigurationManager\">\n  <configuration default=\"false\" name=\"{}\" type=\"CargoCommandRunConfiguration\" factoryName=\"Cargo Command\" folderName=\"{}\">\n    <option name=\"command\" value=\"{}\" />\n    <option name=\"workingDirectory\" value=\"file://$PROJECT_DIR$/{}\" />\n{}\n    <option name=\"emulateTerminal\" value=\"true\" />\n    <option name=\"channel\" value=\"DEFAULT\" />\n    <option name=\"requiredFeatures\" value=\"true\" />\n    <option name=\"allFeatures\" value=\"false\" />\n    <option name=\"withSudo\" value=\"false\" />\n    <option name=\"buildTarget\" value=\"REMOTE\" />\n    <option name=\"backtrace\" value=\"SHORT\" />\n    <option name=\"isRedirectInput\" value=\"false\" />\n    <option name=\"redirectInputPath\" value=\"\" />\n    <method v=\"2\">\n      <option name=\"CARGO.BUILD_TASK_PROVIDER\" enabled=\"true\" />\n    </method>\n  </configuration>\n</component>\n",
         xml_escape(configuration.name),
         xml_escape(configuration.folder),
         xml_escape(configuration.command),
         xml_escape(configuration.working_directory),
-        run_config_envs_xml(app_root),
+        run_config_envs_xml(app_root, tools_root),
     )
 }
 
@@ -759,31 +762,33 @@ fn run_configuration_xml_working_directory(
     }
 }
 
-fn run_config_envs_xml(app_root: &Path) -> String {
+fn run_config_envs_xml(app_root: &Path, tools_root: &Path) -> String {
     format!(
         "    <envs>\n      <env name=\"{}\" value=\"{}\" />\n      <env name=\"RUSTUP_HOME\" value=\"{}\" />\n      <env name=\"CARGO_HOME\" value=\"{}\" />\n    </envs>",
         APP_ROOT_ENV,
         xml_escape(&app_root.to_string_lossy()),
-        xml_escape(&app_root.join("rustup-home").to_string_lossy()),
-        xml_escape(&app_root.join("cargo-home").to_string_lossy()),
+        xml_escape(&tools_root.join("rustup-home").to_string_lossy()),
+        xml_escape(&tools_root.join("cargo-home").to_string_lossy()),
     )
 }
 
 fn vapor_xml(
     super_root: &Path,
     app_root: &Path,
-    cargo: &Path,
-    rustc: &Path,
-    rustup: &Path,
+    tools_root: &Path,
+    rust_bin: &Path,
     stdlib: &Path,
     toolchain_shim: &RustRoverToolchainShim,
 ) -> String {
+    let cargo = rust_bin.join(executable("cargo"));
+    let rustc = rust_bin.join(executable("rustc"));
+    let rustup = tools_root.join("rustup/bin").join(executable("rustup"));
     format!(
         "<project version=\"4\">\n  <component name=\"VaporSuperWorkspaceSettings\">\n    <option name=\"schemaVersion\" value=\"1\" />\n    <option name=\"superWorkspaceRoot\" value=\"$PROJECT_DIR$\" />\n    <option name=\"superWorkspaceManifest\" value=\"{}\" />\n    <option name=\"appRoot\" value=\"{}\" />\n    <option name=\"cargoHome\" value=\"{}\" />\n    <option name=\"rustupHome\" value=\"{}\" />\n    <option name=\"cargoPath\" value=\"{}\" />\n    <option name=\"rustcPath\" value=\"{}\" />\n    <option name=\"rustupPath\" value=\"{}\" />\n    <option name=\"rustStdlibSource\" value=\"{}\" />\n    <option name=\"rustRoverToolchainBin\" value=\"{}\" />\n    <option name=\"rustRoverCargoPath\" value=\"{}\" />\n    <option name=\"rustRoverRustcPath\" value=\"{}\" />\n    <option name=\"rustRoverRustupPath\" value=\"{}\" />\n  </component>\n</project>\n",
         xml_escape(&super_root.join(SUPER_MANIFEST).to_string_lossy()),
         xml_escape(&app_root.to_string_lossy()),
-        xml_escape(&app_root.join("cargo-home").to_string_lossy()),
-        xml_escape(&app_root.join("rustup-home").to_string_lossy()),
+        xml_escape(&tools_root.join("cargo-home").to_string_lossy()),
+        xml_escape(&tools_root.join("rustup-home").to_string_lossy()),
         xml_escape(&cargo.to_string_lossy()),
         xml_escape(&rustc.to_string_lossy()),
         xml_escape(&rustup.to_string_lossy()),

@@ -526,6 +526,9 @@ fn find_tool_script(relative: &str, app_root: Option<&Path>) -> Option<PathBuf> 
 
 fn tool_root_candidates(app_root: Option<&Path>) -> Vec<PathBuf> {
     let mut candidates = Vec::new();
+    if let Ok(user_data) = user_data_root() {
+        candidates.push(user_data.join("resources/vapor/tools"));
+    }
     if let Some(app_root) = app_root {
         candidates.push(app_root.join("resources/vapor/tools"));
     } else if let Ok(app_root) = resolve_app_root(None) {
@@ -535,10 +538,14 @@ fn tool_root_candidates(app_root: Option<&Path>) -> Vec<PathBuf> {
 }
 
 fn app_root_tool_path(app_root: Option<&Path>, relative: &str) -> PathBuf {
-    app_root
-        .map(Path::to_path_buf)
-        .or_else(|| resolve_app_root(None).ok())
-        .unwrap_or_else(|| PathBuf::from("<app-root>"))
+    user_data_root()
+        .or_else(|_| {
+            app_root
+                .map(Path::to_path_buf)
+                .or_else(|| resolve_app_root(None).ok())
+                .ok_or_else(|| "cannot locate Vapor tools".to_owned())
+        })
+        .unwrap_or_else(|_| PathBuf::from("<vapor-user-data>"))
         .join("resources/vapor/tools")
         .join(relative)
 }

@@ -40,21 +40,25 @@ const LLVM_MINGW_X86_64_WINDOWS_SHA256: &str =
 const RUST_TARGETS: &[&str] = &["x86_64-unknown-linux-gnu", "x86_64-pc-windows-gnullvm"];
 const RUST_COMPONENTS: &[&str] = &["rustfmt", "clippy", "rust-src", "rust-analyzer"];
 const PLAYER_DIRS: &[&str] = &[
-    ".vapor/state",
-    ".vapor/state/installer",
-    ".vapor/logs",
-    ".vapor/diagnostics/runs",
-    ".vapor/downloads",
-    ".vapor/extract",
+    "state/installer",
+    "logs",
+    "diagnostics/runs",
+    "downloads",
+    "extract",
     "content/cache/packages",
     "content/installed",
     "content/workshop/downloads",
-    "tools",
 ];
 
 const PLAYER_TEARDOWN_PATHS: &[&str] = &[
+    "rustup",
+    "rustup-home",
+    "cargo-home",
     "tools/git",
     "tools/steamcmd",
+    "tools/zig",
+    "tools/llvm-mingw",
+    "tools/cross",
     ".vapor/registry",
     ".vapor/downloads",
     ".vapor/extract",

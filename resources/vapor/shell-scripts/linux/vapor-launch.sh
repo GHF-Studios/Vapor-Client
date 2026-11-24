@@ -9,7 +9,14 @@ app_root=$(CDPATH= cd -- "$script_dir/.." 2>/dev/null && pwd || pwd)
 vapor="$app_root/bin/$target/vapor"
 installer="$app_root/bin/$target/vapor-installer"
 entrypoint="$app_root/bin/$target/vapor-entrypoint"
-log_dir="$app_root/.vapor/logs"
+if [ -n "${XDG_DATA_HOME:-}" ]; then
+    vapor_data_home="$XDG_DATA_HOME/vapor"
+elif [ -n "${HOME:-}" ]; then
+    vapor_data_home="$HOME/.local/share/vapor"
+else
+    vapor_data_home="${TMPDIR:-/tmp}/vapor-user-data"
+fi
+log_dir="$vapor_data_home/logs"
 launch_log="$log_dir/launch-wrapper.log"
 
 mkdir -p "$log_dir" 2>/dev/null || true
@@ -76,7 +83,7 @@ case "$launch_target" in
         fi
         run_command "$installer" "$@"
         ;;
-    launcher|studio|ide|chooser)
+    play|launcher|studio|ide|chooser)
         if [ ! -x "$entrypoint" ]; then
             echo "error: expected Vapor app entrypoint is missing"
             echo "  target:  $target"
@@ -98,9 +105,6 @@ if [ ! -x "$vapor" ]; then
 fi
 
 case "$launch_target" in
-    play)
-        run_command "$vapor" --startup-script default "$@"
-        ;;
     shell|vapor-shell)
         run_command "$vapor" "$@"
         ;;
