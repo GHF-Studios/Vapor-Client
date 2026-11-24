@@ -1,0 +1,13 @@
+schema = 1
+
+[ecosystem]
+id = "ghf-studios/vapor"
+
+[registry]
+endpoint = "https://vapor.ghf-studios.site/api/registry"
+
+[root]
+name = "vapor-client"
+organization = "ghf-studios"
+version = "0.5.0"
+repository = "https://github.com/GHF-Studios/Vapor-Client"

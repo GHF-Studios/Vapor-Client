@@ -65,7 +65,15 @@ root = "installation"
 from = "bin/x86_64-unknown-linux-gnu"
 to = "bin/x86_64-unknown-linux-gnu"
 target = "x86_64-unknown-linux-gnu"
-exclude = ["vapor-launcher", "vapor-studio", "vapor-ide", "vapor-installer-gui"]
+exclude = [
+    "vapor-gui",
+    "vapor-launcher",
+    "vapor-studio",
+    "vapor-ide",
+    "vapor-installer-gui",
+    "vapor-setup",
+    "vapor-installer",
+]
 required = true
 
 [[root.steam.depots.linux.include]]
@@ -89,7 +97,15 @@ root = "installation"
 from = "bin/x86_64-pc-windows-gnullvm"
 to = "bin/x86_64-pc-windows-gnullvm"
 target = "x86_64-pc-windows-gnullvm"
-exclude = ["vapor-launcher.exe", "vapor-studio.exe", "vapor-ide.exe", "vapor-installer-gui.exe"]
+exclude = [
+    "vapor-gui.exe",
+    "vapor-launcher.exe",
+    "vapor-studio.exe",
+    "vapor-ide.exe",
+    "vapor-installer-gui.exe",
+    "vapor-setup.exe",
+    "vapor-installer.exe",
+]
 required = true
 
 [[root.steam.depots.windows.include]]
