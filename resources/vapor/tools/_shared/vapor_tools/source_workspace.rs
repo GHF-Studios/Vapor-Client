@@ -1,3 +1,6 @@
+static SOURCE_CLONE_SEQUENCE: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
 fn source_preset(name: &str) -> Result<SourcePreset, String> {
     SOURCE_PRESETS
         .iter()
@@ -15,9 +18,60 @@ fn source_preset(name: &str) -> Result<SourcePreset, String> {
         })
 }
 
-fn clone_source(sources_root: &Path, source: SourcePreset) -> Result<(), String> {
+fn validate_commit_revision(revision: &str) -> Result<(), String> {
+    if matches!(revision.len(), 40 | 64) && revision.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        Ok(())
+    } else {
+        Err("--revision must be a full 40- or 64-character hexadecimal commit SHA".to_owned())
+    }
+}
+
+fn require_success(status: std::process::ExitStatus, operation: &str, source: &str) -> Result<(), String> {
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("Vapor-managed Git {operation} for {source} failed with {status}"))
+    }
+}
+
+fn run_git(root: &Path, args: &[&str]) -> Result<(), String> {
+    let status = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(args)
+        .status()
+        .map_err(|error| format!("Vapor-managed Git could not start: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("Vapor-managed Git {:?} failed with {status}", args))
+    }
+}
+
+fn checkout_revision(root: &Path, revision: &str) -> Result<(), String> {
+    let status = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["checkout", "--detach"])
+        .arg(revision)
+        .status()
+        .map_err(|error| format!("Vapor-managed Git could not start: {error}"))?;
+    require_success(status, "checkout", revision)
+}
+
+struct RemoveDirectoryOnDrop(PathBuf);
+
+impl Drop for RemoveDirectoryOnDrop {
+    fn drop(&mut self) {
+        if self.0.exists() {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+}
+
+fn clone_source(sources_root: &Path, source: SourcePreset, revision: Option<&str>) -> Result<(), String> {
     let target = sources_root.join(source.name);
-    if target.exists() {
+    if fs::symlink_metadata(&target).is_ok() {
         return Err(format!(
             "source clone already exists: {}\nremove it deliberately before cloning again",
             target.display()
@@ -26,31 +80,50 @@ fn clone_source(sources_root: &Path, source: SourcePreset) -> Result<(), String>
     println!("Cloning {}", source.name);
     println!("  remote: {}", source.remote);
     println!("  branch: {}", source.branch);
-    println!("  target: {}", target.display());
-    let status = Command::new("git")
-        .args([
-            "clone",
-            "--recurse-submodules",
-            "--branch",
-            source.branch,
-            source.remote,
-        ])
-        .arg(&target)
-        .status()
-        .map_err(|error| format!("failed to run git clone: {error}"))?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(format!(
-            "git clone for {} failed with {status}",
-            source.name
-        ))
+    if let Some(revision) = revision {
+        validate_commit_revision(revision)?;
+        println!("  revision: {revision}");
     }
+    println!("  target: {}", target.display());
+    let stage = reserve_clone_stage(sources_root, source.name)?;
+    let _cleanup = RemoveDirectoryOnDrop(stage.clone());
+    let mut clone = Command::new("git");
+    clone.args(["clone", "--branch", source.branch, "--single-branch"]);
+    if revision.is_some() {
+        clone.arg("--no-checkout");
+    } else {
+        clone.arg("--recurse-submodules");
+    }
+    let status = clone.arg(source.remote).arg(&stage).status()
+        .map_err(|error| format!("failed to run Vapor-managed source clone: {error}"))?;
+    require_success(status, "clone", source.name)?;
+
+    if let Some(revision) = revision {
+        checkout_revision(&stage, revision)
+            .map_err(|error| format!("could not select source revision {revision}: {error}"))?;
+        run_git(&stage, &["submodule", "update", "--init", "--recursive"])
+            .map_err(|error| format!("could not initialize pinned source submodules: {error}"))?;
+    }
+
+    fs::rename(&stage, &target).map_err(io("commit source checkout", &target))?;
+    Ok(())
+}
+
+fn reserve_clone_stage(sources_root: &Path, name: &str) -> Result<PathBuf, String> {
+    for _ in 0..64 {
+        let sequence = SOURCE_CLONE_SEQUENCE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let stage = sources_root.join(format!(".{name}.clone.{}.{}", std::process::id(), sequence));
+        match fs::create_dir(&stage) {
+            Ok(()) => return Ok(stage),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(format!("could not reserve temporary source checkout {}: {error}", stage.display())),
+        }
+    }
+    Err(format!("could not reserve a unique temporary checkout for {name}"))
 }
 
 fn record_source_clone(
     super_root: &Path,
-    app_root: &Path,
     source: SourcePreset,
 ) -> Result<(), String> {
     let manifest = super_root.join(SUPER_MANIFEST);
@@ -63,7 +136,6 @@ fn record_source_clone(
         &manifest,
         &superworkspace_manifest(
             &superworkspace_name(super_root),
-            app_root,
             &mounted
                 .iter()
                 .map(|name| source_preset(name))
@@ -106,21 +178,13 @@ fn superworkspace_name(root: &Path) -> String {
         .unwrap_or_else(|| "vapor-superworkspace".to_owned())
 }
 
-fn superworkspace_manifest(name: &str, app_root: &Path, mounted: &[SourcePreset]) -> String {
+fn superworkspace_manifest(name: &str, mounted: &[SourcePreset]) -> String {
     let mut source = String::new();
     source.push_str("schema = 2\n\n");
     source.push_str("[super-workspace]\n");
     source.push_str(&format!("name = \"{}\"\n", toml_escape(name)));
     source.push_str("sources-directory = \"sources\"\n");
     source.push_str("tools = \"user-data\"\n\n");
-    source.push_str("[app-root]\n");
-    source.push_str(&format!("name = \"{}\"\n", STEAM_APP_DIR_NAME));
-    source.push_str(&format!("steam-app-id = {STEAM_APP_ID}\n"));
-    source.push_str(&format!("env-var = \"{}\"\n", APP_ROOT_ENV));
-    source.push_str(&format!(
-        "path = \"{}\"\n\n",
-        toml_escape(&app_root.to_string_lossy())
-    ));
     source.push_str("[tooling]\n");
     source.push_str("location = \"user-data/resources/vapor/tools\"\n");
     source.push_str("rust-toolchain-owner = \"user-data\"\n\n");
