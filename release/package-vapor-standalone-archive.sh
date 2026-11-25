@@ -4,10 +4,10 @@ set -euo pipefail
 usage() {
   cat >&2 <<'EOF'
 Usage:
-  package-vapor-standalone-archive.sh APP_INSTANCE_ROOT PLATFORM VERSION OUTPUT_ARCHIVE
+  package-vapor-standalone-archive.sh STAGED_APP_ROOT PLATFORM VERSION OUTPUT_ARCHIVE
 
-Packages an already-built Vapor App Instance for the signed Artifact release
-pipeline. It does not invoke Cargo or modify the Steam depot.
+Packages the Vapor-owned output of `vapor root stage-standalone` for the signed
+Artifact release pipeline. It does not invoke Cargo or modify the active app.
 PLATFORM is windows-x86_64 or linux-x86_64.
 EOF
 }
@@ -17,7 +17,7 @@ if [ "$#" -ne 4 ]; then
   exit 2
 fi
 
-app_root_input="$1"
+staged_root_input="$1"
 platform="$2"
 version="$3"
 output_input="$4"
@@ -29,12 +29,12 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+
   echo "error: VERSION must be a SemVer version" >&2
   exit 2
 fi
-if [ ! -d "$app_root_input" ] || [ -L "$app_root_input" ]; then
-  echo "error: APP_INSTANCE_ROOT must be a real directory" >&2
+if [ ! -d "$staged_root_input" ] || [ -L "$staged_root_input" ]; then
+  echo "error: STAGED_APP_ROOT must be a real directory" >&2
   exit 1
 fi
 
-app_root="$(cd -- "$app_root_input" && pwd -P)"
+app_root="$(cd -- "$staged_root_input" && pwd -P)"
 script_dir="$(cd -- "$(dirname -- "$0")" && pwd -P)"
 repo_root="$(cd -- "$script_dir/.." && pwd -P)"
 output_parent_input="$(dirname -- "$output_input")"

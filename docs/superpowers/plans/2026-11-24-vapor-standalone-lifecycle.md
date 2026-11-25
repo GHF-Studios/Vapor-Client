@@ -19,6 +19,7 @@
 - Keep ordinary uninstall separate from explicit erase-all; ordinary uninstall preserves user data and source.
 - Preserve unrelated dirty and untracked work; use Vapor-managed commands for all Rust builds and validation.
 - Do not publish Steam's public default branch; public Steam rollout remains owner-controlled.
+- Stable Vapor releases are intended to publish from the default-branch pipeline only after all required checks and release packaging succeed. The release signing key belongs in a protected CI secret; remote publishing requires a separate restricted publisher identity.
 
 ## Review Focus
 
@@ -84,8 +85,12 @@
 **Files:**
 - Modify: `App-Source.vapor.toml` or add a dedicated standalone distribution manifest
 - Modify: Vapor Client root release packaging/provider files that own staged artifact assembly
+- Modify: `Vapor/crates/vapor_client_provider/src/standalone_release.rs` and `release/promotion.rs`
+- Modify: `Vapor-CLI/crates/vapor_cli/src/command/model.rs` and `command/root_commands.rs`
+- Modify: `Vapor-CLI/crates/vapor_cli/docs/commands.md`
 - Create: `release/package-vapor-standalone-archive.sh`
-- Modify: `Vapor-Platform-Server/Vapor-Homepage-Server/src/main.rs`
+- Modify: `Vapor-Platform-Server/Vapor-Artifact-Server/src/lib.rs`
+- Modify: `Vapor-Platform-Server/Vapor-Homepage-Server/src/lib.rs`
 - Modify: `Vapor-Platform-Server/Vapor-Homepage-Server/README.md`
 - Test: release package review and Homepage route checks
 
@@ -94,12 +99,16 @@
 - Homepage already exposes a download page that reads Artifact's stable feed for Linux and Windows; finish the user flow only when the signed app archive is accompanied by a real guided installer/bootstrap artifact.
 - Do not alter Homepage Server deployment orchestration or embed large binaries in its image.
 
-- [x] Add a separate archive assembler that copies only the selected target runtime, tool resources, toolchain metadata, and the Vapor-only app manifest from a completed app instance (source written; no live build root was available to produce an archive).
+- [x] Add a separate Vapor-owned `root stage-standalone` operation that assembles selected release outputs under Vapor User Data, writes the canonical Vapor workspace toolchain pin and Vapor-only app manifest, and leaves the active app root untouched. It can run from the source-built CLI using the source root and canonical User Data directly, so no App Instance deploy is needed for release staging. Vapor-managed Linux/Windows release build and staging both succeeded.
+- [x] Update the archive assembler to consume this standalone stage instead of an app instance. Linux and Windows archives assembled successfully under Vapor User Data (113 MB and 98 MB); structural inspection confirmed target-specific runtime closure, launcher and toolchain metadata, with no Loo-Cast/source payload.
 - [x] Define a separate app-instance manifest template in `Standalone-App.vapor.toml`; the release archive must install it as `App.vapor.toml`, not copy the Steam-owned Loo-Cast manifest.
 - [x] Extend the Artifact release preparation guard to accept both current target IDs and require the documented standalone runtime closure, reject unsafe/duplicate/Steam/game payload paths, and require the Vapor-only app manifest (source changed; bundle preparation remains unverified).
 - [x] Homepage validates release platform/version, setup/archive size and digest metadata, and canonical URLs; the setup binary is the primary download.
-- [ ] Verify signed manifest platform IDs, bootstrap package contents, and Homepage links agree.
-- [ ] Confirm repository release write access before publishing public assets; do not claim downloads live without a successful fetch.
+- [x] Artifact exposes a newest-first stable version index from complete immutable bundles; Homepage renders older per-platform setup links under the latest primary download. New releases append automatically from their immutable directory without a separate Homepage edit. Artifact and Homepage compiled through the Vapor shell; no tests or runtime requests were run.
+- [ ] Verify signed manifest platform IDs, bootstrap package contents, and live Homepage links agree; no release has been signed or published.
+- [ ] Implement the default-branch build/package/publish pipeline using Vapor-managed builds, the protected release-signing secret, and a restricted publisher SSH key; no default-branch release workflow or publisher key is configured yet.
+- [ ] Publish a signed first stable release and confirm its public latest/history links; no release is live.
+- [ ] Remove the remaining app-instance startup dependency from Vapor commands where the operation belongs to source/User Data or the standalone installation. The release-stage command is a narrow working example; this is broader than Steam depot publishing and needs its own ownership/dependency pass.
 
 ### Task 4: Steam creator handoff and game-state path contract
 
