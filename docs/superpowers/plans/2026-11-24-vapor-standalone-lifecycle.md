@@ -72,10 +72,10 @@
 - [x] Implement bounded archive download, digest verification, safe same-volume extraction, runtime-closure checks, immutable version placement, and atomic active-pointer replacement (source written; not compiled or runtime-verified).
 - [x] Add installed-version listing and explicit activation of an already installed release. A version history/list endpoint for available published releases is still absent from the current Artifact API.
 - [x] Expose local installed-version selection in the standalone Installer panel; switching updates the active pointer for the next launch without deleting versions.
-- [x] Add a setup-only `vapor-setup` GUI mode that installs, updates, repairs, opens, and normally removes the standalone app without requiring Steam or an installed app instance. The GUI source build is still blocked by its stale ignored lockfile.
+- [x] Add a setup-only `vapor-setup` GUI mode that installs, updates, repairs, opens, and normally removes the standalone app without requiring Steam or an installed app instance. After refreshing the ignored GUI lockfile with the Vapor-managed `cargo update --workspace --offline` operation, the full Vapor-GUI workspace compiled through Vapor-managed Cargo, including `vapor-setup`; no tests or runtime checks were run.
 - [x] Normal standalone removal clears its managed PATH/environment integration while preserving canonical User Data and source.
 - [x] Extend the signed release manifest, Artifact immutable routes, release preparation/publication scripts, and Homepage download link for a separate setup executable. No release bundle has been assembled or published.
-- [ ] Build and publish the setup bootstrap and signed app bundle for Windows and Linux. Vapor's managed build currently refuses to refresh the `Vapor-GUI` lockfile under `--locked`.
+- [ ] Build and publish the setup bootstrap and signed app bundle for Windows and Linux. The Vapor-CLI and Vapor-GUI lockfiles are now tracked; no signed release or clean-machine build has been produced yet.
 - [ ] Add signed available-version history so the GUI can select an older published release; current selection covers versions already installed locally.
 - [ ] Build/check with Vapor for Linux and Windows targets; no raw Cargo invocation.
 
