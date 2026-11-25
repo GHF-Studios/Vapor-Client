@@ -51,6 +51,30 @@ fn setup_development(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Provision Vapor-owned Cargo and cross-compilation tools without writing
+/// into the immutable Vapor App Instance or installing Steam-specific tools.
+pub fn install_managed_toolchain() -> Result<(), String> {
+    let tools_root = user_data_root()?;
+    fs::create_dir_all(&tools_root).map_err(io("create Vapor developer home", &tools_root))?;
+    println!("Install Vapor-managed build toolchain");
+    println!("Vapor User Data: {}", tools_root.display());
+    if !rust_toolchain_installed(&tools_root) {
+        install_rust(&tools_root)?;
+    } else {
+        install_rust_targets_and_components(&tools_root)?;
+        println!("kept Vapor Rust/Cargo");
+    }
+    if !cross_status(&tools_root).ready {
+        install_zig(&tools_root)?;
+        install_llvm_mingw(&tools_root)?;
+        write_cross_wrappers(&tools_root)?;
+    } else {
+        println!("kept Vapor cross-build tools");
+    }
+    println!("Status: Vapor-managed build toolchain ready");
+    Ok(())
+}
+
 fn teardown_player(app_root: &Path) -> Result<(), String> {
     require_app_root(app_root)?;
     println!("Teardown Player");

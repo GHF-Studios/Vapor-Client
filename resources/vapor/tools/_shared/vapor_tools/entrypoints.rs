@@ -58,6 +58,10 @@ pub fn setup_development_main() -> Result<(), String> {
     setup_development(&app_root)
 }
 
+pub fn install_managed_toolchain_main() -> Result<(), String> {
+    install_managed_toolchain()
+}
+
 pub fn teardown_player_main() -> Result<(), String> {
     let app_root = resolve_app_root(arg_path("--app-root"))?;
     teardown_player(&app_root)
@@ -129,7 +133,7 @@ pub fn create_superworkspace_at(
         .map(|name| name.to_string_lossy().into_owned())
         .filter(|name| !name.trim().is_empty())
         .unwrap_or_else(|| "vapor-superworkspace".to_owned());
-    write(&manifest, &superworkspace_manifest(&name, &app_root, &[]))?;
+    write(&manifest, &superworkspace_manifest(&name, &[]))?;
     println!("SuperWorkspace created");
     println!();
     println!("root:    {}", root.display());
@@ -172,26 +176,45 @@ pub fn clone_source_main() -> Result<(), String> {
                 .join("|")
         ));
     }
-    clone_source_into_superworkspace(None, arg_path("--app-root").as_deref(), &requested[0])
+    clone_source_into_superworkspace(None, arg_path("--app-root").as_deref(), &requested[0], None)
 }
 
 pub fn clone_source_into_superworkspace(
     explicit_super_root: Option<&Path>,
     explicit_app_root: Option<&Path>,
     source_name: &str,
+    revision: Option<&str>,
 ) -> Result<(), String> {
-    let app_root = resolve_app_root(
+    let _app_root = resolve_app_root(
         explicit_app_root
             .map(Path::to_path_buf)
             .or_else(candidate_app_root_from_exe),
     )?;
-    let super_root = resolve_super_workspace_root(explicit_super_root)?;
+    let super_root = match explicit_super_root {
+        Some(root) => canonical_dir(root.to_path_buf())?,
+        None => match super_workspace_root() {
+            Ok(root) => root,
+            Err(_) => {
+                let root = canonical_superworkspace_root()?;
+                fs::create_dir_all(&root).map_err(io("create canonical Vapor source home", &root))?;
+                let root = fs::canonicalize(&root).map_err(io("resolve canonical Vapor source home", &root))?;
+                let sources = root.join(SOURCES_DIR);
+                fs::create_dir_all(&sources).map_err(io("create canonical Vapor sources directory", &sources))?;
+                write(&root.join(SUPER_MANIFEST), &superworkspace_manifest(&superworkspace_name(&root), &[]))?;
+                root
+            }
+        },
+    };
     let source = source_preset(source_name)?;
     let sources_root = super_root.join(SOURCES_DIR);
     fs::create_dir_all(&sources_root)
         .map_err(io("create source clone directory", &sources_root))?;
-    clone_source(&sources_root, source)?;
-    record_source_clone(&super_root, &app_root, source)?;
+    clone_source(&sources_root, source, revision)?;
+    if let Err(error) = record_source_clone(&super_root, source) {
+        let created = sources_root.join(source.name);
+        let _ = fs::remove_dir_all(&created);
+        return Err(error);
+    }
     println!();
     println!("Source clone ready under {}", sources_root.display());
     Ok(())
@@ -291,7 +314,7 @@ pub fn ide_run_main() -> Result<(), String> {
                 println!("cancelled");
                 return Ok(());
             }
-            clone_source_into_superworkspace(Some(&super_root), Some(&app_root), source.name)
+            clone_source_into_superworkspace(Some(&super_root), Some(&app_root), source.name, None)
         }
         "source-init-basic-content" => {
             require_executable(&vapor, "app-local Vapor shell")?;
