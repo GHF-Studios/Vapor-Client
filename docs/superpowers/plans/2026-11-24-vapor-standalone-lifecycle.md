@@ -70,7 +70,7 @@
 
 - [x] Identify the release signer format and pin the dedicated production app-release public key in the Installer verifier (`vapor-release-2026-11-24`, SHA-256 `6560933ce5adeb11362cb01b070d6a5142d430d51de867c79e1c4bb2b9a8dd63`). Its private Ed25519 key file remains in the local Vapor home with mode `0600`, outside repositories and the VPS.
 - [x] Wire the bounded manifest and archive verifier into HTTPS acquisition using only the offline-pinned release key set (Linux and Windows bundles are now signed and the publisher accepted both in isolated temporary storage; the public Artifact feed remains unexercised).
-- [x] Implement bounded archive download, digest verification, safe same-volume extraction, runtime-closure checks, immutable version placement, and atomic active-pointer replacement (source written; not compiled or runtime-verified).
+- [x] Implement bounded archive download, digest verification, safe same-volume extraction, runtime-closure checks, immutable version placement, and atomic active-pointer replacement. The Installer and setup targets are included in the Vapor-managed Linux/Windows release builds; actual acquisition/activation still needs a live feed.
 - [x] Add installed-version listing and explicit activation of an already installed release. Artifact also exposes a newest-first stable history endpoint; the GUI's available-history picker remains unfinished.
 - [x] Expose local installed-version selection in the standalone Installer panel; switching updates the active pointer for the next launch without deleting versions.
 - [x] Add a setup-only `vapor-setup` GUI mode that installs, updates, repairs, opens, and normally removes the standalone app without requiring Steam or an installed app instance. Add `vapor-setup install [--channel stable]` as a headless entry to the same signed install path for managed bootstrap automation. The full Vapor-GUI workspace compiled through Vapor-managed Cargo for Linux and the Windows release target; the staged Linux setup executable reported this subcommand in `--help`. No tests or clean-machine install were run.
@@ -78,7 +78,7 @@
 - [x] Extend the signed release manifest, Artifact immutable routes, release preparation/publication scripts, and Homepage download link for a separate setup executable. The `0.5.0` Linux and Windows bundles have been assembled and signed locally; isolated publication validated both bundles and advanced temporary channel pointers. They are not published on the live Artifact service.
 - [ ] Publish the signed setup bootstrap and app bundles for Windows and Linux. The signed `0.5.0` bundles are locally prepared and pass isolated publisher validation; no live release or clean-machine install has been produced yet.
 - [ ] Add signed available-version history so the GUI can select an older published release; current selection covers versions already installed locally.
-- [ ] Build/check with Vapor for Linux and Windows targets; no raw Cargo invocation.
+- [x] Build standalone release artifacts through Vapor for Linux and Windows targets; no raw Cargo invocation. Tests and clean-machine install were skipped by owner direction, and the live release path is still pending.
 
 ### Task 3: Standalone distribution artifacts and website download surface
 
