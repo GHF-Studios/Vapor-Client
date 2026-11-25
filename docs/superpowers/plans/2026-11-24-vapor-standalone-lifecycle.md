@@ -69,14 +69,14 @@
 - Keep authored source and mutable user data outside versioned program directories.
 
 - [x] Identify the release signer format and pin the dedicated production app-release public key in the Installer verifier (`vapor-release-2026-11-24`, SHA-256 `6560933ce5adeb11362cb01b070d6a5142d430d51de867c79e1c4bb2b9a8dd63`). Its private Ed25519 key file remains in the local Vapor home with mode `0600`, outside repositories and the VPS.
-- [x] Wire the bounded manifest and archive verifier into HTTPS acquisition using only the offline-pinned release key set (source written; no Artifact release exists to exercise it).
+- [x] Wire the bounded manifest and archive verifier into HTTPS acquisition using only the offline-pinned release key set (Linux and Windows bundles are now signed and the publisher accepted both in isolated temporary storage; the public Artifact feed remains unexercised).
 - [x] Implement bounded archive download, digest verification, safe same-volume extraction, runtime-closure checks, immutable version placement, and atomic active-pointer replacement (source written; not compiled or runtime-verified).
-- [x] Add installed-version listing and explicit activation of an already installed release. A version history/list endpoint for available published releases is still absent from the current Artifact API.
+- [x] Add installed-version listing and explicit activation of an already installed release. Artifact also exposes a newest-first stable history endpoint; the GUI's available-history picker remains unfinished.
 - [x] Expose local installed-version selection in the standalone Installer panel; switching updates the active pointer for the next launch without deleting versions.
 - [x] Add a setup-only `vapor-setup` GUI mode that installs, updates, repairs, opens, and normally removes the standalone app without requiring Steam or an installed app instance. After refreshing the ignored GUI lockfile with the Vapor-managed `cargo update --workspace --offline` operation, the full Vapor-GUI workspace compiled through Vapor-managed Cargo, including `vapor-setup`; no tests or runtime checks were run.
 - [x] Normal standalone removal clears its managed PATH/environment integration while preserving canonical User Data and source.
-- [x] Extend the signed release manifest, Artifact immutable routes, release preparation/publication scripts, and Homepage download link for a separate setup executable. No release bundle has been assembled or published.
-- [ ] Build and publish the setup bootstrap and signed app bundle for Windows and Linux. The Vapor-CLI and Vapor-GUI lockfiles are now tracked; no signed release or clean-machine build has been produced yet.
+- [x] Extend the signed release manifest, Artifact immutable routes, release preparation/publication scripts, and Homepage download link for a separate setup executable. The `0.5.0` platform bundles have now been assembled and signed locally; they are not published.
+- [ ] Publish the signed setup bootstrap and app bundles for Windows and Linux. The signed `0.5.0` bundles are locally prepared and pass isolated publisher validation; no live release or clean-machine install has been produced yet.
 - [ ] Add signed available-version history so the GUI can select an older published release; current selection covers versions already installed locally.
 - [ ] Build/check with Vapor for Linux and Windows targets; no raw Cargo invocation.
 
@@ -105,8 +105,8 @@
 - [x] Extend the Artifact release preparation guard to accept both current target IDs and require the documented standalone runtime closure, reject unsafe/duplicate/Steam/game payload paths, and require the Vapor-only app manifest (source changed; bundle preparation remains unverified).
 - [x] Homepage validates release platform/version, setup/archive size and digest metadata, and canonical URLs; the setup binary is the primary download.
 - [x] Artifact exposes a newest-first stable version index from complete immutable bundles; Homepage renders older per-platform setup links under the latest primary download. New releases append automatically from their immutable directory without a separate Homepage edit. Artifact and Homepage compiled through the Vapor shell; no tests or runtime requests were run.
-- [ ] Verify signed manifest platform IDs, bootstrap package contents, and live Homepage links agree; no release has been signed or published.
-- [ ] Implement the default-branch build/package/publish pipeline using Vapor-managed builds, the protected release-signing secret, and a restricted publisher SSH key; no default-branch release workflow or publisher key is configured yet.
+- [x] Verify signed manifest platform IDs and bootstrap package contents agree for both platforms; isolated publisher validation passed. Live Homepage links remain unverified because nothing is published.
+- [ ] Implement the default-branch build/package/publish pipeline using Vapor-managed builds, the protected release-signing secret, and a restricted publisher SSH key; no Client release workflow or protected publication credentials are configured yet. GitHub-hosted runners do not require a repository self-hosted runner registration.
 - [ ] Publish a signed first stable release and confirm its public latest/history links; no release is live.
 - [ ] Remove the remaining app-instance startup dependency from Vapor commands where the operation belongs to source/User Data or the standalone installation. The release-stage command is a narrow working example; this is broader than Steam depot publishing and needs its own ownership/dependency pass.
 
