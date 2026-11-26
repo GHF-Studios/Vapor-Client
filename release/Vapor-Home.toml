@@ -1,0 +1,4 @@
+schema = 1
+
+[vapor]
+id = "ghf-studios/vapor"

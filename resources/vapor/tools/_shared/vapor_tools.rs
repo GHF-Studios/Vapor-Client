@@ -7,12 +7,8 @@ use std::{
     process::{Command, Stdio},
 };
 
-pub const APP_ROOT_ENV: &str = "LOO_CAST_APP_ROOT";
+pub const VAPOR_HOME_ENV: &str = "VAPOR_HOME";
 pub const SUPER_MANIFEST: &str = "Superworkspace.vapor.toml";
-pub const APP_MANIFEST: &str = "App.vapor.toml";
-pub const APP_SOURCE_MANIFEST: &str = "Vapor-Client.vapor.toml";
-pub const STEAM_APP_ID: &str = "2122620";
-pub const STEAM_APP_DIR_NAME: &str = "Loo Cast";
 pub const RUST_TOOLCHAIN: &str = "1.97.0";
 pub const ZIG_VERSION: &str = "0.16.0";
 pub const LLVM_MINGW_VERSION: &str = "20260616";
@@ -71,7 +67,7 @@ const PLAYER_TEARDOWN_PATHS: &[&str] = &[
     "output",
 ];
 
-const PLAYER_EMPTY_PARENT_DIRS: &[&str] = &["content/workshop", "content", "tools", ".vapor"];
+const PLAYER_EMPTY_PARENT_DIRS: &[&str] = &[];
 
 #[derive(Debug, Clone)]
 struct ComponentStatus {

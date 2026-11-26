@@ -1,0 +1,14 @@
+schema = 1
+
+[vapor]
+id = "ghf-studios/vapor"
+
+[ecosystem]
+id = "ghf-studios/vapor"
+
+[registry]
+endpoint = "https://vapor.ghf-studios.site/api/registry"
+
+[payload]
+targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-gnullvm"]
+directories = ["bin", "docs", "examples", "metadata", "resources"]

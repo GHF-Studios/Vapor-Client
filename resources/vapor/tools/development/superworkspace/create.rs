@@ -1,6 +1,6 @@
 #!/usr/bin/env -S rust-script --force
 
-//! Create a Vapor SuperWorkspace shape from the installed app root.
+//! Create a Vapor SuperWorkspace shape from the installed Vapor home.
 //!
 //! ```cargo
 //! [package]
@@ -11,6 +11,6 @@
 mod vapor_tools;
 
 fn main() {
-    let _cache_buster = "superworkspace-create-v1";
+    let _cache_buster = "standalone-home-v4";
     vapor_tools::exit(vapor_tools::create_superworkspace_main());
 }

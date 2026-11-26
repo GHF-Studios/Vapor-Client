@@ -7,10 +7,16 @@ planning protocol.
 
 Vapor Client is the source root for an independently installed Vapor runtime.
 The user's Vapor home owns Vapor binaries, tools, source checkouts, caches,
-configuration, and mutable state; Steam does not own those paths. Official
-Steam products may provide local Vapor content artifacts and a small locator
-that opens the separately installed Vapor, but the locator never bundles or
-installs Vapor.
+configuration, and mutable state; Steam does not own those paths. Loo Cast's
+Steam depot is a product mount: the common depot contains
+`Packagepack.vapor.toml`; each supported OS depot contains one primary
+Packagepack executable and only explicitly required runtime sidecars (such as
+DLLs). “One executable” means one product entry point, not necessarily one
+physical file. The executable composes the Engine and Game and launches
+directly from Steam. The depot contains no `App.vapor.toml`, separate
+Engine/Game product directories, Vapor runtime, locator, or Vapor-managed
+files. The current cross-repository direction is recorded in the
+Vapor-Platform-Server realignment spec and implementation plan.
 
 Loo Cast's official depot is a trusted local source for its first-party
 Engine, Game, and Packagepack products; those products are not community
