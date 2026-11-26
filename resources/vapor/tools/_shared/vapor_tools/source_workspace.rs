@@ -30,33 +30,79 @@ fn require_success(status: std::process::ExitStatus, operation: &str, source: &s
     if status.success() {
         Ok(())
     } else {
-        Err(format!("Vapor-managed Git {operation} for {source} failed with {status}"))
+        Err(format!("Vapor Git provider {operation} for {source} failed with {status}"))
     }
 }
 
-fn run_git(root: &Path, args: &[&str]) -> Result<(), String> {
-    let status = Command::new("git")
-        .arg("-C")
-        .arg(root)
-        .args(args)
+fn vapor_git_command<I, S>(vapor_home: &Path, args: I) -> Result<Command, String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<std::ffi::OsStr>,
+{
+    let target = host_rust_target()?;
+    let command = vapor_home
+        .join("bin")
+        .join(target)
+        .join(executable("vapor"));
+    if !command.is_file() {
+        return Err(format!(
+            "installed Vapor CLI is missing: {}",
+            command.display()
+        ));
+    }
+    let mut process = Command::new(&command);
+    process.args(["provider", "git", "run", "--"]).args(args);
+    Ok(process)
+}
+
+fn run_git(vapor_home: &Path, root: &Path, args: &[&str]) -> Result<(), String> {
+    let mut command_args = vec![
+        std::ffi::OsString::from("-C"),
+        git_worktree_path(root).into_os_string(),
+    ];
+    command_args.extend(args.iter().map(|arg| std::ffi::OsString::from(*arg)));
+    let status = vapor_git_command(vapor_home, &command_args)?
         .status()
-        .map_err(|error| format!("Vapor-managed Git could not start: {error}"))?;
+        .map_err(|error| format!("Vapor Git provider could not start: {error}"))?;
     if status.success() {
         Ok(())
     } else {
-        Err(format!("Vapor-managed Git {:?} failed with {status}", args))
+        Err(format!("Vapor Git provider {:?} failed with {status}", args))
     }
 }
 
-fn checkout_revision(root: &Path, revision: &str) -> Result<(), String> {
-    let status = Command::new("git")
-        .arg("-C")
-        .arg(root)
-        .args(["checkout", "--detach"])
-        .arg(revision)
+fn checkout_revision(vapor_home: &Path, root: &Path, revision: &str) -> Result<(), String> {
+    let status = vapor_git_command(
+        vapor_home,
+        [
+            std::ffi::OsString::from("-C"),
+            git_worktree_path(root).into_os_string(),
+            "checkout".into(),
+            "--detach".into(),
+            revision.into(),
+        ],
+    )?
         .status()
-        .map_err(|error| format!("Vapor-managed Git could not start: {error}"))?;
+        .map_err(|error| format!("Vapor Git provider could not start: {error}"))?;
     require_success(status, "checkout", revision)
+}
+
+fn fetch_revision(vapor_home: &Path, root: &Path, revision: &str) -> Result<(), String> {
+    let status = vapor_git_command(
+        vapor_home,
+        [
+            std::ffi::OsString::from("-C"),
+            git_worktree_path(root).into_os_string(),
+            "fetch".into(),
+            "--no-tags".into(),
+            "--depth=1".into(),
+            "origin".into(),
+            revision.into(),
+        ],
+    )?
+        .status()
+        .map_err(|error| format!("Vapor Git provider could not start: {error}"))?;
+    require_success(status, "fetch", revision)
 }
 
 struct RemoveDirectoryOnDrop(PathBuf);
@@ -69,7 +115,12 @@ impl Drop for RemoveDirectoryOnDrop {
     }
 }
 
-fn clone_source(sources_root: &Path, source: SourcePreset, revision: Option<&str>) -> Result<(), String> {
+fn clone_source(
+    vapor_home: &Path,
+    sources_root: &Path,
+    source: SourcePreset,
+    revision: Option<&str>,
+) -> Result<(), String> {
     let target = sources_root.join(source.name);
     if fs::symlink_metadata(&target).is_ok() {
         return Err(format!(
@@ -80,28 +131,35 @@ fn clone_source(sources_root: &Path, source: SourcePreset, revision: Option<&str
     println!("Cloning {}", source.name);
     println!("  remote: {}", source.remote);
     println!("  branch: {}", source.branch);
-    if let Some(revision) = revision {
-        validate_commit_revision(revision)?;
-        println!("  revision: {revision}");
-    }
     println!("  target: {}", target.display());
     let stage = reserve_clone_stage(sources_root, source.name)?;
     let _cleanup = RemoveDirectoryOnDrop(stage.clone());
-    let mut clone = Command::new("git");
-    clone.args(["clone", "--branch", source.branch, "--single-branch"]);
+    let mut clone_args = vec![
+        "clone".into(),
+        "--branch".into(),
+        source.branch.into(),
+        "--single-branch".into(),
+    ];
     if revision.is_some() {
-        clone.arg("--no-checkout");
+        clone_args.push("--no-checkout".into());
     } else {
-        clone.arg("--recurse-submodules");
+        clone_args.push("--recurse-submodules".into());
     }
-    let status = clone.arg(source.remote).arg(&stage).status()
-        .map_err(|error| format!("failed to run Vapor-managed source clone: {error}"))?;
+    clone_args.extend([
+        source.remote.into(),
+        git_worktree_path(&stage).into_os_string(),
+    ]);
+    let status = vapor_git_command(vapor_home, &clone_args)?
+        .status()
+        .map_err(|error| format!("failed to run Vapor Git provider for source clone: {error}"))?;
     require_success(status, "clone", source.name)?;
 
     if let Some(revision) = revision {
-        checkout_revision(&stage, revision)
+        fetch_revision(vapor_home, &stage, revision)
+            .map_err(|error| format!("could not fetch pinned source revision {revision}: {error}"))?;
+        checkout_revision(vapor_home, &stage, revision)
             .map_err(|error| format!("could not select source revision {revision}: {error}"))?;
-        run_git(&stage, &["submodule", "update", "--init", "--recursive"])
+        run_git(vapor_home, &stage, &["submodule", "update", "--init", "--recursive"])
             .map_err(|error| format!("could not initialize pinned source submodules: {error}"))?;
     }
 
@@ -122,8 +180,30 @@ fn reserve_clone_stage(sources_root: &Path, name: &str) -> Result<PathBuf, Strin
     Err(format!("could not reserve a unique temporary checkout for {name}"))
 }
 
+fn git_worktree_path(path: &Path) -> PathBuf {
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+
+        let wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+        let extended_unc = r"\\?\UNC\".encode_utf16().collect::<Vec<_>>();
+        if wide.starts_with(&extended_unc) {
+            let mut compatible = r"\\".encode_utf16().collect::<Vec<_>>();
+            compatible.extend_from_slice(&wide[extended_unc.len()..]);
+            return PathBuf::from(std::ffi::OsString::from_wide(&compatible));
+        }
+        let extended = r"\\?\".encode_utf16().collect::<Vec<_>>();
+        if wide.starts_with(&extended) {
+            return PathBuf::from(std::ffi::OsString::from_wide(&wide[extended.len()..]));
+        }
+    }
+
+    path.to_path_buf()
+}
+
 fn record_source_clone(
     super_root: &Path,
+    vapor_home: &Path,
     source: SourcePreset,
 ) -> Result<(), String> {
     let manifest = super_root.join(SUPER_MANIFEST);
@@ -136,6 +216,7 @@ fn record_source_clone(
         &manifest,
         &superworkspace_manifest(
             &superworkspace_name(super_root),
+            vapor_home,
             &mounted
                 .iter()
                 .map(|name| source_preset(name))
@@ -178,13 +259,20 @@ fn superworkspace_name(root: &Path) -> String {
         .unwrap_or_else(|| "vapor-superworkspace".to_owned())
 }
 
-fn superworkspace_manifest(name: &str, mounted: &[SourcePreset]) -> String {
+fn superworkspace_manifest(name: &str, vapor_home: &Path, mounted: &[SourcePreset]) -> String {
     let mut source = String::new();
     source.push_str("schema = 2\n\n");
     source.push_str("[super-workspace]\n");
     source.push_str(&format!("name = \"{}\"\n", toml_escape(name)));
     source.push_str("sources-directory = \"sources\"\n");
     source.push_str("tools = \"user-data\"\n\n");
+    source.push_str("[app-root]\n");
+    source.push_str("name = \"Vapor Home\"\n");
+    source.push_str(&format!("env-var = \"{}\"\n", VAPOR_HOME_ENV));
+    source.push_str(&format!(
+        "path = \"{}\"\n\n",
+        toml_escape(&vapor_home.to_string_lossy())
+    ));
     source.push_str("[tooling]\n");
     source.push_str("location = \"user-data/resources/vapor/tools\"\n");
     source.push_str("rust-toolchain-owner = \"user-data\"\n\n");
