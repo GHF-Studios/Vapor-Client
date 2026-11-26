@@ -1,0 +1,5 @@
+[root]
+name = "vapor-client"
+organization = "ghf-studios"
+version = "0.5.0"
+repository = "https://github.com/GHF-Studios/Vapor-Client"

@@ -79,7 +79,15 @@ root = "product"
 from = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-unknown-linux-gnu"
 to = "content/installed/ghf-studios/loo-cast/loo-cast-packagepack/bin/x86_64-unknown-linux-gnu"
 target = "x86_64-unknown-linux-gnu"
-exclude = ["vapor-launcher", "vapor-studio", "vapor-ide", "vapor-installer-gui"]
+exclude = [
+    "vapor-gui",
+    "vapor-launcher",
+    "vapor-studio",
+    "vapor-ide",
+    "vapor-installer-gui",
+    "vapor-setup",
+    "vapor-installer",
+]
 required = true
 
 [[root.steam.depots.linux.include]]
@@ -97,7 +105,15 @@ root = "product"
 from = "content/installed/ghf-studios/loo-cast/spacetime-engine/lib/x86_64-pc-windows-gnullvm"
 to = "content/installed/ghf-studios/loo-cast/spacetime-engine/lib/x86_64-pc-windows-gnullvm"
 target = "x86_64-pc-windows-gnullvm"
-exclude = ["vapor-launcher.exe", "vapor-studio.exe", "vapor-ide.exe", "vapor-installer-gui.exe"]
+exclude = [
+    "vapor-gui.exe",
+    "vapor-launcher.exe",
+    "vapor-studio.exe",
+    "vapor-ide.exe",
+    "vapor-installer-gui.exe",
+    "vapor-setup.exe",
+    "vapor-installer.exe",
+]
 required = true
 
 [[root.steam.depots.windows.include]]

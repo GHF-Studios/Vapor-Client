@@ -19,11 +19,25 @@ fn super_workspace_root() -> Result<PathBuf, String> {
     }
     let current =
         env::current_dir().map_err(|error| format!("failed to read current dir: {error}"))?;
-    find_upward(&current, SUPER_MANIFEST).ok_or_else(|| {
-        format!(
-            "could not find {SUPER_MANIFEST}; run from inside the Loo-Cast/Vapor super-workspace or set VAPOR_SUPER_WORKSPACE_ROOT"
-        )
-    })
+    if let Some(root) = find_upward(&current, SUPER_MANIFEST) {
+        return Ok(root);
+    }
+    let canonical = canonical_superworkspace_root()?;
+    if canonical.join(SUPER_MANIFEST).is_file() {
+        Ok(canonical)
+    } else {
+        Err(format!(
+            "could not find {SUPER_MANIFEST}; create Vapor's canonical source home or set VAPOR_SUPER_WORKSPACE_ROOT"
+        ))
+    }
+}
+
+fn canonical_superworkspace_root() -> Result<PathBuf, String> {
+    env::var_os("HOME")
+        .or_else(|| env::var_os("USERPROFILE"))
+        .map(PathBuf::from)
+        .map(|home| home.join("Vapor"))
+        .ok_or_else(|| "could not determine the canonical Vapor source home".to_owned())
 }
 
 fn resolve_super_workspace_root(explicit: Option<&Path>) -> Result<PathBuf, String> {

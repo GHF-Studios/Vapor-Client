@@ -58,6 +58,10 @@ pub fn setup_development_main() -> Result<(), String> {
     setup_development(&vapor_home)
 }
 
+pub fn install_managed_toolchain_main() -> Result<(), String> {
+    install_managed_toolchain()
+}
+
 pub fn teardown_player_main() -> Result<(), String> {
     let vapor_home = resolve_vapor_home(arg_path("--vapor-home"))?;
     teardown_player(&vapor_home)
@@ -179,13 +183,28 @@ pub fn clone_source_into_superworkspace(
     explicit_super_root: Option<&Path>,
     explicit_app_root: Option<&Path>,
     source_name: &str,
+    revision: Option<&str>,
 ) -> Result<(), String> {
     let vapor_home = resolve_vapor_home(
         explicit_app_root
             .map(Path::to_path_buf)
             .or_else(candidate_vapor_home_from_exe),
     )?;
-    let super_root = resolve_super_workspace_root(explicit_super_root)?;
+    let super_root = match explicit_super_root {
+        Some(root) => canonical_dir(root.to_path_buf())?,
+        None => match super_workspace_root() {
+            Ok(root) => root,
+            Err(_) => {
+                let root = canonical_superworkspace_root()?;
+                fs::create_dir_all(&root).map_err(io("create canonical Vapor source home", &root))?;
+                let root = fs::canonicalize(&root).map_err(io("resolve canonical Vapor source home", &root))?;
+                let sources = root.join(SOURCES_DIR);
+                fs::create_dir_all(&sources).map_err(io("create canonical Vapor sources directory", &sources))?;
+                write(&root.join(SUPER_MANIFEST), &superworkspace_manifest(&superworkspace_name(&root), &[]))?;
+                root
+            }
+        },
+    };
     let source = source_preset(source_name)?;
     let sources_root = super_root.join(SOURCES_DIR);
     fs::create_dir_all(&sources_root)
