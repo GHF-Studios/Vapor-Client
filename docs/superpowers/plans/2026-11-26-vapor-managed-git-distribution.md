@@ -37,6 +37,16 @@ homepage link alone.
 ## Task 2: Build and stage separate Git tool payloads through Vapor
 
 - Add version-pinned acquisition/build recipes to Vapor-owned release tooling.
+- Keep Linux source archives and native build intermediates under a
+  Git-specific Vapor User Data cache namespace beneath
+  `cache/build/native-tools/git`. Key reuse on the verified source digest,
+  recipe revision, managed compiler/toolchain identity, target, and enabled
+  build features; publish a completion marker only after version and staged
+  inventory checks pass. Keep the activated Git provider under
+  `tools/git`, outside the disposable build cache.
+- Make cleanup categorize this cache as rebuildable generated state without
+  conflating it with authored `sources/` checkouts or the installed `tools/`
+  provider.
 - Build Linux Git from upstream through Vapor's managed compiler and staged
   dependency closure; verify it runs in the supported Linux baseline.
 - Verify and stage the official Windows MinGit archive without stripping its
@@ -47,7 +57,10 @@ homepage link alone.
   paths are contained, predictable, and version-addressed.
 
 **Proof:** Both staged archives match their declared file inventories and
-version reports; their runtime dependencies are explicit.
+version reports; their runtime dependencies are explicit. Repeating the same
+Linux build through Vapor reuses the keyed build tree; changing a key input
+selects a different build tree. Clearing the native build cache leaves the
+installed provider intact and allows Vapor to rebuild it.
 
 ## Task 3: Extend signed release metadata and Artifact delivery
 

@@ -72,6 +72,20 @@ system package.
 - The release workflow builds and stages Linux Git through Vapor-managed
   tooling, pins and verifies the official Windows MinGit input, and sends both
   platform tool payloads through the same signed release preparation path.
+- Native Git build inputs and intermediates belong to a named Vapor User Data
+  cache namespace beneath `cache/build/native-tools/git`, never in the app
+  install, the authored Superworkspace checkout, or `tools/git`. Its cache key
+  must include the exact source archive digest, build-recipe revision,
+  compiler/toolchain identity, target, and enabled feature/configuration set.
+  A cache entry is reusable only when its recorded key matches and its
+  completion marker was written after the staged output passed its declared
+  inventory and version checks. The promoted provider remains separate under
+  `tools/git`; deleting the build cache must not uninstall that provider.
+- This is a Git-specific cache consumer, not a new generic tool-build
+  framework. Current Vapor-managed source workspace builds use
+  `output/dev/<project>`, while other managed Cargo realizations use
+  `cache/build/<target>`. Do not claim native Git build reuse works until the
+  Git recipe itself has demonstrated a repeat build hit through Vapor.
 - Artifact owns immutable storage and read routes for tool payload, exact
   corresponding source, and notices. The signed app manifest is the authority
   for the tool asset's platform, version, URL, size, digest, source reference,
@@ -123,6 +137,12 @@ using Vapor-managed compiler/toolchain inputs. The first release transition
 must also bootstrap source acquisition from the currently published setup,
 which predates managed Git. Preserve the explicit-provider capability for this
 transition; do not bake a permanent host-Git fallback into clean-machine CI.
+
+The native Git cache must coexist with Vapor's disposable-output and Cargo
+cache ownership. A repeat build with unchanged inputs should reuse configured
+and object outputs; a change in any cache-key input must select a fresh entry.
+The cache must be safe to delete while the separately installed Git provider
+remains usable.
 
 The legal inventory is not yet complete because the exact Git and MinGit
 revisions and Linux runtime closure have not been selected. In particular,
