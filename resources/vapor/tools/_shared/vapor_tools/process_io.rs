@@ -30,9 +30,12 @@ fn verify_sha256(path: &Path, expected: &str) -> Result<(), String> {
                 powershell_quote(&powershell_compatible_path_text(&path.to_string_lossy()))
             ))
             .output()
-            .map_err(|error| format!("failed to start PowerShell sha256 check: {error}"))?;
+            .map_err(|error| format!("failed to start certutil sha256 check: {error}"))?;
         let actual = String::from_utf8_lossy(&output.stdout)
-            .trim()
+            .lines()
+            .map(str::trim)
+            .find(|line| line.len() == 64 && line.bytes().all(|byte| byte.is_ascii_hexdigit()))
+            .unwrap_or_default()
             .to_ascii_lowercase();
         (
             actual,
@@ -99,12 +102,10 @@ fn extract_zip_single_root(archive: &Path, target: &Path) -> Result<(), String> 
     entries.sort_by_key(|entry| entry.path());
     if entries.len() == 1 && entries[0].file_type().is_ok_and(|kind| kind.is_dir()) {
         let single_root = entries[0].path();
-        reset_plain_dir(target)?;
-        for entry in fs::read_dir(&single_root).map_err(io("read zip single root", &single_root))? {
-            let entry = entry.map_err(|error| format!("failed to read zip entry: {error}"))?;
-            fs::rename(entry.path(), target.join(entry.file_name()))
-                .map_err(|error| format!("failed to move extracted file: {error}"))?;
+        if target.exists() {
+            remove_path(target).map_err(io("remove old extract target", target))?;
         }
+        fs::rename(&single_root, target).map_err(io("promote zip single root", target))?;
         remove_path(&staging).map_err(io("remove zip staging", &staging))?;
         Ok(())
     } else {

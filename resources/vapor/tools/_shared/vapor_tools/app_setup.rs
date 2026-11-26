@@ -22,6 +22,17 @@ pub fn setup_player_for(vapor_home: &Path) -> Result<(), String> {
 }
 
 fn setup_development(app_root: &Path) -> Result<(), String> {
+    setup_development_with_progress(app_root, |_| {})
+}
+
+/// Prepare the complete app-local developer toolchain while reporting the
+/// current setup stage to GUI callers. The CLI uses the same implementation
+/// without a progress receiver.
+pub fn setup_development_with_progress(
+    app_root: &Path,
+    mut report_progress: impl FnMut(&str),
+) -> Result<(), String> {
+    report_progress("Preparing Player prerequisites");
     setup_player(app_root)?;
     let tools_root = user_data_root()?;
     fs::create_dir_all(&tools_root).map_err(io("create Vapor developer home", &tools_root))?;
@@ -107,6 +118,10 @@ fn teardown_development(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
+pub fn teardown_development_for(app_root: &Path) -> Result<(), String> {
+    teardown_development(app_root)
+}
+
 fn install_steamcmd(app_root: &Path) -> Result<(), String> {
     println!("installing Vapor SteamCMD");
     let target = app_root.join("tools/steamcmd");
@@ -163,6 +178,7 @@ fn install_rust_targets_and_components(vapor_home: &Path) -> Result<(), String> 
         return Err(format!("missing Vapor rustup: {}", rustup.display()));
     }
     for target in RUST_TARGETS {
+        report_progress(&format!("Installing Rust target {target}"));
         println!("installing Rust target {target}");
         run(Command::new(&rustup)
             .args(["target", "add", target])
@@ -170,6 +186,7 @@ fn install_rust_targets_and_components(vapor_home: &Path) -> Result<(), String> 
             .env("CARGO_HOME", vapor_home.join("tools/cargo/home")))?;
     }
     for component in RUST_COMPONENTS {
+        report_progress(&format!("Installing Rust component {component}"));
         println!("installing Rust component {component}");
         run(Command::new(&rustup)
             .args(["component", "add", component])
@@ -207,14 +224,22 @@ fn install_llvm_mingw(vapor_home: &Path) -> Result<(), String> {
         let archive = app_root
             .join("downloads")
             .join(format!("llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-x86_64.zip"));
-        download(LLVM_MINGW_X86_64_WINDOWS, &archive)?;
+        if !archive.is_file()
+            || verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256).is_err()
+        {
+            download(LLVM_MINGW_X86_64_WINDOWS, &archive)?;
+        }
         verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
         let archive = app_root.join("downloads").join(format!(
             "llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
         ));
-        download(LLVM_MINGW_X86_64_LINUX, &archive)?;
+        if !archive.is_file()
+            || verify_sha256(&archive, LLVM_MINGW_X86_64_LINUX_SHA256).is_err()
+        {
+            download(LLVM_MINGW_X86_64_LINUX, &archive)?;
+        }
         verify_sha256(&archive, LLVM_MINGW_X86_64_LINUX_SHA256)?;
         extract_tar_xz_strip(&archive, &target)?;
     }

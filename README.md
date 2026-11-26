@@ -61,14 +61,7 @@ candidate is installed and the first-run migration path has been reviewed. A
 real standalone release/deploy remains unverified, and Loo Cast depot upload
 still requires its own reviewed app-source staging and publication step.
 
-The current Shell command model is documented in
-[`Vapor-CLI/crates/vapor_cli/docs/commands.md`](Vapor-CLI/crates/vapor_cli/docs/commands.md).
-The product model behind it is in
-[`product-topology.md`](Vapor-CLI/crates/vapor_cli/docs/design/product-topology.md).
-
-## Repository Checkouts
-
-Initialize pinned project checkouts with:
+Initialize the pinned project checkouts with:
 
 ```bash
 git submodule update --init --recursive

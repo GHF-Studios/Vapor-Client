@@ -135,8 +135,7 @@ fn superworkspace_manifest(name: &str, vapor_home: &Path, mounted: &[SourcePrese
     source.push_str("sources-directory = \"sources\"\n");
     source.push_str("tools = \"user-data\"\n\n");
     source.push_str("[app-root]\n");
-    source.push_str(&format!("name = \"{}\"\n", STEAM_APP_DIR_NAME));
-    source.push_str(&format!("steam-app-id = {STEAM_APP_ID}\n"));
+    source.push_str("name = \"Vapor Home\"\n");
     source.push_str(&format!("env-var = \"{}\"\n", APP_ROOT_ENV));
     source.push_str(&format!(
         "path = \"{}\"\n\n",
