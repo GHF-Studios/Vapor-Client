@@ -59,6 +59,17 @@ fn checkout_revision(root: &Path, revision: &str) -> Result<(), String> {
     require_success(status, "checkout", revision)
 }
 
+fn fetch_revision(root: &Path, revision: &str) -> Result<(), String> {
+    let status = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["fetch", "--no-tags", "--depth=1", "origin"])
+        .arg(revision)
+        .status()
+        .map_err(|error| format!("Vapor-managed Git could not start: {error}"))?;
+    require_success(status, "fetch", revision)
+}
+
 struct RemoveDirectoryOnDrop(PathBuf);
 
 impl Drop for RemoveDirectoryOnDrop {
@@ -81,26 +92,6 @@ fn clone_source(sources_root: &Path, source: SourcePreset, revision: Option<&str
     println!("  remote: {}", source.remote);
     println!("  branch: {}", source.branch);
     println!("  target: {}", target.display());
-    let status = Command::new("git")
-        .args([
-            "clone",
-            "--recurse-submodules",
-            "--branch",
-            source.branch,
-            source.remote,
-        ])
-        .arg(git_worktree_path(&target))
-        .status()
-        .map_err(|error| format!("failed to run git clone: {error}"))?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(format!(
-            "git clone for {} failed with {status}",
-            source.name
-        ))
-    }
-    println!("  target: {}", target.display());
     let stage = reserve_clone_stage(sources_root, source.name)?;
     let _cleanup = RemoveDirectoryOnDrop(stage.clone());
     let mut clone = Command::new("git");
@@ -115,6 +106,8 @@ fn clone_source(sources_root: &Path, source: SourcePreset, revision: Option<&str
     require_success(status, "clone", source.name)?;
 
     if let Some(revision) = revision {
+        fetch_revision(&stage, revision)
+            .map_err(|error| format!("could not fetch pinned source revision {revision}: {error}"))?;
         checkout_revision(&stage, revision)
             .map_err(|error| format!("could not select source revision {revision}: {error}"))?;
         run_git(&stage, &["submodule", "update", "--init", "--recursive"])
@@ -226,7 +219,7 @@ fn superworkspace_manifest(name: &str, vapor_home: &Path, mounted: &[SourcePrese
     source.push_str("tools = \"user-data\"\n\n");
     source.push_str("[app-root]\n");
     source.push_str("name = \"Vapor Home\"\n");
-    source.push_str(&format!("env-var = \"{}\"\n", APP_ROOT_ENV));
+    source.push_str(&format!("env-var = \"{}\"\n", VAPOR_HOME_ENV));
     source.push_str(&format!(
         "path = \"{}\"\n\n",
         toml_escape(&vapor_home.to_string_lossy())
