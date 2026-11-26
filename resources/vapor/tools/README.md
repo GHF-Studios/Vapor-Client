@@ -17,12 +17,16 @@ Run these from the installed Vapor home:
 ```text
 <vapor-home>/bin/<target>/vapor-installer superworkspace create --path /path/to/SuperWorkspace
 <vapor-home>/bin/<target>/vapor-installer source clone Vapor-Client --super-workspace /path/to/SuperWorkspace
+<vapor-home>/bin/<target>/vapor-installer source clone Vapor-Platform-Server --revision <full-commit-sha>
 <vapor-home>/bin/<target>/vapor-installer ide patch-rustrover --super-workspace /path/to/SuperWorkspace
 ```
 
 Clone only the sources needed for the current task. The SuperWorkspace stores
 checkouts under `sources/`; its manifest records the independently installed
 Vapor home that owns the toolchain and generated state.
+`--revision` fetches and checks out the requested full commit ID before
+initializing that revision's submodules, so detached CI checkouts stay under
+the same Vapor-owned source root.
 
 ## Player and Developer setup
 

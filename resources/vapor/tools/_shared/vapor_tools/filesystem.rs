@@ -47,18 +47,8 @@ fn remove_empty_dir(root: &Path, path: &Path) -> Result<(), String> {
 }
 
 fn user_data_root() -> Result<PathBuf, String> {
-    let root = if cfg!(windows) {
-        env::var_os("LOCALAPPDATA")
-            .or_else(|| env::var_os("USERPROFILE").map(|home| PathBuf::from(home).join("AppData/Local").into_os_string()))
-            .map(|base| PathBuf::from(base).join("Vapor"))
-    } else if cfg!(target_os = "macos") {
-        env::var_os("HOME").map(|home| PathBuf::from(home).join("Library/Application Support/Vapor"))
-    } else {
-        env::var_os("XDG_DATA_HOME").filter(|value| !value.is_empty())
-            .or_else(|| env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share").into_os_string()))
-            .map(|base| PathBuf::from(base).join("vapor"))
-    };
-    root.ok_or_else(|| "cannot locate Vapor User Data; set the platform home directory".to_owned())
+    vapor_core::user_data_root()
+        .ok_or_else(|| "cannot locate Vapor User Data; set the platform home directory".to_owned())
 }
 
 fn write_receipt(_app_root: &Path, name: &str, state: &str) -> Result<(), String> {

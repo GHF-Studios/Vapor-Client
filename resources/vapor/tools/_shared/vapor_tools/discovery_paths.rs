@@ -130,6 +130,23 @@ fn resolve_vapor_home(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
     ))
 }
 
+fn resolve_install_root() -> Result<PathBuf, String> {
+    if let Ok(value) = env::var(VAPOR_INSTALL_ROOT_ENV) {
+        if !value.trim().is_empty() {
+            let path = canonical_dir(PathBuf::from(value.trim()))?;
+            if path.join("App.vapor.toml").is_file() {
+                return Ok(path);
+            }
+            return Err(format!("{VAPOR_INSTALL_ROOT_ENV} does not identify a Vapor release: {}", path.display()));
+        }
+    }
+    let executable = env::current_exe()
+        .map_err(|error| format!("failed to locate the running Vapor executable: {error}"))?;
+    let start = executable.parent().unwrap_or(&executable);
+    find_upward(start, "App.vapor.toml")
+        .ok_or_else(|| format!("could not locate the installed Vapor release above {}", executable.display()))
+}
+
 fn candidate_vapor_homes_from_tool_source() -> Vec<PathBuf> {
     let mut candidates = Vec::new();
     for path in tool_source_path_candidates() {
@@ -384,20 +401,20 @@ fn tool_root_candidates(vapor_home: Option<&Path>) -> Vec<PathBuf> {
     if let Ok(user_data) = user_data_root() {
         candidates.push(user_data.join("resources/vapor/tools"));
     }
-    if let Some(app_root) = app_root {
-        candidates.push(app_root.join("resources/vapor/tools"));
-    } else if let Ok(app_root) = resolve_app_root(None) {
-        candidates.push(app_root.join("resources/vapor/tools"));
+    if let Some(vapor_home) = vapor_home {
+        candidates.push(vapor_home.join("resources/vapor/tools"));
+    } else if let Some(vapor_home) = candidate_vapor_home_from_exe() {
+        candidates.push(vapor_home.join("resources/vapor/tools"));
     }
     dedupe_paths(candidates)
 }
 
-fn app_root_tool_path(app_root: Option<&Path>, relative: &str) -> PathBuf {
+fn app_root_tool_path(vapor_home: Option<&Path>, relative: &str) -> PathBuf {
     user_data_root()
         .or_else(|_| {
-            app_root
+            vapor_home
                 .map(Path::to_path_buf)
-                .or_else(|| resolve_app_root(None).ok())
+                .or_else(candidate_vapor_home_from_exe)
                 .ok_or_else(|| "cannot locate Vapor tools".to_owned())
         })
         .unwrap_or_else(|_| PathBuf::from("<vapor-user-data>"))
@@ -405,8 +422,8 @@ fn app_root_tool_path(app_root: Option<&Path>, relative: &str) -> PathBuf {
         .join(relative)
 }
 
-fn expected_rust_bin(vapor_home: &Path) -> Result<PathBuf, String> {
-    Ok(vapor_home
+fn expected_rust_bin(user_data_root: &Path) -> Result<PathBuf, String> {
+    Ok(user_data_root
         .join("tools/rustup/home/toolchains")
         .join(format!("{RUST_TOOLCHAIN}-{}", host_rust_target()?))
         .join("bin"))

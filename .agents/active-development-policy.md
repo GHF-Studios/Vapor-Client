@@ -20,4 +20,13 @@ consulted when recovering work after a context change.
 
 **Phase transitions:** Explicit decisions, never automatically inferred from the version number alone.
 
-**Next milestone:** Alpha v0.5.0 — integrated, comprehensive tech demos of Vapor, Spacetime Engine and Loo Cast.
+**Pre-alpha release version:** Keep the compatibility target pinned at `0.5.0`.
+Standalone releases use `0.5.0-pre-alpha-<inner SemVer>` to identify the phase
+while the inner version records rolling product changes without moving the
+compatibility target. The hosted default-branch workflow currently advances
+the inner patch component on its `0.1` release train. Package, content, and
+schema versions keep their own contracts.
+
+**Next milestone:** Alpha — integrated, comprehensive tech demos of Vapor,
+Spacetime Engine, and Loo Cast. Phase transitions are explicit owner decisions;
+a version string alone does not change the phase.

@@ -1,5 +1,5 @@
 pub fn status_main() -> Result<(), String> {
-    let app_root = resolve_app_root(arg_path("--app-root"))?;
+    let vapor_home = resolve_vapor_home(arg_path("--vapor-home"))?;
     let tools_root = user_data_root()?;
     println!("Vapor App Tool Status");
     println!();
@@ -10,13 +10,13 @@ pub fn status_main() -> Result<(), String> {
         println!("  {}", super_root.display());
     }
     println!();
-    print_component(&directories_status(&app_root));
+    print_component(&directories_status());
     print_component(&steamcmd_status(&tools_root));
     print_component(&rust_status(&tools_root));
     print_component(&cross_status(&tools_root));
     println!();
     println!("Next");
-    if !directories_status(&app_root).ready {
+    if !directories_status().ready {
         println!(
             "  {} install --vapor-home {}",
             shell_arg(&app_control_runner(&vapor_home)),
@@ -206,7 +206,7 @@ pub fn clone_source_into_superworkspace(
                 let root = fs::canonicalize(&root).map_err(io("resolve canonical Vapor source home", &root))?;
                 let sources = root.join(SOURCES_DIR);
                 fs::create_dir_all(&sources).map_err(io("create canonical Vapor sources directory", &sources))?;
-                write(&root.join(SUPER_MANIFEST), &superworkspace_manifest(&superworkspace_name(&root), &[]))?;
+                write(&root.join(SUPER_MANIFEST), &superworkspace_manifest(&superworkspace_name(&root), &vapor_home, &[]))?;
                 root
             }
         },
@@ -256,18 +256,20 @@ pub fn ide_run_main() -> Result<(), String> {
 
     let host_target = host_rust_target().unwrap_or("x86_64-unknown-linux-gnu");
     let tools_root = user_data_root()?;
+    let app_root = resolve_install_root()?;
     let app_bin_dir = app_root.join("bin").join(host_target);
     let vapor = app_bin_dir.join(executable("vapor"));
     let installer = app_control_runner(&vapor_home);
     let entrypoint = app_bin_dir.join(executable("vapor-entrypoint"));
 
-    set_env_var(APP_ROOT_ENV, &app_root);
-    set_env_var("RUSTUP_HOME", tools_root.join("rustup-home"));
-    set_env_var("CARGO_HOME", tools_root.join("cargo-home"));
+    set_env_var(VAPOR_INSTALL_ROOT_ENV, &app_root);
+    set_env_var("VAPOR_USER_DATA_ROOT", &tools_root);
+    set_env_var("RUSTUP_HOME", tools_root.join("tools/rustup/home"));
+    set_env_var("CARGO_HOME", tools_root.join("tools/cargo/home"));
     prepend_path(&[
         app_bin_dir.clone(),
         tools_root
-            .join("rustup-home/toolchains")
+            .join("tools/rustup/home/toolchains")
             .join(format!("{RUST_TOOLCHAIN}-{host_target}"))
             .join("bin"),
         tools_root.join("rustup/bin"),
@@ -516,7 +518,8 @@ fn ide_runner_executable() -> Result<PathBuf, String> {
 
 pub fn patch_rustrover_main() -> Result<(), String> {
     let super_root = super_workspace_root()?;
-    let app_root = resolve_app_root(arg_path("--app-root"))?;
+    let vapor_home = resolve_vapor_home(arg_path("--vapor-home"))?;
+    let app_root = resolve_install_root()?;
     let tools_root = user_data_root()?;
     let rust = rust_status(&tools_root);
     if !rust.ready {
@@ -575,7 +578,14 @@ pub fn patch_rustrover_main() -> Result<(), String> {
         &rust_workspace_component(&toolchain_shim.bin, &stdlib),
         &run_manager_component(&run_configurations),
     )?;
-    write_run_configurations(&idea, &super_root, &app_root, &tools_root, &run_configurations)?;
+    write_run_configurations(
+        &idea,
+        &super_root,
+        &app_root,
+        &vapor_home,
+        &tools_root,
+        &run_configurations,
+    )?;
     let verification = verify_rustrover_setup(
         &super_root,
         &idea,
@@ -622,15 +632,12 @@ pub fn source_status_at(
     explicit_app_root: Option<&Path>,
 ) -> Result<(), String> {
     let super_root = resolve_super_workspace_root(explicit_super_root)?;
-    let vapor_home = explicit_app_root
-        .map(Path::to_path_buf)
-        .or_else(candidate_vapor_home_from_exe)
-        .and_then(|path| resolve_vapor_home(Some(path)).ok());
-    let control = vapor_home
-        .as_deref()
-        .map(app_control_runner)
-        .map(|path| shell_arg(&path))
-        .unwrap_or_else(|| "vapor-installer".to_owned());
+    let vapor_home = resolve_vapor_home(
+        explicit_app_root
+            .map(Path::to_path_buf)
+            .or_else(candidate_vapor_home_from_exe),
+    )?;
+    let control = shell_arg(&app_control_runner(&vapor_home));
     println!("Vapor Source Status");
     println!();
     println!("Super workspace: {}", super_root.display());
@@ -652,9 +659,7 @@ pub fn source_status_at(
                 source.name,
                 shell_arg(&super_root)
             );
-            if let Some(vapor_home) = &vapor_home {
-                command.push_str(&format!(" --vapor-home {}", shell_arg(vapor_home)));
-            }
+            command.push_str(&format!(" --vapor-home {}", shell_arg(&vapor_home)));
             println!("  clone: {command}");
             continue;
         }

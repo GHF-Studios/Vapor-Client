@@ -2,15 +2,15 @@ fn setup_player(vapor_home: &Path) -> Result<(), String> {
     require_vapor_home(vapor_home)?;
     println!("Setup Player");
     println!();
-    println!("App root: {}", app_root.display());
+    println!("Vapor home: {}", vapor_home.display());
     let user_data = user_data_root()?;
     for relative in PLAYER_DIRS {
         let path = user_data.join(relative);
         fs::create_dir_all(&path).map_err(io("create Vapor User Data directory", &path))?;
         println!("ensured {relative}");
     }
-    write_app_root_anchor(app_root)?;
-    write_receipt(app_root, "player", "ready")?;
+    write_vapor_home_anchor(vapor_home)?;
+    write_receipt(vapor_home, "player", "ready")?;
     println!();
     println!("Status: player setup ready");
     Ok(())
@@ -21,19 +21,42 @@ pub fn setup_player_for(vapor_home: &Path) -> Result<(), String> {
     setup_player(vapor_home)
 }
 
-fn setup_development(app_root: &Path) -> Result<(), String> {
-    setup_development_with_progress(app_root, |_| {})
+fn setup_development(vapor_home: &Path) -> Result<(), String> {
+    setup_development_with_progress(vapor_home, |_| {})
+}
+
+fn install_managed_toolchain() -> Result<(), String> {
+    let tools_root = user_data_root()?;
+    fs::create_dir_all(&tools_root).map_err(io("create Vapor developer home", &tools_root))?;
+    println!("Install Vapor-managed developer toolchain");
+    if !steamcmd_status(&tools_root).ready {
+        install_steamcmd(&tools_root)?;
+    }
+    let mut report_progress = |stage: &str| println!("{stage}");
+    if !rust_toolchain_installed(&tools_root) {
+        install_rust(&tools_root, &mut report_progress)?;
+    } else {
+        install_rust_targets_and_components(&tools_root, &mut report_progress)?;
+    }
+    if !cross_status(&tools_root).ready {
+        install_zig(&tools_root)?;
+        install_llvm_mingw(&tools_root)?;
+        write_cross_wrappers(&tools_root)?;
+    }
+    write_receipt(&tools_root, "dev-env", "ready")?;
+    println!("Status: Vapor-managed developer toolchain ready");
+    Ok(())
 }
 
 /// Prepare the complete app-local developer toolchain while reporting the
 /// current setup stage to GUI callers. The CLI uses the same implementation
 /// without a progress receiver.
 pub fn setup_development_with_progress(
-    app_root: &Path,
+    vapor_home: &Path,
     mut report_progress: impl FnMut(&str),
 ) -> Result<(), String> {
     report_progress("Preparing Player prerequisites");
-    setup_player(app_root)?;
+    setup_player(vapor_home)?;
     let tools_root = user_data_root()?;
     fs::create_dir_all(&tools_root).map_err(io("create Vapor developer home", &tools_root))?;
     println!();
@@ -44,9 +67,9 @@ pub fn setup_development_with_progress(
         println!("kept Vapor SteamCMD");
     }
     if !rust_toolchain_installed(&tools_root) {
-        install_rust(&tools_root)?;
+        install_rust(&tools_root, &mut report_progress)?;
     } else {
-        install_rust_targets_and_components(&tools_root)?;
+        install_rust_targets_and_components(&tools_root, &mut report_progress)?;
         println!("kept Vapor Rust/Cargo");
     }
     if !cross_status(&tools_root).ready {
@@ -88,13 +111,15 @@ fn teardown_player(vapor_home: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn teardown_development(app_root: &Path) -> Result<(), String> {
-    require_app_root(app_root)?;
+fn teardown_development(vapor_home: &Path) -> Result<(), String> {
+    require_vapor_home(vapor_home)?;
     let tools_root = user_data_root()?;
     fs::create_dir_all(&tools_root).map_err(io("create Vapor developer home", &tools_root))?;
     println!("Teardown Development");
     println!();
     for relative in [
+        "tools/rustup",
+        "tools/cargo",
         "rustup",
         "rustup-home",
         "cargo-home",
@@ -118,20 +143,20 @@ fn teardown_development(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-pub fn teardown_development_for(app_root: &Path) -> Result<(), String> {
-    teardown_development(app_root)
+pub fn teardown_development_for(vapor_home: &Path) -> Result<(), String> {
+    teardown_development(vapor_home)
 }
 
-fn install_steamcmd(app_root: &Path) -> Result<(), String> {
+fn install_steamcmd(tools_root: &Path) -> Result<(), String> {
     println!("installing Vapor SteamCMD");
-    let target = app_root.join("tools/steamcmd");
-    reset_dir(app_root, &target)?;
+    let target = tools_root.join("tools/steamcmd");
+    reset_dir(tools_root, &target)?;
     if cfg!(target_os = "windows") {
-        let archive = app_root.join("downloads/steamcmd.zip");
+        let archive = tools_root.join("downloads/steamcmd.zip");
         download(STEAMCMD_WINDOWS, &archive)?;
         extract_zip(&archive, &target)?;
     } else {
-        let archive = app_root.join("downloads/steamcmd_linux.tar.gz");
+        let archive = tools_root.join("downloads/steamcmd_linux.tar.gz");
         download(STEAMCMD_LINUX, &archive)?;
         run(Command::new("tar")
             .arg("-xzf")
@@ -142,9 +167,9 @@ fn install_steamcmd(app_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn install_rust(app_root: &Path) -> Result<(), String> {
+fn install_rust(tools_root: &Path, report_progress: &mut impl FnMut(&str)) -> Result<(), String> {
     println!("installing Vapor Rust/Cargo {RUST_TOOLCHAIN}");
-    let rustup_init = app_root
+    let rustup_init = tools_root
         .join("downloads")
         .join(executable("rustup-init"));
     download(rustup_init_url()?, &rustup_init)?;
@@ -160,20 +185,23 @@ fn install_rust(app_root: &Path) -> Result<(), String> {
             "--default-host",
             host_rust_target()?,
         ])
-        .env("RUSTUP_HOME", vapor_home.join("tools/rustup/home"))
-        .env("CARGO_HOME", vapor_home.join("tools/cargo/home")))?;
-    let source = vapor_home.join("tools/cargo/home/bin").join(executable("rustup"));
-    let target = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
+        .env("RUSTUP_HOME", tools_root.join("tools/rustup/home"))
+        .env("CARGO_HOME", tools_root.join("tools/cargo/home")))?;
+    let source = tools_root.join("tools/cargo/home/bin").join(executable("rustup"));
+    let target = tools_root.join("tools/rustup/bin").join(executable("rustup"));
     if let Some(parent) = target.parent() {
         fs::create_dir_all(parent).map_err(io("create rustup bin directory", parent))?;
     }
     fs::copy(&source, &target).map_err(io("copy rustup into Vapor User Data", &target))?;
     make_executable(&target)?;
-    install_rust_targets_and_components(vapor_home)
+    install_rust_targets_and_components(tools_root, report_progress)
 }
 
-fn install_rust_targets_and_components(vapor_home: &Path) -> Result<(), String> {
-    let rustup = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
+fn install_rust_targets_and_components(
+    tools_root: &Path,
+    report_progress: &mut impl FnMut(&str),
+) -> Result<(), String> {
+    let rustup = tools_root.join("tools/rustup/bin").join(executable("rustup"));
     if !is_executable(&rustup) {
         return Err(format!("missing Vapor rustup: {}", rustup.display()));
     }
@@ -182,32 +210,32 @@ fn install_rust_targets_and_components(vapor_home: &Path) -> Result<(), String> 
         println!("installing Rust target {target}");
         run(Command::new(&rustup)
             .args(["target", "add", target])
-            .env("RUSTUP_HOME", vapor_home.join("tools/rustup/home"))
-            .env("CARGO_HOME", vapor_home.join("tools/cargo/home")))?;
+            .env("RUSTUP_HOME", tools_root.join("tools/rustup/home"))
+            .env("CARGO_HOME", tools_root.join("tools/cargo/home")))?;
     }
     for component in RUST_COMPONENTS {
         report_progress(&format!("Installing Rust component {component}"));
         println!("installing Rust component {component}");
         run(Command::new(&rustup)
             .args(["component", "add", component])
-            .env("RUSTUP_HOME", vapor_home.join("tools/rustup/home"))
-            .env("CARGO_HOME", vapor_home.join("tools/cargo/home")))?;
+            .env("RUSTUP_HOME", tools_root.join("tools/rustup/home"))
+            .env("CARGO_HOME", tools_root.join("tools/cargo/home")))?;
     }
     Ok(())
 }
 
-fn install_zig(vapor_home: &Path) -> Result<(), String> {
+fn install_zig(tools_root: &Path) -> Result<(), String> {
     println!("installing Zig {ZIG_VERSION}");
-    let target = vapor_home.join("tools/zig");
-    reset_dir(vapor_home, &target)?;
+    let target = tools_root.join("tools/zig");
+    reset_dir(tools_root, &target)?;
     if cfg!(target_os = "windows") {
-        let archive = app_root
+        let archive = tools_root
             .join("downloads")
             .join(format!("zig-x86_64-windows-{ZIG_VERSION}.zip"));
         download(ZIG_X86_64_WINDOWS, &archive)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
-        let archive = app_root
+        let archive = tools_root
             .join("downloads")
             .join(format!("zig-x86_64-linux-{ZIG_VERSION}.tar.xz"));
         download(ZIG_X86_64_LINUX, &archive)?;
@@ -216,12 +244,12 @@ fn install_zig(vapor_home: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn install_llvm_mingw(vapor_home: &Path) -> Result<(), String> {
+fn install_llvm_mingw(tools_root: &Path) -> Result<(), String> {
     println!("installing llvm-mingw {LLVM_MINGW_VERSION}");
-    let target = vapor_home.join("tools/llvm-mingw");
-    reset_dir(vapor_home, &target)?;
+    let target = tools_root.join("tools/llvm-mingw");
+    reset_dir(tools_root, &target)?;
     if cfg!(target_os = "windows") {
-        let archive = app_root
+        let archive = tools_root
             .join("downloads")
             .join(format!("llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-x86_64.zip"));
         if !archive.is_file()
@@ -232,7 +260,7 @@ fn install_llvm_mingw(vapor_home: &Path) -> Result<(), String> {
         verify_sha256(&archive, LLVM_MINGW_X86_64_WINDOWS_SHA256)?;
         extract_zip_single_root(&archive, &target)?;
     } else {
-        let archive = app_root.join("downloads").join(format!(
+        let archive = tools_root.join("downloads").join(format!(
             "llvm-mingw-{LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
         ));
         if !archive.is_file()
@@ -273,10 +301,10 @@ fn write_cross_wrappers(vapor_home: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn directories_status(app_root: &Path) -> ComponentStatus {
+fn directories_status() -> ComponentStatus {
     let user_data = match user_data_root() {
         Ok(root) => root,
-        Err(error) => return ComponentStatus { label: "Generated directories", ready: false, path: app_root.to_path_buf(), missing: vec![error] },
+        Err(error) => return ComponentStatus { label: "Generated directories", ready: false, path: PathBuf::new(), missing: vec![error] },
     };
     let missing = PLAYER_DIRS
         .iter()
@@ -306,8 +334,8 @@ fn steamcmd_status(vapor_home: &Path) -> ComponentStatus {
     }
 }
 
-fn rust_status(vapor_home: &Path) -> ComponentStatus {
-    let rustup = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
+fn rust_status(user_data_root: &Path) -> ComponentStatus {
+    let rustup = user_data_root.join("tools/rustup/bin").join(executable("rustup"));
     let required = [
         "cargo",
         "rustc",
@@ -316,7 +344,7 @@ fn rust_status(vapor_home: &Path) -> ComponentStatus {
         "rustdoc",
         "rust-analyzer",
     ];
-    let (path, mut missing) = match expected_rust_bin(vapor_home) {
+    let (path, mut missing) = match expected_rust_bin(user_data_root) {
         Ok(bin) => {
             let missing = required
                 .iter()
@@ -325,7 +353,7 @@ fn rust_status(vapor_home: &Path) -> ComponentStatus {
                 .collect::<Vec<_>>();
             (bin, missing)
         }
-        Err(error) => (vapor_home.join("tools/rustup/home/toolchains"), vec![error]),
+        Err(error) => (user_data_root.join("tools/rustup/home/toolchains"), vec![error]),
     };
     if !is_executable(&rustup) {
         missing.push(format!("rustup at {}", rustup.display()));
@@ -338,12 +366,12 @@ fn rust_status(vapor_home: &Path) -> ComponentStatus {
     }
 }
 
-fn rust_toolchain_installed(vapor_home: &Path) -> bool {
-    let rustup = vapor_home.join("tools/rustup/bin").join(executable("rustup"));
+fn rust_toolchain_installed(user_data_root: &Path) -> bool {
+    let rustup = user_data_root.join("tools/rustup/bin").join(executable("rustup"));
     if !is_executable(&rustup) {
         return false;
     }
-    expected_rust_bin(vapor_home).is_ok_and(|bin| {
+    expected_rust_bin(user_data_root).is_ok_and(|bin| {
         ["cargo", "rustc"]
             .into_iter()
             .all(|name| is_executable(&bin.join(executable(name))))

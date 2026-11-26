@@ -220,3 +220,91 @@ workflow on `main`, and verify live download/install behavior. Steam remains
 untouched. The Homepage copy was locally corrected to describe Player and
 Developer setup as implemented; that nested source edit is uncompiled and
 undeployed.
+
+
+#### Canonical state ownership correction (2026-11-26)
+
+Runtime inspection showed the newly installed standalone app resolving role
+state under its versioned release directory, while Rust/Cargo and other shared
+tools use Vapor User Data. The existing schema-1 role receipt at
+`~/.local/share/vapor/state/role.toml` was therefore ignored by that release.
+`VaporInstallation::state_root()` now resolves to `<Vapor User Data>/state`;
+the first state access merges a legacy `<App Instance>/data/state` tree into
+that canonical directory, rejects conflicting or unsafe entries, and removes
+the old tree only after a successful merge. This keeps state across release
+switches and normal removal while preserving the established canonical source
+and role files.
+
+The Vapor Core, Vapor-Installer, and Vapor-CLI workspaces compiled through the
+Vapor-managed SDK with locked dependencies. The newly built Installer's
+read-only `role status`, pointed at the active standalone release, reported
+`Developer` from `~/.local/share/vapor/state/role.toml`. The Installer staging
+cleanup compile error found during the first managed build was corrected and
+the workspace then built successfully. A disposable `/tmp` legacy-state smoke
+confirmed schema-1 Developer state migrates into canonical User Data and the
+old tree is removed only after a successful merge. Standalone activation now
+migrates the previous release before switching versions, and normal uninstall
+preserves/migrates state before removing release files. No tests, release-
+profile build, publication, Steam change, or live role mutation occurred. A new
+source-built CLI invoked directly from its managed build-cache path still
+rejects itself as not laid out as an installed Vapor app, so use of that binary
+for standalone SDK builds remains unverified. The full signed distribution
+workflow and live cross-version migration remain outstanding.
+
+#### Release and toolchain gate reconciliation (2026-11-26)
+
+The live release feed is no longer empty: Vapor-Client#3 now records
+`0.5.0-pre-alpha-0.1.1` as the available Windows and Linux release. This
+supersedes the earlier candidate note above that the live Homepage had no
+stable release. The release workflow is still only on `dev`; `main` has no
+workflow, and `dev` contains unrelated work that must not be promoted wholesale
+for this bracket.
+
+The Vapor-managed SDK successfully refreshed the selected workspace lockfile
+offline and built the current Vapor-CLI workspace with `--locked`. The local
+release build correctly stopped at Vapor's guard because optimized distribution
+builds are restricted to the designated GitHub Actions job; do not set that
+marker locally to bypass the policy. A separate `sdk deploy` attempt exposed a
+package-name versus executable-name mismatch (`vapor_cli` versus `vapor`) in
+Vapor's deployment helper. The helper now models the executable name
+explicitly and the changed workspace compiles, but behavior is not yet
+reverified because a source-built Vapor executable still requires installed-app
+layout for `sdk deploy`.
+
+The owner resolved Vapor#4's policy fork: Git used for source checkout is
+Vapor-owned, with managed Git under canonical User Data preferred and no silent
+host-PATH fallback for CI. That decision is recorded on Vapor#4; provisioning
+and the blank-machine path remain unimplemented, so Vapor-Client#3 stays
+BLOCKED. Homepage's local copy now describes Player and Developer setup as
+available; the live page still needs a source build/deployment before this copy
+is confirmed publicly.
+
+The standalone Windows setup closure was checked with a fresh Vapor-managed
+development build for `x86_64-pc-windows-gnullvm`. The resulting 224,400,896-byte
+`vapor-setup.exe` used the GUI's target-specific `+crt-static` config, and
+Vapor-managed `llvm-objdump` showed no `libunwind.dll` import (the table contains
+Windows API/UCRT imports). This confirms the config applies to the dev build,
+not the optimized release profile. The Client's local `Vapor-GUI` gitlink now
+points to existing commit `587d28d`; its parent gitlink is still uncommitted,
+so current hosted workflows cannot consume it. No release build or publication
+was attempted; Vapor correctly denies local release-profile builds outside its
+designated CI distribution job.
+
+#### Standalone provider command correction (2026-11-26)
+
+An installed `vapor provider git status` previously failed before reaching the
+provider when the local Client service endpoint was stale/unavailable. The
+direct-command startup restored the remembered source first, which queries the
+Client service even though installation/provider maintenance needs only Vapor
+Home. `ShellCommand::requires_saved_source_context` now skips that dependency
+for installation, diagnostics, and provider commands. A Vapor-managed build of
+the Vapor-CLI workspace passed; a temporary installed-layout runtime check
+then ran `provider git status` with no Client service and no source override.
+
+The same check exposed that Git was silently selected from `/usr/bin` via PATH.
+Resolution now prefers explicit `VAPOR_GIT`, an explicitly linked operator
+provider, then `<Vapor User Data>/tools/git/{bin/git|cmd/git.exe}`; it does not
+adopt PATH/common-location Git. Runtime status correctly reports the missing
+managed provider and gives the explicit-link override. Git provisioning itself
+is not implemented, so blank-machine Developer setup/source bootstrap remains
+blocked and the updated Git-provider source has not been published.

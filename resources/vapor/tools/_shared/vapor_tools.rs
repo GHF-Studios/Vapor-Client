@@ -8,6 +8,7 @@ use std::{
 };
 
 pub const VAPOR_HOME_ENV: &str = "VAPOR_HOME";
+pub const VAPOR_INSTALL_ROOT_ENV: &str = "VAPOR_INSTALL_ROOT";
 pub const SUPER_MANIFEST: &str = "Superworkspace.vapor.toml";
 pub const RUST_TOOLCHAIN: &str = "1.97.0";
 pub const ZIG_VERSION: &str = "0.16.0";
