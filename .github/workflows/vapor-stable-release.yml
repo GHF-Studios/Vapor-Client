@@ -48,8 +48,10 @@ jobs:
           if manifest.get("key_id") != key_id or manifest.get("channel") != "stable" or manifest.get("platform") != platform:
               raise SystemExit("release manifest identity does not match the pinned Vapor release")
           version = manifest.get("version")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"VAPOR_BOOTSTRAP_VERSION={version}\n")
           setup = manifest.get("setup")
-          if not isinstance(version, str) or not isinstance(setup, dict):
+          if not isinstance(version, str) or not re.fullmatch(r"0\.5\.0-pre-alpha-(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version) or not isinstance(setup, dict):
               raise SystemExit("release manifest has no signed setup payload")
           setup_url = setup.get("url")
           expected_prefix = f"{origin}/api/updates/v1/vapor/releases/{version}/{platform}/vapor-setup"
@@ -124,7 +126,7 @@ jobs:
           set -euo pipefail
           client="$HOME/Vapor/sources/Vapor-Client"
           cd "$client"
-          vapor root build --release --release-targets
+          VAPOR_WORKSPACE="$client" vapor root build --release --release-targets
           vapor root stage-standalone --release-targets | tee "$RUNNER_TEMP/vapor-stage.log"
           python3 - "$RUNNER_TEMP/vapor-stage.log" "$GITHUB_ENV" <<'PY'
           import re
@@ -152,7 +154,7 @@ jobs:
           chmod 600 "$key"
           platform="$HOME/Vapor/sources/Vapor-Platform-Server"
           client="$HOME/Vapor/sources/Vapor-Client"
-          version="0.5.${GITHUB_RUN_NUMBER}+ci.$(printf '%09d' "$GITHUB_RUN_NUMBER").$(printf '%04d' "$GITHUB_RUN_ATTEMPT")"
+          version="$(bash "$client/release/pre-alpha-version.sh" "$VAPOR_BOOTSTRAP_VERSION")"
           linux_archive="$RUNNER_TEMP/vapor-linux.tar.gz"
           windows_archive="$RUNNER_TEMP/vapor-windows.tar.gz"
           bash "$client/release/package-vapor-standalone-archive.sh" "$VAPOR_STAGED_ROOT" linux-x86_64 "$version" "$linux_archive"
