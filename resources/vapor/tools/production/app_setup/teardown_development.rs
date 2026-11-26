@@ -1,6 +1,6 @@
 #!/usr/bin/env -S rust-script --force
 
-//! Remove the app-root developer toolchain layer.
+//! Remove the Vapor-home developer toolchain layer.
 //!
 //! ```cargo
 //! [package]
@@ -11,6 +11,6 @@
 mod vapor_tools;
 
 fn main() {
-    let _cache_buster = "app-root-discovery-v2";
+    let _cache_buster = "standalone-home-v4";
     vapor_tools::exit(vapor_tools::teardown_development_main());
 }

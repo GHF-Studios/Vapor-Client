@@ -35,7 +35,7 @@ fn clone_source(sources_root: &Path, source: SourcePreset) -> Result<(), String>
             source.branch,
             source.remote,
         ])
-        .arg(&target)
+        .arg(git_worktree_path(&target))
         .status()
         .map_err(|error| format!("failed to run git clone: {error}"))?;
     if status.success() {
@@ -48,9 +48,30 @@ fn clone_source(sources_root: &Path, source: SourcePreset) -> Result<(), String>
     }
 }
 
+fn git_worktree_path(path: &Path) -> PathBuf {
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+
+        let wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+        let extended_unc = r"\\?\UNC\".encode_utf16().collect::<Vec<_>>();
+        if wide.starts_with(&extended_unc) {
+            let mut compatible = r"\\".encode_utf16().collect::<Vec<_>>();
+            compatible.extend_from_slice(&wide[extended_unc.len()..]);
+            return PathBuf::from(std::ffi::OsString::from_wide(&compatible));
+        }
+        let extended = r"\\?\".encode_utf16().collect::<Vec<_>>();
+        if wide.starts_with(&extended) {
+            return PathBuf::from(std::ffi::OsString::from_wide(&wide[extended.len()..]));
+        }
+    }
+
+    path.to_path_buf()
+}
+
 fn record_source_clone(
     super_root: &Path,
-    app_root: &Path,
+    vapor_home: &Path,
     source: SourcePreset,
 ) -> Result<(), String> {
     let manifest = super_root.join(SUPER_MANIFEST);
@@ -63,7 +84,7 @@ fn record_source_clone(
         &manifest,
         &superworkspace_manifest(
             &superworkspace_name(super_root),
-            app_root,
+            vapor_home,
             &mounted
                 .iter()
                 .map(|name| source_preset(name))
@@ -106,7 +127,7 @@ fn superworkspace_name(root: &Path) -> String {
         .unwrap_or_else(|| "vapor-superworkspace".to_owned())
 }
 
-fn superworkspace_manifest(name: &str, app_root: &Path, mounted: &[SourcePreset]) -> String {
+fn superworkspace_manifest(name: &str, vapor_home: &Path, mounted: &[SourcePreset]) -> String {
     let mut source = String::new();
     source.push_str("schema = 2\n\n");
     source.push_str("[super-workspace]\n");
@@ -119,7 +140,7 @@ fn superworkspace_manifest(name: &str, app_root: &Path, mounted: &[SourcePreset]
     source.push_str(&format!("env-var = \"{}\"\n", APP_ROOT_ENV));
     source.push_str(&format!(
         "path = \"{}\"\n\n",
-        toml_escape(&app_root.to_string_lossy())
+        toml_escape(&vapor_home.to_string_lossy())
     ));
     source.push_str("[tooling]\n");
     source.push_str("location = \"user-data/resources/vapor/tools\"\n");

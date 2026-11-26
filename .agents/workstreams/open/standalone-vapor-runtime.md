@@ -1,4 +1,4 @@
-# Workstream — Standalone Vapor Runtime and Product Sources
+# Workstream — Standalone Vapor and Packagepack-Only Steam Mount
 
 - State: foreground
 - Goal: make Vapor independently installable and removable while keeping installed versions and mutable state in OS-appropriate Vapor data locations, authored checkouts under `~/Vapor/sources`, and Loo Cast playable directly from Steam without Vapor setup.
