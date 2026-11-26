@@ -48,10 +48,12 @@ jobs:
           if manifest.get("key_id") != key_id or manifest.get("channel") != "stable" or manifest.get("platform") != platform:
               raise SystemExit("release manifest identity does not match the pinned Vapor release")
           version = manifest.get("version")
+          if not isinstance(version, str) or not re.fullmatch(r"0\.5\.0-pre-alpha-(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version):
+              raise SystemExit("stable bootstrap version does not follow the pinned pre-alpha SemVer policy")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
               env.write(f"VAPOR_BOOTSTRAP_VERSION={version}\n")
           setup = manifest.get("setup")
-          if not isinstance(version, str) or not re.fullmatch(r"0\.5\.0-pre-alpha-(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version) or not isinstance(setup, dict):
+          if not isinstance(setup, dict):
               raise SystemExit("release manifest has no signed setup payload")
           setup_url = setup.get("url")
           expected_prefix = f"{origin}/api/updates/v1/vapor/releases/{version}/{platform}/vapor-setup"
