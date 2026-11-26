@@ -168,7 +168,7 @@ pub fn clone_source_main() -> Result<(), String> {
     let requested = positional_values();
     if requested.len() != 1 {
         return Err(format!(
-            "usage: clone.rs --super-workspace /path/to/SuperWorkspace SOURCE_NAME\nknown sources: {}",
+            "usage: clone.rs --super-workspace /path/to/SuperWorkspace SOURCE_NAME [--revision COMMIT_SHA]\nknown sources: {}",
             SOURCE_PRESETS
                 .iter()
                 .map(|source| source.name)
@@ -176,7 +176,13 @@ pub fn clone_source_main() -> Result<(), String> {
                 .join("|")
         ));
     }
-    clone_source_into_superworkspace(None, arg_path("--vapor-home").as_deref(), &requested[0])
+    let revision = arg_value("--revision");
+    clone_source_into_superworkspace(
+        None,
+        arg_path("--vapor-home").as_deref(),
+        &requested[0],
+        revision.as_deref(),
+    )
 }
 
 pub fn clone_source_into_superworkspace(
@@ -209,7 +215,7 @@ pub fn clone_source_into_superworkspace(
     let sources_root = super_root.join(SOURCES_DIR);
     fs::create_dir_all(&sources_root)
         .map_err(io("create source clone directory", &sources_root))?;
-    clone_source(&sources_root, source)?;
+    clone_source(&vapor_home, &sources_root, source, revision)?;
     record_source_clone(&super_root, &vapor_home, source)?;
     println!();
     println!("Source clone ready under {}", sources_root.display());
@@ -310,7 +316,12 @@ pub fn ide_run_main() -> Result<(), String> {
                 println!("cancelled");
                 return Ok(());
             }
-            clone_source_into_superworkspace(Some(&super_root), Some(&vapor_home), source.name)
+            clone_source_into_superworkspace(
+                Some(&super_root),
+                Some(&vapor_home),
+                source.name,
+                None,
+            )
         }
         "source-init-basic-content" => {
             require_executable(&vapor, "app-local Vapor shell")?;
@@ -647,12 +658,25 @@ pub fn source_status_at(
             println!("  clone: {command}");
             continue;
         }
-        match Command::new("git")
-            .arg("-C")
-            .arg(&root)
-            .args(["status", "--short", "--branch"])
-            .output()
-        {
+        let Some(vapor_home) = vapor_home.as_deref() else {
+            println!("  status unavailable: Vapor home could not be resolved");
+            continue;
+        };
+        match vapor_git_command(
+            vapor_home,
+            [
+                std::ffi::OsString::from("-C"),
+                git_worktree_path(&root).into_os_string(),
+                "status".into(),
+                "--short".into(),
+                "--branch".into(),
+            ],
+        )
+        .and_then(|mut command| {
+            command
+                .output()
+                .map_err(|error| format!("Vapor Git provider could not start: {error}"))
+        }) {
             Ok(output) if output.status.success() => {
                 let text = String::from_utf8_lossy(&output.stdout);
                 for line in text.lines() {
@@ -660,10 +684,10 @@ pub fn source_status_at(
                 }
             }
             Ok(output) => {
-                println!("  git status failed: {}", output.status);
+                println!("  Vapor Git provider status failed: {}", output.status);
             }
             Err(error) => {
-                println!("  git unavailable: {error}");
+                println!("  Vapor Git provider status unavailable: {error}");
             }
         }
         println!();

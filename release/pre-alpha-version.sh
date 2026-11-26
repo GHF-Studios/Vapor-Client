@@ -23,4 +23,5 @@ inner_major="${BASH_REMATCH[1]}"
 inner_minor="${BASH_REMATCH[2]}"
 inner_patch="${BASH_REMATCH[3]}"
 inner_patch=$((10#$inner_patch + 1))
-printf '%s-pre-alpha-%s.%s.%s\n' "$compatibility_version" "$inner_major" "$inner_minor" "$inner_patch"
+printf '%s-pre-alpha-%s.%s.%s\n' \
+  "$compatibility_version" "$inner_major" "$inner_minor" "$inner_patch"

@@ -69,6 +69,10 @@ for path in \
     exit 1
   fi
 done
+if [ ! -f "$repo_root/release/Vapor-Home.toml" ] || [ -L "$repo_root/release/Vapor-Home.toml" ]; then
+  echo "error: required Vapor home marker must be a regular file: $repo_root/release/Vapor-Home.toml" >&2
+  exit 1
+fi
 
 case "$platform" in
   windows-x86_64)
@@ -91,10 +95,11 @@ for name in "${required[@]}"; do
   fi
 done
 
-python3 - "$app_root" "$target" "$launcher" <<'PY'
+python3 - "$app_root" "$target" "$launcher" "$repo_root/release/Vapor-Home.toml" <<'PY'
 import os
 import stat
 import sys
+import tomllib
 from pathlib import Path
 
 root = Path(sys.argv[1])
@@ -114,6 +119,15 @@ for relative in (
         mode = path.lstat().st_mode
         if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)):
             sys.exit(f"error: unsupported filesystem entry in release inputs: {path}")
+home_marker = Path(sys.argv[4])
+if home_marker.is_symlink() or not home_marker.is_file():
+    sys.exit(f"error: Vapor home marker is not a regular file: {home_marker}")
+try:
+    manifest = tomllib.loads(home_marker.read_text(encoding="utf-8"))
+except (OSError, UnicodeError, tomllib.TOMLDecodeError) as error:
+    sys.exit(f"error: Vapor home marker is invalid: {error}")
+if manifest.get("schema") != 1 or manifest.get("vapor", {}).get("id") != "ghf-studios/vapor":
+    sys.exit("error: Vapor home marker does not identify the supported Vapor home")
 PY
 
 temporary_root="$(mktemp -d "$output_parent/.vapor-standalone.XXXXXX")"
@@ -129,6 +143,7 @@ cp -a -- "$app_root/bin/$target/." "$temporary_root/bin/$target/"
 cp -a -- "$app_root/bin/$launcher" "$temporary_root/bin/$launcher"
 cp -a -- "$app_root/resources/vapor/tools" "$temporary_root/resources/vapor/tools"
 cp -a -- "$app_root/metadata/toolchain.toml" "$temporary_root/metadata/toolchain.toml"
+cp -a -- "$repo_root/release/Vapor-Home.toml" "$temporary_root/Vapor-Home.toml"
 
 python3 - "$repo_root/Standalone-App.vapor.toml" "$temporary_root/App.vapor.toml" "$version" <<'PY'
 import re

@@ -75,8 +75,8 @@
 - [x] Expose local installed-version selection in the standalone Installer panel; switching updates the active pointer for the next launch without deleting versions.
 - [x] Add a setup-only `vapor-setup` GUI mode that installs, updates, repairs, opens, and normally removes the standalone app without requiring Steam or an installed app instance. Add `vapor-setup install [--channel stable]` as a headless entry to the same signed install path for managed bootstrap automation. The full Vapor-GUI workspace compiled through Vapor-managed Cargo for Linux and the Windows release target; the staged Linux setup executable reported this subcommand in `--help`. No tests or clean-machine install were run.
 - [x] Normal standalone removal clears its managed PATH/environment integration while preserving canonical User Data and source.
-- [x] Extend the signed release manifest, Artifact immutable routes, release preparation/publication scripts, and Homepage download link for a separate setup executable. The `0.5.0` Linux and Windows bundles have been assembled and signed locally; isolated publication validated both bundles and advanced temporary channel pointers. They are not published on the live Artifact service.
-- [ ] Publish the signed setup bootstrap and app bundles for Windows and Linux. The signed `0.5.0` bundles are locally prepared and pass isolated publisher validation; no live release or clean-machine install has been produced yet.
+- [x] Extend the signed release manifest, Artifact immutable routes, release preparation/publication scripts, and Homepage download link for a separate setup executable. Linux and Windows bundles were assembled and signed locally, and isolated publication validated both bundles. Those initial `0.5.0` bundles predate the owner's rolling inner SemVer release identity and must not be used as the first publication.
+- [ ] Publish the signed setup bootstrap and app bundles for Windows and Linux under the pre-alpha release identity `0.5.0-pre-alpha-0.1.0`, then confirm public latest/history links and a clean install.
 - [ ] Add signed available-version history so the GUI can select an older published release; current selection covers versions already installed locally.
 - [x] Build standalone release artifacts through Vapor for Linux and Windows targets; no raw Cargo invocation. Tests and clean-machine install were skipped by owner direction, and the live release path is still pending.
 
@@ -105,10 +105,37 @@
 - [x] Extend the Artifact release preparation guard to accept both current target IDs and require the documented standalone runtime closure, reject unsafe/duplicate/Steam/game payload paths, and require the Vapor-only app manifest (source changed; bundle preparation remains unverified).
 - [x] Homepage validates release platform/version, setup/archive size and digest metadata, and canonical URLs; the setup binary is the primary download.
 - [x] Artifact exposes a newest-first stable version index from complete immutable bundles; Homepage renders older per-platform setup links under the latest primary download. New releases append automatically from their immutable directory without a separate Homepage edit. Artifact and Homepage compiled through the Vapor shell; no tests or runtime requests were run.
+- [x] Permit the pinned `0.5.0-pre-alpha-<inner SemVer>` release identity on the stable distribution channel. Artifact history orders inner SemVer numerically and puts the final pinned version after pre-alpha; Homepage accepts the same form. The implementation and API documentation are now present in local Platform submodules, but this continuation has not compiled or deployed those edits.
 - [x] Verify signed manifest platform IDs and bootstrap package contents agree for both platforms; isolated publisher validation passed. Live Homepage links remain unverified because nothing is published.
-- [ ] Implement the default-branch build/package/publish pipeline using Vapor-managed builds, the protected release-signing secret, and a restricted publisher SSH key; no Client release workflow or protected publication credentials are configured yet. The headless bootstrap now provides a reusable install entry for managed automation, but it needs an initial live stable feed before a clean runner can install its managed toolchain. GitHub-hosted runners do not require a repository self-hosted runner registration.
-- [ ] Publish a signed first stable release and confirm its public latest/history links; no release is live.
+- [x] Add the default-branch build/package/publish workflow using Vapor-managed builds, the protected release-signing secret, and a restricted publisher SSH key. The workflow exists on `dev`; its main-branch execution still requires the initial live feed seed. GitHub visibly lists the expected protected environment secrets and variables, but no hosted run has validated their values.
+- [ ] Publish the signed first rolling pre-alpha release and confirm its public latest/history links; no release is live.
 - [ ] Remove the remaining app-instance startup dependency from Vapor commands where the operation belongs to source/User Data or the standalone installation. The release-stage command is a narrow working example; this is broader than Steam depot publishing and needs its own ownership/dependency pass.
+
+#### Bootstrap/rebuild blocker observed 2026-11-26
+
+The default-branch workflow installs the latest signed stable setup before it
+can build, so it cannot seed the first release. Existing signed `0.5.0`
+bundles do not match the owner's chosen pre-alpha product version. The local
+Steam-launched Vapor command is not a usable source-build home: its managed
+service rejects the intentionally retired `ecosystem-developer` role state,
+and source-local Client deployment resolves the Steam app root where a
+standalone `Vapor-Home.toml` is required. No user state or Steam files were
+changed. A direct Vapor-managed debug build compiled, but did not deploy. A
+bootstrap path that builds through Vapor without borrowing the Steam App
+Instance, or a valid signed first-release seed installed through the standalone
+Installer, is required before regenerating the first rolling release.
+
+#### Release-channel and live-state reconciliation (2026-11-26)
+
+GitHub PR #10 is closed without a merge to `main`; its feature history was
+integrated into the persistent `dev` branch. `main` remains the stable release
+channel. The live Homepage `/downloads` view confirms that neither Linux nor
+Windows currently has a published stable release. The Platform receiver is
+deployed, but the Artifact feed is still empty. The first release must use
+`0.5.0-pre-alpha-0.1.0`; the locally signed `0.5.0` bundles are not valid
+seeds. The latest User Data path reconciliation is local-only in the dirty
+`dev` worktree and nested Vapor/Vapor-CLI checkouts, and is not included in
+PR #10 or on `main`.
 
 ### Task 4: Steam creator handoff and game-state path contract
 
@@ -144,3 +171,52 @@
 - [ ] Reconcile the stale Steam build/Windows evidence in Vapor-Client#3 without closing it prematurely.
 - [ ] Keep the standalone lifecycle work ACTIVE and identify any still-blocked publication or clean-machine proof.
 - [ ] Run `git diff --check` across the parent and every modified subrepository.
+
+## Owner version clarification (2026-11-26)
+
+Keep the pre-alpha compatibility target fixed at `0.5.0`; identify standalone
+product releases as `0.5.0-pre-alpha-<inner SemVer>`. The initial release is
+`0.5.0-pre-alpha-0.1.0`. Successful default-branch workflow runs advance the inner patch
+component on the `0.1` train. The Artifact `stable` value names the update
+channel and may carry this prerelease-form version. Package/content/schema
+versions remain independent. The locally signed `0.5.0` candidates are not
+valid seeds for this policy.
+
+#### Rust/Cargo path ownership follow-up (2026-11-26)
+
+The setup helper provisions Rustup and Cargo under `<Vapor User Data>/tools/{rustup,cargo}`, but several consumers still resolved the app root or flat legacy directories. `VaporUserDataLayout` now defines the canonical tool, build-cache, and output paths; Core, SDK, Client provider, CLI, IDE setup, generated activation scripts, and shared setup helpers use that contract. Vapor-home initialization no longer creates these caches/tool homes inside the versioned app root. The XDG override is accepted only when absolute, matching generated Unix activation scripts.
+
+The changed Core, SDK, Client provider, and CLI packages compiled through Vapor-managed Cargo. The local deployment command then stopped at its explicit guard because the Steam app root is not a marked Vapor Home. No tests ran; the managed build cache under Vapor User Data was updated, while Steam and release artifacts were untouched. This resolves the demonstrated tool-path mismatch; it does not resolve the missing first feed seed or `root build`'s installed-App Instance dependency.
+
+#### First pre-alpha candidate prepared (2026-11-26)
+
+The lockfiles needed by the active workspace were resolved through Vapor's
+managed command. `root build --release --release-targets` then completed at
+100% for Linux and Windows. The rebuilt source CLI staged 24 artifacts under
+canonical Vapor User Data without deploying to an App Instance. That run
+exposed a provider path assumption: Cargo's native host outputs are directly
+under the profile directory, while foreign-target outputs use a target-triple
+directory; the provider now models both layouts.
+
+The staged outputs were packaged and signed as
+`0.5.0-pre-alpha-0.1.0`. Local verification passed for both platform
+signatures, manifest identities, artifact/setup sizes and SHA-256 digests,
+and stable pointers. This does not publish or prove the live download/install
+flow. The live Homepage still reports no stable release. The signed-in browser
+recorded this evidence on Vapor-Client#3; that issue remains OPEN + BLOCKED.
+
+The `vapor-stable-release` GitHub environment now contains the three expected
+secrets and two publisher variables, restricted to `main`; only names and
+timestamps were inspected, not secret values, and no hosted workflow has
+validated them. Local GitHub CLI reauthentication reached an owner-only fresh
+passkey/authenticator/email confirmation screen and was stopped. The local
+publisher private/public keypair matches, but a no-payload SSH probe was
+rejected with `Permission denied (publickey)`, so the restricted account is
+not usable from this session and no bundle was sent. GitHub `dev` still has the
+old CI-run-number version generator; the corrected pre-alpha workflow remains
+in the dirty local tree. Next is to resolve publisher access, then synchronize
+the built Client/submodule changes, seed the signed candidate, integrate the
+workflow on `main`, and verify live download/install behavior. Steam remains
+untouched. The Homepage copy was locally corrected to describe Player and
+Developer setup as implemented; that nested source edit is uncompiled and
+undeployed.

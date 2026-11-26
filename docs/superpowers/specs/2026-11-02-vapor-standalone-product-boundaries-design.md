@@ -1,6 +1,6 @@
 # Vapor Standalone Runtime and Steam Product Boundaries
 
-**Status:** Draft for owner review  
+**Status:** Draft for owner review
 **Date:** 2026-11-02
 
 ## Goal
@@ -124,6 +124,3 @@ The remote build-cache capability is a separate service concern from Vapor relea
 3. Does the builder topology match: Linux and Windows in pinned VMs hosted by the single VPS and managed through one orchestration path, with no external worker or owner-PC fallback?
 4. I interpret Cargo.lock files inside source repositories as build inputs governed by the one Vapor.lock, not as extra Vapor-level locks. Is that your intended meaning of “one lock”?
 5. Does the migration sequence preserve the intended Steam ownership and leave external Workshop deletion under explicit owner control?
-
-
-

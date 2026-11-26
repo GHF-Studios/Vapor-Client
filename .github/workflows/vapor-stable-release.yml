@@ -50,11 +50,11 @@ jobs:
           version = manifest.get("version")
           if not isinstance(version, str) or not re.fullmatch(r"0\.5\.0-pre-alpha-(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version):
               raise SystemExit("stable bootstrap version does not follow the pinned pre-alpha SemVer policy")
-          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
-              env.write(f"VAPOR_BOOTSTRAP_VERSION={version}\n")
           setup = manifest.get("setup")
           if not isinstance(setup, dict):
               raise SystemExit("release manifest has no signed setup payload")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"VAPOR_BOOTSTRAP_VERSION={version}\n")
           setup_url = setup.get("url")
           expected_prefix = f"{origin}/api/updates/v1/vapor/releases/{version}/{platform}/vapor-setup"
           if setup_url != expected_prefix:
@@ -96,21 +96,54 @@ jobs:
           test -x "$vapor_root/bin/x86_64-unknown-linux-gnu/vapor-installer"
           echo "VAPOR_HOME=$vapor_root" >> "$GITHUB_ENV"
           echo "$vapor_root/bin/x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
-          vapor-installer toolchain install
+          vapor-installer role promote developer
           vapor-installer superworkspace create
 
       - name: Resolve and clone exact source revisions through Vapor
         shell: bash
         env:
           VAPOR_CLIENT_REVISION: ${{ github.sha }}
+          VAPOR_SOURCE_READ_TOKEN: ${{ secrets.VAPOR_SOURCE_READ_TOKEN || github.token }}
         run: |
           set -euo pipefail
+          credential_helper="$RUNNER_TEMP/vapor-git-credential"
+          cat > "$credential_helper" <<'SH'
+          #!/bin/sh
+          protocol=
+          host=
+          path=
+          while IFS= read -r line; do
+            case "$line" in
+              protocol=*) protocol=${line#protocol=} ;;
+              host=*) host=${line#host=} ;;
+              path=*) path=${line#path=} ;;
+            esac
+          done
+          case "$protocol:$host:$path" in
+            https:github.com:GHF-Studios/*)
+              printf 'username=x-access-token\npassword=%s\n' "$VAPOR_SOURCE_READ_TOKEN"
+              ;;
+          esac
+          SH
+          chmod 700 "$credential_helper"
+          export GIT_CONFIG_COUNT=2
+          export GIT_CONFIG_KEY_0=credential.https://github.com.useHttpPath
+          export GIT_CONFIG_VALUE_0=true
+          export GIT_CONFIG_KEY_1=credential.helper
+          export GIT_CONFIG_VALUE_1="!$credential_helper"
+          export GIT_TERMINAL_PROMPT=0
           platform_revision="$(python3 - <<'PY'
+          import os
           import json
           import urllib.request
+          token = os.environ.get("VAPOR_SOURCE_READ_TOKEN", "")
           request = urllib.request.Request(
               "https://api.github.com/repos/GHF-Studios/Vapor-Platform-Server/commits/main",
-              headers={"Accept": "application/vnd.github+json", "User-Agent": "Vapor-release-workflow"},
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "User-Agent": "Vapor-release-workflow",
+                  **({"Authorization": f"Bearer {token}"} if token else {}),
+              },
           )
           with urllib.request.urlopen(request, timeout=30) as response:
               commit = json.load(response)["sha"]
@@ -128,7 +161,10 @@ jobs:
           set -euo pipefail
           client="$HOME/Vapor/sources/Vapor-Client"
           cd "$client"
-          VAPOR_WORKSPACE="$client" vapor root build --release --release-targets
+          # Source cloning records the checkout in the Superworkspace, but it
+          # does not make it Vapor's active source. Select this exact checkout
+          # for the one-shot managed build without changing saved user state.
+          VAPOR_DISTRIBUTION_JOB=steam-release-v1 VAPOR_WORKSPACE="$client" vapor root build --release --release-targets
           vapor root stage-standalone --release-targets | tee "$RUNNER_TEMP/vapor-stage.log"
           python3 - "$RUNNER_TEMP/vapor-stage.log" "$GITHUB_ENV" <<'PY'
           import re
