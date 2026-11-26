@@ -74,15 +74,16 @@ Initialize pinned project checkouts with:
 git submodule update --init --recursive
 ```
 
-Key checkouts:
+- [`Vapor/`](Vapor/) — client core, providers, and managed workflows.
+- [`Vapor-CLI/`](Vapor-CLI/) — terminal facade and user documentation.
+- [`Vapor-GUI/`](Vapor-GUI/) — shared GUI host and launcher.
+- [`Vapor-Installer/`](Vapor-Installer/) — standalone install and maintenance UI.
+- [`Vapor-Steam-Entrypoint/`](Vapor-Steam-Entrypoint/) — Steam-to-Vapor handoff
+  prototype; it is not included in the Loo-Cast depots.
+- [`Vapor-Studio/`](Vapor-Studio/) — Studio UI.
+- [`Vapor-Examples/`](Vapor-Examples/) — example content.
 
-- [`Vapor-CLI`](Vapor-CLI/) — terminal facade.
-- [`Vapor-GUI`](Vapor-GUI/) — graphical app host.
-- [`Vapor-Installer`](Vapor-Installer/) — bootstrap and recovery installer.
-- [`Vapor-Steam-Entrypoint`](Vapor-Steam-Entrypoint/) — Steam-facing entrypoint.
-- [`Vapor-Studio`](Vapor-Studio/) — Studio product UI.
-- [`Vapor`](Vapor/) — core application workspace.
-- [`Vapor-Examples`](Vapor-Examples/) — examples when present.
+## Product boundaries
 
 ## Custom Content
 
