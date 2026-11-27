@@ -98,6 +98,9 @@ done
 if [[ "$platform" == windows-x86_64 ]]; then
   python3 "$script_dir/verify-standalone-setup.py" \
     "$app_root/bin/$target/vapor-setup.exe"
+else
+  python3 "$script_dir/verify-linux-glibc-baseline.py" \
+    "$app_root" "$repo_root/release/target-policy.toml"
 fi
 
 python3 - "$app_root" "$target" "$launcher" "$repo_root/release/Vapor-Home.toml" <<'PY'

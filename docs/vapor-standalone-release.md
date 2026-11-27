@@ -28,3 +28,11 @@ build job.
 Optimized distribution builds are restricted by Vapor to this designated CI
 job. Do not reproduce them with a local Cargo invocation or a local override
 of Vapor's distribution guard.
+
+The build-stage runner is Windows so Vapor can start from the signed Windows
+setup bundle even when the currently published Linux setup is incompatible
+with the packaging baseline. Vapor provisions Rust and its managed Zig
+cross-linker, builds both runtime targets, and stages the payload. Ubuntu 22.04
+then packages the staged payload and checks every Linux ELF import against the
+glibc 2.35 ceiling. This catches a too-new Linux ABI before a candidate can be
+uploaded or signed; changing the packaging runner cannot relax that gate.
