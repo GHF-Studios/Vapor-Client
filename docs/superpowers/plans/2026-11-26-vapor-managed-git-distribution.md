@@ -277,3 +277,28 @@ component map or legal review. The candidate remains cache-only and
 `distribution_eligible=false`; Windows MinGit review, signed release
 references, Developer provisioning, and blank-machine bootstrap remain open.
 No tests ran, no provider was installed or published, and Steam was untouched.
+
+## Installed self-deploy and Installer workspace checkpoint — 2026-11-27
+
+The Installer workspace UI build blocker is resolved. `vapor_installer_ui`
+now depends on the Installer library it uses, its setup/role screen compiles
+against the current APIs, and an uncalled legacy duplicate operation path that
+referenced removed APIs was removed. The complete workspace builds through
+Vapor-managed Cargo; only existing Core and script-bridge dead-code warnings
+remain. No tests were run.
+
+The fix is pushed on persistent `dev`: Installer `6232660`, with Client parent
+pointer `c11fde8`. The documented `vapor client deploy local` source-authority
+handoff then completed against the canonical standalone App Instance. The
+installed `vapor sdk git build` command ran successfully and reused the exact
+recipe-source-keyed cache above, reporting Git 2.56.1 and the same verified
+source-bundle digest. This closes the installed-version/self-deploy mismatch
+for this operation; it does not install the candidate as a provider.
+
+The installed `provider git status` still reports no managed or explicitly
+linked Git provider. The candidate remains cache-only and
+`distribution_eligible=false`. Its source bundle explicitly marks
+redistribution review incomplete, with binary-to-component attribution and
+legal review still open. Windows MinGit inventory, Developer setup
+provisioning, signed release integration, and clean-machine bootstrap remain
+outstanding. No release was published and no Steam files changed.
