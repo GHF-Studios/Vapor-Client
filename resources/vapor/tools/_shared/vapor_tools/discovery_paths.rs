@@ -467,3 +467,19 @@ fn host_rust_target() -> Result<&'static str, String> {
         )),
     }
 }
+
+/// Resolve the supported app binary target for the current operating system.
+///
+/// This is distinct from `host_rust_target`: Windows toolchains run on MSVC,
+/// while Vapor's installed Windows app binaries use the GNU/LLVM ABI target.
+fn host_runtime_target() -> Result<&'static str, String> {
+    match (env::consts::ARCH, env::consts::OS) {
+        ("x86_64", "linux") => Ok("x86_64-unknown-linux-gnu"),
+        ("x86_64", "windows") => Ok("x86_64-pc-windows-gnullvm"),
+        _ => Err(format!(
+            "Vapor app runtime is not configured for {}-{}",
+            env::consts::ARCH,
+            env::consts::OS
+        )),
+    }
+}

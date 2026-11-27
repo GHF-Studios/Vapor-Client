@@ -273,7 +273,8 @@ pub fn ide_run_main() -> Result<(), String> {
         println!("Konsole is not available; running inside the current terminal.");
     }
 
-    let host_target = host_rust_target().unwrap_or("x86_64-unknown-linux-gnu");
+    let host_target = host_runtime_target().unwrap_or("x86_64-unknown-linux-gnu");
+    let rust_host_target = host_rust_target().unwrap_or("x86_64-unknown-linux-gnu");
     let tools_root = user_data_root()?;
     let app_root = resolve_install_root()?;
     let app_bin_dir = app_root.join("bin").join(host_target);
@@ -289,7 +290,7 @@ pub fn ide_run_main() -> Result<(), String> {
         app_bin_dir.clone(),
         tools_root
             .join("tools/rustup/home/toolchains")
-            .join(format!("{RUST_TOOLCHAIN}-{host_target}"))
+            .join(format!("{RUST_TOOLCHAIN}-{rust_host_target}"))
             .join("bin"),
         tools_root.join("rustup/bin"),
         tools_root.join("tools/zig"),

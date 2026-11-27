@@ -103,7 +103,7 @@ fn executable(name: &str) -> String {
 }
 
 fn app_control_runner(vapor_home: &Path) -> PathBuf {
-    let host_target = host_rust_target().unwrap_or("x86_64-unknown-linux-gnu");
+    let host_target = host_runtime_target().unwrap_or("x86_64-unknown-linux-gnu");
     vapor_home
         .join("bin")
         .join(host_target)

@@ -39,7 +39,7 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<std::ffi::OsStr>,
 {
-    let target = host_rust_target()?;
+    let target = host_runtime_target()?;
     let command = vapor_home
         .join("bin")
         .join(target)
