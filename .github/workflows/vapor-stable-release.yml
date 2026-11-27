@@ -107,14 +107,20 @@ jobs:
           extracted = set()
           with tarfile.open(archive_path, "r:gz") as package:
               for member in package:
-                  if member.name not in {expected_setup_member, expected_runtime_member}:
+                  member_path = pathlib.PurePosixPath(member.name)
+                  if member_path.is_absolute() or ".." in member_path.parts:
                       continue
+                  member_name = member_path.as_posix()
+                  if member_name not in {expected_setup_member, expected_runtime_member}:
+                      continue
+                  if member_name in extracted:
+                      raise SystemExit(f"bootstrap archive contains a duplicate required file: {member_name}")
                   if not member.isfile() or member.size <= 0 or member.size > 512 * 1024 * 1024:
-                      raise SystemExit(f"bootstrap archive contains an invalid required file: {member.name}")
+                      raise SystemExit(f"bootstrap archive contains an invalid required file: {member_name}")
                   stream = package.extractfile(member)
                   if stream is None:
-                      raise SystemExit(f"could not read bootstrap member: {member.name}")
-                  destination = bootstrap_root / member.name
+                      raise SystemExit(f"could not read bootstrap member: {member_name}")
+                  destination = bootstrap_root.joinpath(*member_path.parts)
                   digest = hashlib.sha256()
                   size = 0
                   with destination.open("wb") as output:
@@ -123,12 +129,10 @@ jobs:
                           digest.update(block)
                           output.write(block)
                   if size != member.size:
-                      raise SystemExit(f"bootstrap member size mismatch: {member.name}")
-                  if member.name == expected_setup_member and (size != setup_size or digest.hexdigest() != setup_digest):
+                      raise SystemExit(f"bootstrap member size mismatch: {member_name}")
+                  if member_name == expected_setup_member and (size != setup_size or digest.hexdigest() != setup_digest):
                       raise SystemExit("vapor-setup does not match its authenticated size and digest")
-                  if member.name in extracted:
-                      raise SystemExit(f"bootstrap archive contains a duplicate required file: {member.name}")
-                  extracted.add(member.name)
+                  extracted.add(member_name)
           if extracted != {expected_setup_member, expected_runtime_member}:
               raise SystemExit("signed Windows archive is missing vapor-setup.exe or libunwind.dll")
           setup_path = bootstrap_bin / "vapor-setup.exe"
