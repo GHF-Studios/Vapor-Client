@@ -253,3 +253,27 @@ legal review. The manifest explicitly says review is incomplete; the
 candidate remains `distribution_eligible=false`, under disposable build
 cache only. No tests ran, no provider was installed or published, and Steam
 was untouched.
+
+## Linux recipe-source and cache-identity checkpoint — 2026-11-27
+
+The source bundle now includes the exact Vapor Core Git builder and bundle
+generator source files under `recipe/`, with each file's byte count and SHA-256
+in schema-2 `components.json`. Recipe source digests also participate in the
+native-build cache key and are recorded in schema-5 cache markers, so editing
+the builder invalidates old candidate output without relying only on a manual
+revision bump.
+
+Vapor-managed Core/CLI compilation succeeded. The recipe-source-keyed build
+produced cache key
+`412d5b73951ed310fcaef16cad2d08a1b9a1d4e4dcad472463fb22ab6b10c711` and a
+68,956,160-byte source bundle with SHA-256
+`db4b69e8ebb1f27ce5178385fc80ec51611a705d88e314a785b47656c59caeed`. An
+independent inspection verified 46 unique safe archive members, all five
+source archives, twelve notice files, and both recipe-source digests. A repeat
+`sdk git build` reused the same cache entry.
+
+The bundled recipe code and upstream sources do not complete the binary-to-
+component map or legal review. The candidate remains cache-only and
+`distribution_eligible=false`; Windows MinGit review, signed release
+references, Developer provisioning, and blank-machine bootstrap remain open.
+No tests ran, no provider was installed or published, and Steam was untouched.
