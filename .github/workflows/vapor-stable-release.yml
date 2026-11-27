@@ -156,8 +156,8 @@ jobs:
           echo "$vapor_root/bin/x86_64-pc-windows-gnullvm" >> "$GITHUB_PATH"
           export PATH="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
           # The signed 0.1.1 bootstrap predates role management. Install its
-          # managed compiler/toolchains first; the next step builds the current
-          # role-aware Installer through Vapor's SDK before Developer work.
+          # managed compiler/toolchains first; a temporary role-aware CLI
+          # bootstrap handles the old signed launcher's missing role command.
           # This bootstrap compares canonical Windows roots against an
           # uncanonicalized child path; use the Win32 extended-path spelling
           # for this provisioning process. The actual location remains the
@@ -180,7 +180,7 @@ jobs:
             case "$role_status" in
               *"Installed role: Player"*|*"Installed role: Developer"*)
                 echo "$role_status"
-                echo 'needs_source_seed=false' >> "$GITHUB_OUTPUT"
+                echo 'needs_role_bootstrap=false' >> "$GITHUB_OUTPUT"
                 ;;
               *)
                 printf '%s\n' "$role_status" >&2
@@ -190,78 +190,91 @@ jobs:
             esac
           elif [[ "$role_status" == *"unknown command 'role'"* ]]; then
             echo 'Installed signed bootstrap predates role management.'
-            echo 'needs_source_seed=true' >> "$GITHUB_OUTPUT"
+            echo 'needs_role_bootstrap=true' >> "$GITHUB_OUTPUT"
           else
             printf '%s\n' "$role_status" >&2
             exit "$role_status_code"
           fi
 
-      - name: Seed the exact Client source for the first role-aware bootstrap
-        if: steps.bootstrap_role.outputs.needs_source_seed == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          path: vapor-client-bootstrap
-          submodules: recursive
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Build the role-aware Installer and promote through Vapor
+      - name: Promote through the pinned temporary role bootstrap
         shell: bash
+        env:
+          NEEDS_ROLE_BOOTSTRAP: ${{ steps.bootstrap_role.outputs.needs_role_bootstrap }}
         run: |
           set -euo pipefail
           role_installer="$(command -v vapor-installer)"
-          if [[ "${{ steps.bootstrap_role.outputs.needs_source_seed }}" == 'true' ]]; then
-            runner_workspace="$(cygpath -u "$GITHUB_WORKSPACE")"
-            checkout_root="$runner_workspace/vapor-client-bootstrap"
-            sources="$HOME/Vapor/sources"
-            bootstrap_source="$sources/.Vapor-Client.bootstrap.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
-            test -d "$sources"
-            test -f "$checkout_root/Vapor-Installer/Workspace.vapor.toml"
-            test -f "$checkout_root/Vapor-Installer/Cargo.lock"
-            test -d "$checkout_root/Vapor/crates/vapor_core"
-            test ! -e "$bootstrap_source"
-            python - "$checkout_root" "$bootstrap_source" <<'PY'
-          import shutil
-          import sys
-          from pathlib import Path
+          if [[ "$NEEDS_ROLE_BOOTSTRAP" == 'true' ]]; then
+            python - <<'PY'
+          import hashlib
+          import io
+          import json
+          import os
+          import pathlib
+          import stat
+          import urllib.request
+          import zipfile
 
-          source, destination = map(Path, sys.argv[1:])
-          shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git'))
+          tag = "temp-vapor-role-bootstrap-382bedb"
+          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-bootstrap-382bedb.zip"
+          expected_archive_size = 10050812
+          expected_archive_sha256 = "481bc468cb1bd3f99f7ce9154e17912c66a6847f49c90a8d11151028892f7fca"
+          expected_revision = "382bedbdffc0b7d6fd8a18498c86843b53657051"
+          expected_target = "x86_64-pc-windows-gnullvm"
+          expected_files = {
+              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42724864, "31ffa5359215f550934308fe0acb08e7c7f17d12fd22906aa0cc29ce3edce10d"),
+              "bin/x86_64-pc-windows-gnullvm/libunwind.dll": (204288, "8d9f60801f50c0a6cb7beb7fd2e121f98bf39ebe40e6c7e07a8a39fccb817c03"),
+          }
+          with urllib.request.urlopen(archive_url, timeout=60) as response:
+              archive = response.read(expected_archive_size + 1)
+          if len(archive) != expected_archive_size or hashlib.sha256(archive).hexdigest() != expected_archive_sha256:
+              raise SystemExit("temporary role bootstrap archive failed its pinned size or SHA-256 check")
+
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "vapor-temporary-role-bootstrap"
+          if root.exists():
+              raise SystemExit("temporary role bootstrap extraction path already exists")
+          root.mkdir(parents=True)
+          allowed = set(expected_files) | {"bootstrap-manifest.json", "README.txt"}
+          with zipfile.ZipFile(io.BytesIO(archive)) as bundle:
+              entries = bundle.infolist()
+              names = [entry.filename for entry in entries]
+              if len(names) != len(set(names)) or set(names) != allowed:
+                  raise SystemExit("temporary role bootstrap has unexpected or duplicate archive entries")
+              for entry in entries:
+                  path = pathlib.PurePosixPath(entry.filename)
+                  if path.is_absolute() or ".." in path.parts or "\\" in entry.filename:
+                      raise SystemExit("temporary role bootstrap contains an unsafe archive path")
+                  mode = entry.external_attr >> 16
+                  file_type = stat.S_IFMT(mode)
+                  if entry.is_dir() or file_type not in (0, stat.S_IFREG):
+                      raise SystemExit("temporary role bootstrap contains a non-regular file")
+              manifest = json.loads(bundle.read("bootstrap-manifest.json"))
+              if (manifest.get("artifact") != "vapor-role-bootstrap" or
+                  manifest.get("repository") != "GHF-Studios/Vapor-Client" or
+                  manifest.get("source_revision") != expected_revision or
+                  manifest.get("target") != expected_target or
+                  manifest.get("profile") != "dev" or
+                  set(manifest.get("files", {})) != set(expected_files)):
+                  raise SystemExit("temporary role bootstrap manifest identity is invalid")
+              destination_root = root / "bin" / expected_target
+              destination_root.mkdir(parents=True)
+              for name, (expected_size, expected_digest) in expected_files.items():
+                  metadata = manifest["files"][name]
+                  if metadata != {"size": expected_size, "sha256": expected_digest}:
+                      raise SystemExit(f"temporary role bootstrap manifest digest mismatch: {name}")
+                  data = bundle.read(name)
+                  if len(data) != expected_size or hashlib.sha256(data).hexdigest() != expected_digest:
+                      raise SystemExit(f"temporary role bootstrap payload digest mismatch: {name}")
+                  output = root.joinpath(*pathlib.PurePosixPath(name).parts)
+                  output.write_bytes(data)
+
           PY
-            rm -rf -- "$checkout_root"
-            cleanup_bootstrap_source() {
-              rm -rf -- "$bootstrap_source"
-            }
-            trap cleanup_bootstrap_source EXIT
-
-            installer_workspace="$(cygpath -w "$bootstrap_source/Vapor-Installer")"
             runner_temp="$(cygpath -u "$RUNNER_TEMP")"
-            sdk_build_log="$runner_temp/vapor-installer-bootstrap-build.log"
-            vapor sdk --verbose --workspace "$installer_workspace" build 2>&1 | tee "$sdk_build_log"
-            cargo_target_dir="$(python - "$sdk_build_log" <<'PY'
-          import sys
-          from pathlib import Path
-
-          for line in Path(sys.argv[1]).read_text(encoding='utf-8').splitlines():
-              if line.startswith('  cargo_target_dir:'):
-                  print(line.split(':', 1)[1].strip())
-                  break
-          else:
-              raise SystemExit('Vapor SDK build did not report its managed Cargo output root')
-          PY
-          )"
-            cargo_target_dir="$(cygpath -u "$cargo_target_dir")"
-            role_installer="$cargo_target_dir/debug/vapor-installer.exe"
-            test -x "$role_installer"
-            "$role_installer" role status
+            role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
           fi
-
+          test -x "$role_installer"
           role_status="$("$role_installer" role status)"
           case "$role_status" in
-            *"Installed role: Developer"*)
-              echo 'Vapor is already set up as Developer.'
-              ;;
+            *"Installed role: Developer"*) echo 'Vapor is already set up as Developer.' ;;
             *"Installed role: Player"*)
               git_shell="$(command -v git)"
               test -x "$git_shell"
@@ -269,11 +282,7 @@ jobs:
               "$role_installer" role promote developer
               unset VAPOR_GIT
               ;;
-            *)
-              printf '%s\n' "$role_status" >&2
-              echo 'Vapor returned an unrecognized installed-role state' >&2
-              exit 1
-              ;;
+            *) printf '%s\n' "$role_status" >&2; echo 'Unexpected Vapor role state' >&2; exit 1 ;;
           esac
           "$role_installer" role status
 
@@ -519,3 +528,36 @@ jobs:
               -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$known_hosts" \
               "$VAPOR_RELEASE_SSH_USER@$VAPOR_RELEASE_SSH_HOST" "publish $target"
           done
+
+  retire-temporary-role-bootstrap:
+    name: Retire the temporary role bootstrap after stable publication
+    if: github.ref == 'refs/heads/main' && needs.publish.result == 'success'
+    needs: [publish]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Delete only the temporary bootstrap release and tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo='GHF-Studios/Vapor-Client'
+          tag='temp-vapor-role-bootstrap-382bedb'
+          api="https://api.github.com/repos/$repo"
+          headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
+          release_json="$RUNNER_TEMP/temporary-role-bootstrap-release.json"
+          status="$(curl -sS --retry 3 --retry-all-errors -o "$release_json" -w '%{http_code}' "${headers[@]}" "$api/releases/tags/$tag")"
+          case "$status" in
+            404) echo 'Temporary bootstrap release is already absent.'; release_id='' ;;
+            200) release_id="$(jq -er '.id | select(type == "number")' "$release_json")" ;;
+            *) echo "Could not inspect temporary bootstrap release (HTTP $status)." >&2; exit 1 ;;
+          esac
+          if [[ -n "$release_id" ]]; then
+            status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/releases/$release_id")"
+            [[ "$status" == '204' ]] || { echo "Could not delete temporary bootstrap release (HTTP $status)." >&2; exit 1; }
+          fi
+          status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/git/refs/tags/$tag")"
+          [[ "$status" == '204' || "$status" == '404' ]] || { echo "Could not delete temporary bootstrap tag (HTTP $status)." >&2; exit 1; }
+          echo 'Temporary role bootstrap release and tag retired after stable publication.'

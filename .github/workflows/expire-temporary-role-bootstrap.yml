@@ -1,0 +1,49 @@
+name: Expire temporary Vapor role bootstrap
+
+on:
+  # Scheduled workflows run only from the repository's default branch. The
+  # stable release workflow also retires this exact release immediately after
+  # the first successful signed publication.
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  expire-bootstrap:
+    name: Retire the fixed temporary bootstrap tag after its deadline
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Enforce the hard expiry
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          expiry='2026-12-11'
+          today="$(date -u +%F)"
+          if [[ "$today" < "$expiry" ]]; then
+            echo "Temporary bootstrap remains within its declared lifetime (expires $expiry UTC)."
+            exit 0
+          fi
+
+          repo='GHF-Studios/Vapor-Client'
+          tag='temp-vapor-role-bootstrap-382bedb'
+          api="https://api.github.com/repos/$repo"
+          headers=(-H 'Accept: application/vnd.github+json' -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
+          release_json="$RUNNER_TEMP/temporary-role-bootstrap-release.json"
+          status="$(curl -sS --retry 3 --retry-all-errors -o "$release_json" -w '%{http_code}' "${headers[@]}" "$api/releases/tags/$tag")"
+          case "$status" in
+            200)
+              release_id="$(jq -er '.id | select(type == "number")' "$release_json")"
+              status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/releases/$release_id")"
+              [[ "$status" == '204' ]] || { echo "Could not delete temporary bootstrap release (HTTP $status)." >&2; exit 1; }
+              ;;
+            404) echo 'Temporary bootstrap release is already absent.' ;;
+            *) echo "Could not inspect temporary bootstrap release (HTTP $status)." >&2; exit 1 ;;
+          esac
+
+          status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/git/refs/tags/$tag")"
+          [[ "$status" == '204' || "$status" == '404' ]] || { echo "Could not delete temporary bootstrap tag (HTTP $status)." >&2; exit 1; }
+          echo "Temporary role bootstrap release and tag retired after its $expiry UTC hard expiry."
