@@ -207,17 +207,43 @@ jobs:
           export GIT_CONFIG_KEY_1=credential.helper
           export GIT_CONFIG_VALUE_1="!$credential_helper"
           export GIT_TERMINAL_PROMPT=0
-          # The signed bootstrap release predates managed-Git provisioning.
-          # For this one source-acquisition transition, explicitly select the
-          # runner Git as Vapor's provider. All clone/fetch/checkout/submodule
-          # operations still run through `vapor provider git run`; do not call
-          # Git directly here or persist this override into later steps.
+          # The signed bootstrap predates the runtime-target correction in the
+          # source-clone implementation. Its source-clone command resolves the
+          # installed CLI using the compiler host target, which is absent from
+          # the packaged Windows runtime. Bootstrap the two exact checkouts
+          # through Vapor's Git provider directly until a corrected bootstrap
+          # is published. Do not call Git directly or persist the provider
+          # override into later steps.
           git_shell="$(command -v git)"
           test -x "$git_shell"
           VAPOR_GIT="$(cygpath -w "$git_shell")"
           export VAPOR_GIT
-          vapor-installer source clone Vapor-Client --revision "$VAPOR_CLIENT_REVISION"
-          vapor-installer source clone Vapor-Platform-Server --revision "$VAPOR_PLATFORM_REVISION"
+          sources="$HOME/Vapor/sources"
+          test -d "$sources"
+          clone_pinned_source() {
+            local name="$1" remote="$2" revision="$3"
+            local stage="$sources/.${name}.release-bootstrap.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
+            local stage_windows
+            local destination="$sources/$name"
+            [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+            test ! -e "$stage"
+            test ! -e "$destination"
+            stage_windows="$(cygpath -w "$stage")"
+            vapor provider git run -- clone --no-tags --no-checkout --single-branch --branch main "$remote" "$stage_windows"
+            vapor provider git run -- -C "$stage_windows" fetch --no-tags --depth=1 origin "$revision"
+            vapor provider git run -- -C "$stage_windows" checkout --detach "$revision"
+            vapor provider git run -- -C "$stage_windows" submodule update --init --recursive --depth=1
+            mv "$stage" "$destination"
+          }
+          client_stage="$sources/.Vapor-Client.release-bootstrap.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
+          platform_stage="$sources/.Vapor-Platform-Server.release-bootstrap.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
+          cleanup_staging_checkouts() {
+            rm -rf -- "$client_stage" "$platform_stage"
+          }
+          trap cleanup_staging_checkouts EXIT
+          clone_pinned_source Vapor-Client https://github.com/GHF-Studios/Vapor-Client.git "$VAPOR_CLIENT_REVISION"
+          clone_pinned_source Vapor-Platform-Server https://github.com/GHF-Studios/Vapor-Platform-Server.git "$VAPOR_PLATFORM_REVISION"
+          trap - EXIT
           unset VAPOR_GIT
 
       - name: Build and stage with Vapor
