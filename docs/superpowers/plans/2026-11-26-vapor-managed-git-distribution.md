@@ -345,9 +345,29 @@ MinGit unable to find helpers such as `git-remote-https` after provisioning.
 The provider now detects a managed `ucrt64/libexec/git-core` tree first,
 retains `mingw64` as a compatibility layout, and derives both helper and
 template paths from the selected tree. Vapor-managed `sdk build` compiled the
-Linux workspace after this change. The Windows archive itself has not yet
-been acquired and inspected through Vapor, so this is a source-backed layout
-correction, not Windows runtime proof or a complete MinGit inventory. The
-archive's component/source/notice and redistribution review, Developer setup,
-signed release integration, and clean-machine bootstrap remain open. No tests
-ran, no Git provider was activated or published, and Steam was untouched.
+Linux workspace after this change. At that checkpoint the Windows archive was
+not yet acquired; the follow-up inventory below supersedes that limitation.
+
+## Windows MinGit archive inventory checkpoint — 2026-11-27
+
+The Vapor-owned `sdk git inspect-windows` command downloaded the exact pinned
+Git for Windows release into `User Data/cache/build/native-tools/git/windows`,
+verified its SHA-256 (`4a92850b6e917da4fd010669b614b55dccf5b0ec333a534cc4be4700dfefdafd`),
+and wrote a per-file path/size/hash inventory next to it. The 39,849,768-byte
+ZIP contains 375 files totaling 96,243,738 expanded bytes, including 91 EXEs,
+96 DLLs, and 47 license/notice paths. The cache inventory also captures the
+upstream package-version list and the complete `etc/libexec-moved.txt` mapping.
+
+The archive confirms the stable launcher at `cmd/git.exe` and current Git at
+`ucrt64/bin/git.exe`. Relocated helper EXEs such as `git-remote-https.exe` and
+`git-http-fetch.exe` are in `ucrt64/bin`; the mapping file and package-version
+metadata are at archive-root `etc/`, not `ucrt64/etc/`. Remaining helper
+scripts and the credential-wincred helper are in `ucrt64/libexec/git-core`.
+This confirms the intended UCRT64 root selection and PATH coverage in the
+provider, and corrects the earlier expected metadata paths. It does not prove
+Windows runtime behavior because this Linux host cannot execute the package.
+
+The archive is retained only in Vapor's rebuildable User Data cache; nothing
+was extracted, activated, or published. The complete component/source/license
+review, package staging and activation, signed release integration, and
+clean-machine bootstrap remain open. No tests ran and Steam was untouched.
