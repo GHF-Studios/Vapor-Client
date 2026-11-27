@@ -32,9 +32,6 @@ fn install_managed_toolchain() -> Result<(), String> {
     let tools_root = user_data_root()?;
     fs::create_dir_all(&tools_root).map_err(io("create Vapor developer home", &tools_root))?;
     println!("Install Vapor-managed developer toolchain");
-    if !steamcmd_status(&tools_root).ready {
-        install_steamcmd(&tools_root)?;
-    }
     let mut report_progress = |stage: &str| println!("{stage}");
     if !rust_toolchain_installed(&tools_root) {
         install_rust(&tools_root, &mut report_progress)?;

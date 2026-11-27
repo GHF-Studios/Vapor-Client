@@ -156,6 +156,12 @@ jobs:
           export PATH="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
           # Use the standalone managed-toolchain command. The legacy
           # `dev-env install` path also provisions SteamCMD into an app layout.
+          # The published bootstrap compares canonical Windows roots against
+          # an uncanonicalized child path; use the same Win32 extended-path
+          # spelling for this one provisioning process. The actual location
+          # remains the inferred %LOCALAPPDATA%/Vapor root.
+          local_appdata="$(cygpath -w "$LOCALAPPDATA")"
+          export LOCALAPPDATA="\\\\?\\$local_appdata"
           vapor-installer toolchain install
           vapor-installer superworkspace create
 

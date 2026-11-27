@@ -122,7 +122,7 @@ fn canonical_dir(path: PathBuf) -> Result<PathBuf, String> {
 
 fn ensure_contained(root: &Path, path: &Path) -> Result<(), String> {
     let root = fs::canonicalize(root).map_err(io("resolve containment root", root))?;
-    let candidate = normalized_absolute(path)?;
+    let candidate = canonicalize_allow_missing(path)?;
     if candidate.starts_with(&root) {
         Ok(())
     } else {
@@ -131,6 +131,50 @@ fn ensure_contained(root: &Path, path: &Path) -> Result<(), String> {
             candidate.display(),
             root.display()
         ))
+    }
+}
+
+/// Resolve every existing path component before checking containment.
+///
+/// The final leaf often does not exist yet (for example, a tool being
+/// installed). Canonicalizing its nearest existing parent gives Windows paths
+/// the same extended-length prefix as the canonical root, while still
+/// resolving existing symlinks before the untrusted suffix is appended.
+fn canonicalize_allow_missing(path: &Path) -> Result<PathBuf, String> {
+    let absolute = normalized_absolute(path)?;
+    let mut ancestor = absolute.as_path();
+    let mut missing = Vec::new();
+
+    loop {
+        match fs::canonicalize(ancestor) {
+            Ok(mut resolved) => {
+                for component in missing.iter().rev() {
+                    resolved.push(component);
+                }
+                return Ok(resolved);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                if fs::symlink_metadata(ancestor).is_ok() {
+                    return Err(format!(
+                        "cannot resolve existing path component '{}' safely",
+                        ancestor.display()
+                    ));
+                }
+                let component = ancestor.file_name().ok_or_else(|| {
+                    format!("cannot find an existing parent for '{}': {error}", path.display())
+                })?;
+                missing.push(component.to_os_string());
+                ancestor = ancestor.parent().ok_or_else(|| {
+                    format!("cannot find an existing parent for '{}': {error}", path.display())
+                })?;
+            }
+            Err(error) => {
+                return Err(format!(
+                    "failed to resolve existing path component '{}': {error}",
+                    ancestor.display()
+                ));
+            }
+        }
     }
 }
 
