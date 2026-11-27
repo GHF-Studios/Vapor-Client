@@ -152,3 +152,40 @@ reuse, and provider-mediated HTTPS when the runtime helper path is supplied.
 It does not close Linux runtime distribution, Windows Git, component source
 and notice inventories, Developer setup provisioning, signed payload metadata,
 or clean-machine bootstrap. No Git payload was activated or published.
+
+## Portability and installed-tool checkpoint — 2026-11-27
+
+The host-linked libcurl is not a distribution recipe: its installed build pulls
+26 shared-library identities, including an Arch-specific glibc, OpenSSL,
+Kerberos, IDN, compression, and HTTP/2/3 components. Recording that closure
+improves cache correctness but does not make the payload portable.
+
+The Rustls route is a useful experiment, not a selected release backend. curl
+still labels its Rustls backend experimental, and rustls-ffi recommends static
+linking because it does not promise dynamic ABI stability. See the upstream
+[curl build options](https://github.com/curl/curl/blob/master/docs/INSTALL-CMAKE.md)
+and [rustls-ffi linking guidance](https://github.com/rustls/rustls-ffi/blob/main/README.md).
+Do not mark a payload distributable merely because static linkage reduces the
+shared-library count. A shipping candidate still needs a maintained TLS path,
+target-ABI proof, complete source bundle, and reviewed component inventory.
+
+GnuTLS remains a stable-backend candidate for a source-built, minimized curl;
+its upstream download page identifies Nettle and GMP as required and p11-kit,
+IDN, and other support as optional. The current GnuTLS security page recommends
+3.8.14 or later for advisories published on 2026-11-18. This narrows the
+dependency question, but no GnuTLS build, source pin, license inventory, or
+redistribution decision has been made. See [GnuTLS downloads](https://gnutls.org/download.html)
+and [security advisories](https://www.gnutls.org/security-new.html).
+
+The currently installed Steam CLI also cannot drive this new path: its
+`sdk git` command is unrecognized. Its existing SDK build command reports
+`missing_rustup`, while the shipped Vapor Installer reports the pinned Rust
+toolchain ready under User Data. This is a live installed-version/tool-state
+mismatch, not evidence that the source shadow builder failed. The current
+source binary refuses to run directly from its build directory, as designed;
+do not bypass that guard or invoke raw Cargo. Restore the supported
+Vapor-managed self-deploy path before claiming the current installed product
+can reproduce the new SDK operation.
+
+No TLS backend was activated, no runtime tool was installed or published, and
+no Steam payload changed during this investigation.
