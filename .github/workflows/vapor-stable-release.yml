@@ -227,14 +227,9 @@ jobs:
           runner_temp="$(cygpath -u "$RUNNER_TEMP")"
           role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
           test -x "$role_installer"
-          git_shell="$(command -v git)"
-          test -x "$git_shell"
-          export VAPOR_GIT="$(cygpath -w "$git_shell")"
-          # Keep tool installation and role reconciliation on one role-aware
-          # Vapor build. The signed App Instance establishes the release trust
-          # root; this exact, pinned bootstrap is removed after stable publish.
-          "$role_installer" dev-env install --app-root "$VAPOR_HOME"
-          "$role_installer" superworkspace create --app-root "$VAPOR_HOME"
+          # The signed App Instance establishes the release trust root. This
+          # exact, pinned bootstrap owns Developer setup until stable publish;
+          # promotion installs Vapor-managed tools and Git as one operation.
           role_status="$("$role_installer" role status)"
           case "$role_status" in
             *"Installed role: Developer"*) echo 'Vapor is already set up as Developer.' ;;
@@ -242,7 +237,7 @@ jobs:
             *) printf '%s\n' "$role_status" >&2; echo 'Unexpected Vapor role state' >&2; exit 1 ;;
           esac
           "$role_installer" role status
-          unset VAPOR_GIT
+          "$role_installer" superworkspace create --app-root "$VAPOR_HOME"
 
       - name: Resolve and clone exact source revisions through Vapor
         shell: bash
@@ -286,15 +281,9 @@ jobs:
           export GIT_CONFIG_KEY_1=credential.helper
           export GIT_CONFIG_VALUE_1="!$credential_helper"
           export GIT_TERMINAL_PROMPT=0
-          # The signed bootstrap exposes the legacy Developer setup command,
-          # not `role promote`. Source acquisition still executes through the
-          # Vapor Git provider. Select the runner's Git explicitly for this
-          # one-time bootstrap because no distributable managed Git payload is
-          # eligible yet; do not call Git directly or persist this override.
-          git_shell="$(command -v git)"
-          test -x "$git_shell"
-          VAPOR_GIT="$(cygpath -w "$git_shell")"
-          export VAPOR_GIT
+          # Developer role promotion above installs Vapor's pinned Git. Source
+          # acquisition must resolve that managed provider; Actions runner Git
+          # is not an implicit or temporary fallback.
           sources="$HOME/Vapor/sources"
           test -d "$sources"
           clone_pinned_source() {
