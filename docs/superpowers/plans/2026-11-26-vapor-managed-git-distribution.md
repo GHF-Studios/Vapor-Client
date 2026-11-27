@@ -124,3 +124,31 @@ download page.
 This is a release-engineering checklist, not legal advice. A qualified review is
 appropriate if the exact component inventory or intended redistribution terms
 leave a material question unresolved.
+
+## Implementation checkpoint — 2026-11-27
+
+Vapor SDK now exposes `sdk git build` for an x86-64 Linux shadow build. It
+downloads pinned Git 2.56.1 and GNU Make 4.4.1 source archives, checks their
+SHA-256 digests, builds with Vapor-managed Zig, and stores source/build output
+under User Data `cache/build/native-tools/git`. The executable remains outside
+`tools/git` and the report explicitly marks it ineligible for distribution.
+
+The first build completed as Git 2.56.1; an unchanged rerun reused the same
+cache key. The marker now records the actual shared libraries resolved by all
+executable ELF files in the install tree, including canonical paths and content
+digests, and cache validation rechecks that runtime closure. The current host
+build scans 163 executable images and records 627 dependency references to 26
+unique shared-library identities, so its HTTPS helper is still tied to this
+host's system library set and is not a portable payload. Running through Vapor's
+explicit-provider boundary also confirmed the helper-path contract: the
+provider-managed install path supplies `GIT_EXEC_PATH`, while an explicit
+external executable override does not. The shadow binary's compiled helper
+path points to its staging directory, so it must only be exercised with the
+managed helper environment until it is replaced by a package built for
+`tools/git`.
+
+This checkpoint proves Linux source acquisition, managed compilation, cache
+reuse, and provider-mediated HTTPS when the runtime helper path is supplied.
+It does not close Linux runtime distribution, Windows Git, component source
+and notice inventories, Developer setup provisioning, signed payload metadata,
+or clean-machine bootstrap. No Git payload was activated or published.
