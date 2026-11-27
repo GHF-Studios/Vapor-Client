@@ -372,3 +372,24 @@ The archive is retained only in Vapor's rebuildable User Data cache; nothing
 was extracted, activated, or published. The complete component/source/license
 review, package staging and activation, signed release integration, and
 clean-machine bootstrap remain open. No tests ran and Steam was untouched.
+
+## MinGit package metadata checkpoint — 2026-11-27
+
+The archive-root `etc/package-versions.txt` is represented as structured
+package/version rows in the Vapor cache inventory. It contains 67 rows for 65
+distinct package names; `mingw-w64-ucrt-x86_64-curl-winssl` and
+`mingw-w64-ucrt-x86_64-libssh2-wincng` each occur twice with the same version.
+The inventory preserves those duplicates rather than silently deduplicating
+the upstream file. The same archive contains 47 license/notice path entries,
+and the per-file inventory records a size and SHA-256 for every archive file.
+
+This is stronger evidence for exact packaged component-version labels and
+the identity and location of apparent legal files. It does not map each
+package's files to those labels, identify license obligations from the texts,
+or provide complete corresponding source/build inputs for each component.
+The currently published MSYS2 package pages expose a later Git package
+revision (`2.56.1.1-2`), while this archive records `2.56.1.1-1`; the newer
+package page is not exact source/build evidence for this artifact. Keep
+Windows distribution eligibility closed until matching package sources,
+source-build inputs, component-to-file attribution, and required notices are
+established. No legal-compliance claim is made.
