@@ -151,10 +151,13 @@ jobs:
           vapor_root="$($VAPOR_BOOTSTRAP_SETUP install --channel stable --print-root)"
           vapor_root_shell="$(cygpath -u "$vapor_root")"
           test -x "$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
+          test -x "$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor.exe"
+          test -f "$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/steam_api64.dll"
           export VAPOR_HOME="$vapor_root"
           echo "VAPOR_HOME=$vapor_root" >> "$GITHUB_ENV"
           echo "$vapor_root/bin/x86_64-pc-windows-gnullvm" >> "$GITHUB_PATH"
           export PATH="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
+          echo "VAPOR_RELEASE_CLI=$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor.exe" >> "$GITHUB_ENV"
 
       - name: Set up Developer tools through the pinned temporary bootstrap
         shell: bash
@@ -162,6 +165,7 @@ jobs:
           set -euo pipefail
           vapor_root_shell="$(cygpath -u "$VAPOR_HOME")"
           role_installer="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
+          release_cli="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor.exe"
           runner_temp="$(cygpath -u "$RUNNER_TEMP")"
           test -x "$role_installer"
           role_status_exit=0
@@ -182,13 +186,14 @@ jobs:
           import urllib.request
           import zipfile
 
-          tag = "temp-vapor-role-bootstrap-26cdce1a"
-          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-bootstrap-26cdce1a.zip"
-          expected_archive_size = 10060738
-          expected_archive_sha256 = "a156b7c0ef8630cfc5b691de0b30a6e34ee61c97b5781aa82f3b163677f68fdb"
-          expected_revision = "26cdce1a878b8c89f271411b0eeeb6cc16b0f414"
+          tag = "temp-vapor-role-cli-bootstrap-d8268575"
+          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-cli-bootstrap-d8268575.zip"
+          expected_archive_size = 28556561
+          expected_archive_sha256 = "341756cdb8c67a9c13eabb057dc51379107338fd7ab8292d2a7152a5907461b7"
+          expected_revision = "d8268575934c275963d3ea7677ec307191c65676"
           expected_target = "x86_64-pc-windows-gnullvm"
           expected_files = {
+              "bin/x86_64-pc-windows-gnullvm/vapor.exe": (87129600, "e64d1e79d8b40b79d5ff57d1c9dccd77adf8600470a2a54a15ce5d8f390178f9"),
               "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42747904, "3c219bfca864f16dff6a85fd2b71ea668d936ff330f9b9c1770e5f29d7d108a2"),
               "bin/x86_64-pc-windows-gnullvm/libunwind.dll": (204288, "8d9f60801f50c0a6cb7beb7fd2e121f98bf39ebe40e6c7e07a8a39fccb817c03"),
           }
@@ -216,7 +221,7 @@ jobs:
                   if entry.is_dir() or file_type not in (0, stat.S_IFREG):
                       raise SystemExit("temporary role bootstrap contains a non-regular file")
               manifest = json.loads(bundle.read("bootstrap-manifest.json"))
-              if (manifest.get("artifact") != "vapor-role-bootstrap" or
+              if (manifest.get("artifact") != "vapor-role-cli-bootstrap" or
                   manifest.get("repository") != "GHF-Studios/Vapor-Client" or
                   manifest.get("source_revision") != expected_revision or
                   manifest.get("target") != expected_target or
@@ -236,8 +241,14 @@ jobs:
                   output.write_bytes(data)
 
           PY
-            role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
+            helper_bin="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm"
+            role_installer="$helper_bin/vapor-installer.exe"
+            release_cli="$helper_bin/vapor.exe"
             test -x "$role_installer"
+            test -x "$release_cli"
+            echo "$(cygpath -w "$helper_bin")" >> "$GITHUB_PATH"
+            echo "VAPOR_RELEASE_CLI=$release_cli" >> "$GITHUB_ENV"
+            export PATH="$helper_bin:$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
             role_status="$("$role_installer" role status)"
           else
             echo 'The signed stable installation provides role management; skipping the temporary bootstrap.'
@@ -274,6 +285,7 @@ jobs:
           esac
           "$role_installer" role status
           "$role_installer" superworkspace create --app-root "$VAPOR_HOME"
+          "$release_cli" --version
 
       - name: Resolve and clone exact source revisions through Vapor
         shell: bash
@@ -332,10 +344,10 @@ jobs:
             test ! -e "$stage"
             test ! -e "$destination"
             stage_windows="$(cygpath -w "$stage")"
-            vapor provider git run -- clone --no-tags --no-checkout --single-branch --branch main "$remote" "$stage_windows"
-            vapor provider git run -- -C "$stage_windows" fetch --no-tags --depth=1 origin "$revision"
-            vapor provider git run -- -C "$stage_windows" checkout --detach "$revision"
-            vapor provider git run -- -C "$stage_windows" submodule update --init --recursive --depth=1
+            "$VAPOR_RELEASE_CLI" provider git run -- clone --no-tags --no-checkout --single-branch --branch main "$remote" "$stage_windows"
+            "$VAPOR_RELEASE_CLI" provider git run -- -C "$stage_windows" fetch --no-tags --depth=1 origin "$revision"
+            "$VAPOR_RELEASE_CLI" provider git run -- -C "$stage_windows" checkout --detach "$revision"
+            "$VAPOR_RELEASE_CLI" provider git run -- -C "$stage_windows" submodule update --init --recursive --depth=1
             mv "$stage" "$destination"
           }
           client_stage="$sources/.Vapor-Client.release-bootstrap.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
@@ -358,9 +370,9 @@ jobs:
           # does not make it Vapor's active source. Select this exact checkout
           # for the one-shot managed build without changing saved user state.
           client_windows="$(cygpath -w "$client")"
-          VAPOR_DISTRIBUTION_JOB=steam-release-v1 VAPOR_WORKSPACE="$client_windows" vapor root build --release --release-targets
+          VAPOR_DISTRIBUTION_JOB=steam-release-v1 VAPOR_WORKSPACE="$client_windows" "$VAPOR_RELEASE_CLI" root build --release --release-targets
           runner_temp="$(cygpath -u "$RUNNER_TEMP")"
-          vapor root stage-standalone --release-targets | tee "$runner_temp/vapor-stage.log"
+          "$VAPOR_RELEASE_CLI" root stage-standalone --release-targets | tee "$runner_temp/vapor-stage.log"
           python - "$runner_temp/vapor-stage.log" "$GITHUB_ENV" <<'PY'
           import re
           import sys
@@ -378,12 +390,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${VAPOR_RELEASE_CI_GIT_OVERRIDE_SELECTED:-}" != true ]]; then
+          if [[ "${VAPOR_RELEASE_CI_GIT_OVERRIDE_SELECTED:-}" == true ]]; then
+            echo 'VAPOR_GIT=' >> "$GITHUB_ENV"
+            echo 'Cleared the temporary explicit provider override for subsequent steps.'
+          else
             echo 'No temporary runner Git provider override was selected.'
-            exit 0
           fi
-          echo 'VAPOR_GIT=' >> "$GITHUB_ENV"
-          echo 'Cleared the temporary explicit provider override for subsequent steps.'
+          runner_temp="$(cygpath -u "$RUNNER_TEMP")"
+          rm -rf -- "$runner_temp/vapor-temporary-role-bootstrap"
+          echo 'VAPOR_RELEASE_CLI=' >> "$GITHUB_ENV"
+          echo 'Removed the temporary CLI and installer after the build-stage step.'
 
       - name: Verify Windows setup and prepare the package job inputs
         shell: bash
@@ -539,7 +555,7 @@ jobs:
         run: |
           set -euo pipefail
           repo='GHF-Studios/Vapor-Client'
-          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a)
+          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575)
           api="https://api.github.com/repos/$repo"
           headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
           for tag in "${tags[@]}"; do
