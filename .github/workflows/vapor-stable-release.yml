@@ -144,7 +144,7 @@ jobs:
               output.write(f"version={version}\n")
           PY
 
-      - name: Install Vapor and provision its Developer environment
+      - name: Install the signed Vapor App Instance
         shell: bash
         run: |
           set -euo pipefail
@@ -155,56 +155,12 @@ jobs:
           echo "VAPOR_HOME=$vapor_root" >> "$GITHUB_ENV"
           echo "$vapor_root/bin/x86_64-pc-windows-gnullvm" >> "$GITHUB_PATH"
           export PATH="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
-          # The signed 0.1.1 bootstrap predates role management. Install its
-          # managed compiler/toolchains first; a temporary role-aware CLI
-          # bootstrap handles the old signed launcher's missing role command.
-          # This bootstrap compares canonical Windows roots against an
-          # uncanonicalized child path; use the Win32 extended-path spelling
-          # for this provisioning process. The actual location remains the
-          # inferred %LOCALAPPDATA%/Vapor root.
-          local_appdata="$(cygpath -w "$LOCALAPPDATA")"
-          export LOCALAPPDATA="\\\\?\\$local_appdata"
-          vapor-installer dev-env install --app-root "$VAPOR_HOME"
-          vapor-installer superworkspace create
 
-      - id: bootstrap_role
-        name: Check whether the installed bootstrap can manage roles
+      - name: Set up Developer tools through the pinned temporary bootstrap
         shell: bash
         run: |
           set -euo pipefail
-          set +e
-          role_status="$(vapor-installer role status 2>&1)"
-          role_status_code=$?
-          set -e
-          if [[ "$role_status_code" -eq 0 ]]; then
-            case "$role_status" in
-              *"Installed role: Player"*|*"Installed role: Developer"*)
-                echo "$role_status"
-                echo 'needs_role_bootstrap=false' >> "$GITHUB_OUTPUT"
-                ;;
-              *)
-                printf '%s\n' "$role_status" >&2
-                echo 'Role status returned an unrecognized result' >&2
-                exit 1
-                ;;
-            esac
-          elif [[ "$role_status" == *"unknown command 'role'"* ]]; then
-            echo 'Installed signed bootstrap predates role management.'
-            echo 'needs_role_bootstrap=true' >> "$GITHUB_OUTPUT"
-          else
-            printf '%s\n' "$role_status" >&2
-            exit "$role_status_code"
-          fi
-
-      - name: Promote through the pinned temporary role bootstrap
-        shell: bash
-        env:
-          NEEDS_ROLE_BOOTSTRAP: ${{ steps.bootstrap_role.outputs.needs_role_bootstrap }}
-        run: |
-          set -euo pipefail
-          role_installer="$(command -v vapor-installer)"
-          if [[ "$NEEDS_ROLE_BOOTSTRAP" == 'true' ]]; then
-            python - <<'PY'
+          python - <<'PY'
           import hashlib
           import io
           import json
@@ -268,23 +224,25 @@ jobs:
                   output.write_bytes(data)
 
           PY
-            runner_temp="$(cygpath -u "$RUNNER_TEMP")"
-            role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
-          fi
+          runner_temp="$(cygpath -u "$RUNNER_TEMP")"
+          role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
           test -x "$role_installer"
+          git_shell="$(command -v git)"
+          test -x "$git_shell"
+          export VAPOR_GIT="$(cygpath -w "$git_shell")"
+          # Keep tool installation and role reconciliation on one role-aware
+          # Vapor build. The signed App Instance establishes the release trust
+          # root; this exact, pinned bootstrap is removed after stable publish.
+          "$role_installer" dev-env install --app-root "$VAPOR_HOME"
+          "$role_installer" superworkspace create
           role_status="$("$role_installer" role status)"
           case "$role_status" in
             *"Installed role: Developer"*) echo 'Vapor is already set up as Developer.' ;;
-            *"Installed role: Player"*)
-              git_shell="$(command -v git)"
-              test -x "$git_shell"
-              export VAPOR_GIT="$(cygpath -w "$git_shell")"
-              "$role_installer" role promote developer
-              unset VAPOR_GIT
-              ;;
+            *"Installed role: Player"*) "$role_installer" role promote developer ;;
             *) printf '%s\n' "$role_status" >&2; echo 'Unexpected Vapor role state' >&2; exit 1 ;;
           esac
           "$role_installer" role status
+          unset VAPOR_GIT
 
       - name: Resolve and clone exact source revisions through Vapor
         shell: bash
