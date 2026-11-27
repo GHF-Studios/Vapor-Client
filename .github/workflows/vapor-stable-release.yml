@@ -154,9 +154,9 @@ jobs:
           echo "VAPOR_HOME=$vapor_root" >> "$GITHUB_ENV"
           echo "$vapor_root/bin/x86_64-pc-windows-gnullvm" >> "$GITHUB_PATH"
           export PATH="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
-          # The currently published Windows bootstrap predates `role promote`;
-          # its supported setup path provisions the same Developer toolchain.
-          vapor-installer dev-env install
+          # Use the standalone managed-toolchain command. The legacy
+          # `dev-env install` path also provisions SteamCMD into an app layout.
+          vapor-installer toolchain install
           vapor-installer superworkspace create
 
       - name: Resolve and clone exact source revisions through Vapor
