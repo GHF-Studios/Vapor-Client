@@ -144,7 +144,7 @@ jobs:
               output.write(f"version={version}\n")
           PY
 
-      - name: Install Vapor and provision its build toolchain
+      - name: Install Vapor and provision its Developer environment
         shell: bash
         run: |
           set -euo pipefail
@@ -154,15 +154,16 @@ jobs:
           echo "VAPOR_HOME=$vapor_root" >> "$GITHUB_ENV"
           echo "$vapor_root/bin/x86_64-pc-windows-gnullvm" >> "$GITHUB_PATH"
           export PATH="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
-          # Use the standalone managed-toolchain command. The legacy
-          # `dev-env install` path also provisions SteamCMD into an app layout.
-          # The published bootstrap compares canonical Windows roots against
-          # an uncanonicalized child path; use the same Win32 extended-path
-          # spelling for this one provisioning process. The actual location
-          # remains the inferred %LOCALAPPDATA%/Vapor root.
+          # The signed 0.1.1 bootstrap predates `role promote`; its supported
+          # Developer setup entrypoint is `dev-env install`. Keep setup inside
+          # Vapor so the managed tools are provisioned before source/build work.
+          # This bootstrap compares canonical Windows roots against an
+          # uncanonicalized child path; use the Win32 extended-path spelling
+          # for this provisioning process. The actual location remains the
+          # inferred %LOCALAPPDATA%/Vapor root.
           local_appdata="$(cygpath -w "$LOCALAPPDATA")"
           export LOCALAPPDATA="\\\\?\\$local_appdata"
-          vapor-installer toolchain install
+          vapor-installer dev-env install --app-root "$VAPOR_HOME"
           vapor-installer superworkspace create
 
       - name: Resolve and clone exact source revisions through Vapor
@@ -207,19 +208,15 @@ jobs:
           export GIT_CONFIG_KEY_1=credential.helper
           export GIT_CONFIG_VALUE_1="!$credential_helper"
           export GIT_TERMINAL_PROMPT=0
-          # The signed bootstrap predates the runtime-target correction in the
-          # source-clone implementation. Its source-clone command resolves the
-          # installed CLI using the compiler host target, which is absent from
-          # the packaged Windows runtime. Temporarily select runner Git as
-          # Vapor's explicit provider, then use Vapor's supported role
-          # promotion so provider operations and the managed build require a
-          # real Developer installation. Do not call Git directly or persist
-          # this provider override into later steps.
+          # The signed bootstrap exposes the legacy Developer setup command,
+          # not `role promote`. Source acquisition still executes through the
+          # Vapor Git provider. Select the runner's Git explicitly for this
+          # one-time bootstrap because no distributable managed Git payload is
+          # eligible yet; do not call Git directly or persist this override.
           git_shell="$(command -v git)"
           test -x "$git_shell"
           VAPOR_GIT="$(cygpath -w "$git_shell")"
           export VAPOR_GIT
-          vapor-installer role promote developer
           sources="$HOME/Vapor/sources"
           test -d "$sources"
           clone_pinned_source() {
