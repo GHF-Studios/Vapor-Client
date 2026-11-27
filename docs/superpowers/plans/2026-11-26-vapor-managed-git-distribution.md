@@ -163,6 +163,34 @@ payload metadata, or clean-machine bootstrap. The host-linked libcurl/OpenSSL
 closure remains non-portable and distribution-ineligible. No Git payload was
 activated or published.
 
+## Linux payload attribution checkpoint — 2026-11-27
+
+The Linux source bundle now contains a deterministic `payload_files` inventory
+for all installed files, with path, entry kind, size, SHA-256, mode, Git source
+attribution, and hardlink targets. The inventory is collected directly from
+the exact staged install tree used for cache validation; ELF outputs are
+identified from their file signatures, and hardlink groups use the first
+lexically sorted path as their stable representative. This records the 226
+installed paths, including 163 ELF images and 155 hardlink aliases, without
+counting repeated aliases as independent payload binaries.
+
+Vapor-managed Core/CLI compilation and the installed self-deploy completed.
+`sdk git build` produced cache key
+`5f920eee07c63a6c9876f69a648a49db7a2179ce8e59cc3240c83fe3b6aba4c4` with a
+69,048,320-byte source bundle, SHA-256
+`fc6af53d894803472582d2f2c5e11392cf9024be4f602078c3a3d872729108db`; an
+unchanged rerun reused the validated cache. Independent inspection found no
+unmapped payload paths and confirmed the manifest still states that license
+scope, corresponding-source sufficiency, notices, and redistribution terms
+require review.
+
+This adds file-to-Git provenance and hardlink topology. It does not prove which
+subset of static curl/OpenSSL/zlib objects each ELF consumes, complete legal
+compliance, Windows MinGit coverage, a portable install archive, Developer
+provisioning, or blank-machine bootstrap. The candidate remains in the
+disposable cache with `distribution_eligible=false`; it was not activated or
+published. No tests ran and Steam was untouched.
+
 ## Portability and installed-tool checkpoint — 2026-11-27
 
 The host-linked libcurl is not a distribution recipe: its installed build pulls
