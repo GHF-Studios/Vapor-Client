@@ -95,6 +95,11 @@ for name in "${required[@]}"; do
   fi
 done
 
+if [[ "$platform" == windows-x86_64 ]]; then
+  python3 "$script_dir/verify-standalone-setup.py" \
+    "$app_root/bin/$target/vapor-setup.exe"
+fi
+
 python3 - "$app_root" "$target" "$launcher" "$repo_root/release/Vapor-Home.toml" <<'PY'
 import os
 import stat
