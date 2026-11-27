@@ -148,10 +148,20 @@ managed helper environment until it is replaced by a package built for
 `tools/git`.
 
 This checkpoint proves Linux source acquisition, managed compilation, cache
-reuse, and provider-mediated HTTPS when the runtime helper path is supplied.
-It does not close Linux runtime distribution, Windows Git, component source
-and notice inventories, Developer setup provisioning, signed payload metadata,
-or clean-machine bootstrap. No Git payload was activated or published.
+reuse, and provider-mediated HTTPS. A later runtime check found that Git had
+embedded the temporary `install.staging` path for its remote helpers. The
+builder now configures the final immutable cache prefix, stages with
+`DESTDIR`, and verifies `git --exec-path` before promotion and during cache
+validation. A rebuilt shadow cache resolves `git-remote-https` at the promoted
+location and completes provider-mediated HTTPS `ls-remote`; the provider was
+selected by a one-command `VAPOR_GIT` override and was not activated under
+`tools/git`.
+
+That runtime-path fix does not close Linux runtime distribution, Windows Git,
+component source and notice inventories, Developer setup provisioning, signed
+payload metadata, or clean-machine bootstrap. The host-linked libcurl/OpenSSL
+closure remains non-portable and distribution-ineligible. No Git payload was
+activated or published.
 
 ## Portability and installed-tool checkpoint — 2026-11-27
 
