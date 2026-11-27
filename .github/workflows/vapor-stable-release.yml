@@ -106,6 +106,14 @@ jobs:
           VAPOR_SOURCE_READ_TOKEN: ${{ secrets.VAPOR_SOURCE_READ_TOKEN || github.token }}
         run: |
           set -euo pipefail
+          # Pin the release-preparation API to the Platform revision currently
+          # deployed on main. Updating this pin is an explicit release-pipeline
+          # change; never resolve a mutable branch during a release build.
+          VAPOR_PLATFORM_REVISION=5ad1adae67f9a3b527f03ab8f9737474e7e9fc9d
+          if [[ ! "$VAPOR_PLATFORM_REVISION" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'Invalid pinned Platform source revision' >&2
+            exit 1
+          fi
           credential_helper="$RUNNER_TEMP/vapor-git-credential"
           cat > "$credential_helper" <<'SH'
           #!/bin/sh
@@ -140,28 +148,8 @@ jobs:
           VAPOR_GIT="$(command -v git)"
           test -x "$VAPOR_GIT"
           export VAPOR_GIT
-          platform_revision="$(python3 - <<'PY'
-          import os
-          import json
-          import urllib.request
-          token = os.environ.get("VAPOR_SOURCE_READ_TOKEN", "")
-          request = urllib.request.Request(
-              "https://api.github.com/repos/GHF-Studios/Vapor-Platform-Server/commits/main",
-              headers={
-                  "Accept": "application/vnd.github+json",
-                  "User-Agent": "Vapor-release-workflow",
-                  **({"Authorization": f"Bearer {token}"} if token else {}),
-              },
-          )
-          with urllib.request.urlopen(request, timeout=30) as response:
-              commit = json.load(response)["sha"]
-          if len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit):
-              raise SystemExit("Platform source API returned an invalid commit SHA")
-          print(commit)
-          PY
-          )"
           vapor-installer source clone Vapor-Client --revision "$VAPOR_CLIENT_REVISION"
-          vapor-installer source clone Vapor-Platform-Server --revision "$platform_revision"
+          vapor-installer source clone Vapor-Platform-Server --revision "$VAPOR_PLATFORM_REVISION"
           unset VAPOR_GIT
 
       - name: Build and stage with Vapor
