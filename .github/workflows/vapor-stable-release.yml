@@ -234,7 +234,7 @@ jobs:
           # Vapor build. The signed App Instance establishes the release trust
           # root; this exact, pinned bootstrap is removed after stable publish.
           "$role_installer" dev-env install --app-root "$VAPOR_HOME"
-          "$role_installer" superworkspace create
+          "$role_installer" superworkspace create --app-root "$VAPOR_HOME"
           role_status="$("$role_installer" role status)"
           case "$role_status" in
             *"Installed role: Developer"*) echo 'Vapor is already set up as Developer.' ;;
