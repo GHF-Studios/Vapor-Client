@@ -182,14 +182,14 @@ jobs:
           import urllib.request
           import zipfile
 
-          tag = "temp-vapor-role-bootstrap-74a45cbe"
-          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-bootstrap-74a45cbe.zip"
-          expected_archive_size = 10061724
-          expected_archive_sha256 = "8bb61f731baf18c89cccf62d1343facaba9cc2de007583fab4ce10840fe40094"
-          expected_revision = "74a45cbe84ecb2432e95bdea8cbe97829af379f3"
+          tag = "temp-vapor-role-bootstrap-26cdce1a"
+          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-bootstrap-26cdce1a.zip"
+          expected_archive_size = 10060738
+          expected_archive_sha256 = "a156b7c0ef8630cfc5b691de0b30a6e34ee61c97b5781aa82f3b163677f68fdb"
+          expected_revision = "26cdce1a878b8c89f271411b0eeeb6cc16b0f414"
           expected_target = "x86_64-pc-windows-gnullvm"
           expected_files = {
-              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42737664, "67ce8776e4e793c40277bfa7c9f406ecda5498ea0eef9897eb03a98b3e5933e3"),
+              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42747904, "3c219bfca864f16dff6a85fd2b71ea668d936ff330f9b9c1770e5f29d7d108a2"),
               "bin/x86_64-pc-windows-gnullvm/libunwind.dll": (204288, "8d9f60801f50c0a6cb7beb7fd2e121f98bf39ebe40e6c7e07a8a39fccb817c03"),
           }
           with urllib.request.urlopen(archive_url, timeout=60) as response:
@@ -539,7 +539,7 @@ jobs:
         run: |
           set -euo pipefail
           repo='GHF-Studios/Vapor-Client'
-          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe)
+          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a)
           api="https://api.github.com/repos/$repo"
           headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
           for tag in "${tags[@]}"; do
