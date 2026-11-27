@@ -226,3 +226,30 @@ license and notice inventory, signed release references, and Developer setup
 activation are still open. Windows MinGit/source inventory and clean-machine
 bootstrap are also outstanding. No Steam payload changed and no tests were
 run.
+
+## Linux corresponding-source bundle checkpoint — 2026-11-27
+
+The Linux shadow build now creates a cache-owned source bundle next to the
+candidate. It packages the five exact hash-pinned upstream archives used by
+the recipe (Git, GNU Make, curl, OpenSSL, and zlib), the license/notice files
+extracted from those archives, a combined `THIRD_PARTY_NOTICES.txt`, and a
+machine-readable `components.json` containing each source URL, version, digest,
+build role, observed license-text identification, toolchain identity, feature
+set, and notice-file digest. The archive uses normalized ordering, timestamps,
+and owner metadata; its SHA-256 and byte count are recorded in the validated
+cache marker and surfaced by `sdk git build`.
+
+The recipe changed to `2026-11-27.16`. Vapor-managed Core/CLI compilation
+passed, and the updated managed Git build produced a 68,884,480-byte bundle
+with SHA-256
+`cdcc76fff04c2113e9103cf21226291347f54182a3e83857ceb79270b18a72d5`. An
+independent archive inspection found 41 unique safe members, verified all five
+embedded source archive digests and all twelve extracted notice digests, and
+confirmed a repeat `sdk git build` reused the same cache key
+`9e2aa0b0c43ed5bc0a35f8468f345c820bbc702e0cbccde409195eeb1cd630fc`.
+
+This is source-and-notice packaging evidence, not a completed component map or
+legal review. The manifest explicitly says review is incomplete; the
+candidate remains `distribution_eligible=false`, under disposable build
+cache only. No tests ran, no provider was installed or published, and Steam
+was untouched.

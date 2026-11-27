@@ -5,7 +5,7 @@ work. The governing behavior lives in [`AGENTS.md`](../../AGENTS.md).
 
 ## Ordered work
 
-1. `standalone-vapor-runtime` — foreground.
+1. `standalone-vapor-runtime` — foreground; includes the owner-folded Vapor#4 managed-Git/bootstrap work.
 2. `standalone-app-updater` — suspended as an implementation component of the runtime workstream.
 3. `workshop-content-superpass` — suspended; its content-authoring scope remains intact.
 4. `source-atomization-raw-info-dump` — suspended.
