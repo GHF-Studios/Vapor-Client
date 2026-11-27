@@ -132,6 +132,14 @@ jobs:
           export GIT_CONFIG_KEY_1=credential.helper
           export GIT_CONFIG_VALUE_1="!$credential_helper"
           export GIT_TERMINAL_PROMPT=0
+          # The signed bootstrap release predates managed-Git provisioning.
+          # For this one source-acquisition transition, explicitly select the
+          # runner Git as Vapor's provider. All clone/fetch/checkout/submodule
+          # operations still run through `vapor provider git run`; do not call
+          # Git directly here or persist this override into later steps.
+          VAPOR_GIT="$(command -v git)"
+          test -x "$VAPOR_GIT"
+          export VAPOR_GIT
           platform_revision="$(python3 - <<'PY'
           import os
           import json
@@ -154,6 +162,7 @@ jobs:
           )"
           vapor-installer source clone Vapor-Client --revision "$VAPOR_CLIENT_REVISION"
           vapor-installer source clone Vapor-Platform-Server --revision "$platform_revision"
+          unset VAPOR_GIT
 
       - name: Build and stage with Vapor
         shell: bash
