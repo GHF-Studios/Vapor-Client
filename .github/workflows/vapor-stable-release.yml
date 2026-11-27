@@ -164,9 +164,13 @@ jobs:
           role_installer="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
           runner_temp="$(cygpath -u "$RUNNER_TEMP")"
           test -x "$role_installer"
-          if "$role_installer" role --help >/dev/null 2>&1; then
-            echo 'The signed stable installation provides role management; skipping the temporary bootstrap.'
-          else
+          role_status_exit=0
+          role_status="$("$role_installer" role status 2>&1)" || role_status_exit=$?
+          if [[ "$role_status_exit" -ne 0 ]]; then
+            if ! grep -Fq "unknown command 'role'" <<<"$role_status"; then
+              printf '%s\n' "$role_status" >&2
+              exit "$role_status_exit"
+            fi
             echo 'The signed stable installation predates role management; using the pinned temporary bootstrap.'
             python - <<'PY'
           import hashlib
@@ -234,9 +238,11 @@ jobs:
           PY
             role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
             test -x "$role_installer"
+            role_status="$("$role_installer" role status)"
+          else
+            echo 'The signed stable installation provides role management; skipping the temporary bootstrap.'
           fi
 
-          role_status="$("$role_installer" role status)"
           case "$role_status" in
             *"Installed role: Developer"*) echo 'Vapor is already set up as Developer.' ;;
             *"Installed role: Player"*)
