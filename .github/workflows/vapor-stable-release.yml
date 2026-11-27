@@ -210,14 +210,16 @@ jobs:
           # The signed bootstrap predates the runtime-target correction in the
           # source-clone implementation. Its source-clone command resolves the
           # installed CLI using the compiler host target, which is absent from
-          # the packaged Windows runtime. Bootstrap the two exact checkouts
-          # through Vapor's Git provider directly until a corrected bootstrap
-          # is published. Do not call Git directly or persist the provider
-          # override into later steps.
+          # the packaged Windows runtime. Temporarily select runner Git as
+          # Vapor's explicit provider, then use Vapor's supported role
+          # promotion so provider operations and the managed build require a
+          # real Developer installation. Do not call Git directly or persist
+          # this provider override into later steps.
           git_shell="$(command -v git)"
           test -x "$git_shell"
           VAPOR_GIT="$(cygpath -w "$git_shell")"
           export VAPOR_GIT
+          vapor-installer role promote developer
           sources="$HOME/Vapor/sources"
           test -d "$sources"
           clone_pinned_source() {
