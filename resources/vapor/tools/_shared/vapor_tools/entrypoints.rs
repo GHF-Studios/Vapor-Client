@@ -663,12 +663,8 @@ pub fn source_status_at(
             println!("  clone: {command}");
             continue;
         }
-        let Some(vapor_home) = vapor_home.as_deref() else {
-            println!("  status unavailable: Vapor home could not be resolved");
-            continue;
-        };
         match vapor_git_command(
-            vapor_home,
+            &vapor_home,
             [
                 std::ffi::OsString::from("-C"),
                 git_worktree_path(&root).into_os_string(),
