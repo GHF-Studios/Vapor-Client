@@ -330,3 +330,24 @@ redistribution review incomplete, with binary-to-component attribution and
 legal review still open. Windows MinGit inventory, Developer setup
 provisioning, signed release integration, and clean-machine bootstrap remain
 outstanding. No release was published and no Steam files changed.
+
+## Windows MinGit layout checkpoint — 2026-11-27
+
+The selected upstream x64 MinGit 2.56.1 release is built from Git for
+Windows' UCRT64 environment. The upstream MinGit build recipe derives both
+the executable tree and its `libexec` layout from `MSYSTEM`; the Git for
+Windows 2.56 release notes say `/ucrt64/bin/git.exe` replaced
+`/mingw64/bin/git.exe` and recommend the stable `/cmd/git.exe` entry point.
+Vapor's managed provider already selects `cmd/git.exe`, but it previously
+hard-coded Git helper and template discovery to `mingw64`, which can leave
+MinGit unable to find helpers such as `git-remote-https` after provisioning.
+
+The provider now detects a managed `ucrt64/libexec/git-core` tree first,
+retains `mingw64` as a compatibility layout, and derives both helper and
+template paths from the selected tree. Vapor-managed `sdk build` compiled the
+Linux workspace after this change. The Windows archive itself has not yet
+been acquired and inspected through Vapor, so this is a source-backed layout
+correction, not Windows runtime proof or a complete MinGit inventory. The
+archive's component/source/notice and redistribution review, Developer setup,
+signed release integration, and clean-machine bootstrap remain open. No tests
+ran, no Git provider was activated or published, and Steam was untouched.
