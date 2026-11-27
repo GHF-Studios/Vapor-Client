@@ -285,7 +285,7 @@ jobs:
           esac
           "$role_installer" role status
           "$role_installer" superworkspace create --app-root "$VAPOR_HOME"
-          "$release_cli" --version
+          "$release_cli" --help >/dev/null
 
       - name: Resolve and clone exact source revisions through Vapor
         shell: bash
