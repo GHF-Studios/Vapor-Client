@@ -133,10 +133,20 @@ system package.
 ## Open implementation detail
 
 The Linux builder must produce a runtime bundle with a known dependency closure
-using Vapor-managed compiler/toolchain inputs. The first release transition
-must also bootstrap source acquisition from the currently published setup,
-which predates managed Git. Preserve the explicit-provider capability for this
-transition; do not bake a permanent host-Git fallback into clean-machine CI.
+using Vapor-managed compiler/toolchain inputs. The published 0.1.1 setup
+predates both role management in `vapor-installer` and distributable managed
+Git. Its `dev-env install` provisions the managed compiler but leaves the
+installation in Player role, while root release builds are Developer-only.
+For this first transition, the release workflow may use GitHub checkout only
+when the installed bootstrap has no role command: copy that exact Client
+revision into a temporary canonical `Vapor/sources` seed, build the current
+Installer with `vapor sdk build`, and use that Installer's role promotion to
+reconcile Developer setup. Then remove the seed and reacquire Client and
+Platform through Vapor's Git provider. The signed bootstrap's role command
+should make this source seed unnecessary on later releases. Until a managed
+Git payload passes its distribution gates, CI may select its runner Git only
+as an explicit `VAPOR_GIT` provider override; never use ambient PATH fallback
+or invoke Git directly.
 
 The native Git cache must coexist with Vapor's disposable-output and Cargo
 cache ownership. A repeat build with unchanged inputs should reuse configured

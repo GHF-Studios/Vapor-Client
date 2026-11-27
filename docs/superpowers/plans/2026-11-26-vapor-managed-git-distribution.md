@@ -420,3 +420,38 @@ This is implementation and compiler evidence, not a publishable payload: Linux
 Git remains marked `distribution_eligible=false`, and Windows MinGit component
 source, file attribution, notices, and redistribution review are incomplete.
 The active signed feed was not changed; no Git was installed or published.
+
+## Published-bootstrap role bridge — 2026-11-27
+
+The currently published 0.1.1 Installer exposes `dev-env install` but no
+`role` command. Run #12 confirmed that the legacy setup provisions its
+toolchain without changing the persisted Player role; source-provider actions
+then stop at the Developer workflow gate. Client `root build --release` is
+also a Developer workflow, so a GitHub checkout alone cannot close this cycle.
+
+The release workflow now probes the installed Installer. Only when the signed
+bootstrap lacks role management, it uses GitHub checkout at the event's exact
+Client commit, copies source into a temporary hidden path beneath the canonical
+Superworkspace, builds the current Installer with the installed
+`vapor sdk --workspace … build`, and uses that current Installer to promote
+the installation through Core's Developer reconciliation. It supplies the
+runner Git only as an explicit temporary `VAPOR_GIT` provider while managed
+Git remains distribution-ineligible. The seed and checkout are removed before
+Client and Platform are reacquired through Vapor's provider. Once the signed
+bootstrap exposes role management, the checkout/build bridge is skipped.
+
+The Linux local reproduction built the Installer workspace through Vapor's
+SDK in 8.45 seconds and the resulting binary reported the current Developer
+role. This proves the managed build path and current Installer command, not
+Windows hosted-runner execution or compatibility with the older packaged
+Client service. The release workflow run remains the next integration proof;
+managed-Git eligibility and license review stay open.
+
+The exact signed Linux 0.1.1 bootstrap was also exercised in a fresh isolated
+home. Its `vapor sdk` command stopped before SDK execution because the local
+Client service endpoint was unavailable. That probe omitted the workflow's
+preceding `dev-env install`; run #12's hosted-runner log shows the service
+process remained alive until job cleanup. Treat the isolated failure as a
+missing workflow precondition, not evidence that the SDK bridge works or fails.
+The next `dev` workflow run must settle this on the actual Windows runner before
+the bridge is considered proven.

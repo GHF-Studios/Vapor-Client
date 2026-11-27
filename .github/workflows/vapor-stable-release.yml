@@ -155,9 +155,9 @@ jobs:
           echo "VAPOR_HOME=$vapor_root" >> "$GITHUB_ENV"
           echo "$vapor_root/bin/x86_64-pc-windows-gnullvm" >> "$GITHUB_PATH"
           export PATH="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
-          # The signed 0.1.1 bootstrap predates `role promote`; its supported
-          # Developer setup entrypoint is `dev-env install`. Keep setup inside
-          # Vapor so the managed tools are provisioned before source/build work.
+          # The signed 0.1.1 bootstrap predates role management. Install its
+          # managed compiler/toolchains first; the next step builds the current
+          # role-aware Installer through Vapor's SDK before Developer work.
           # This bootstrap compares canonical Windows roots against an
           # uncanonicalized child path; use the Win32 extended-path spelling
           # for this provisioning process. The actual location remains the
@@ -166,6 +166,116 @@ jobs:
           export LOCALAPPDATA="\\\\?\\$local_appdata"
           vapor-installer dev-env install --app-root "$VAPOR_HOME"
           vapor-installer superworkspace create
+
+      - id: bootstrap_role
+        name: Check whether the installed bootstrap can manage roles
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          role_status="$(vapor-installer role status 2>&1)"
+          role_status_code=$?
+          set -e
+          if [[ "$role_status_code" -eq 0 ]]; then
+            case "$role_status" in
+              *"Installed role: Player"*|*"Installed role: Developer"*)
+                echo "$role_status"
+                echo 'needs_source_seed=false' >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                printf '%s\n' "$role_status" >&2
+                echo 'Role status returned an unrecognized result' >&2
+                exit 1
+                ;;
+            esac
+          elif [[ "$role_status" == *"unknown command 'role'"* ]]; then
+            echo 'Installed signed bootstrap predates role management.'
+            echo 'needs_source_seed=true' >> "$GITHUB_OUTPUT"
+          else
+            printf '%s\n' "$role_status" >&2
+            exit "$role_status_code"
+          fi
+
+      - name: Seed the exact Client source for the first role-aware bootstrap
+        if: steps.bootstrap_role.outputs.needs_source_seed == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: vapor-client-bootstrap
+          submodules: recursive
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Build the role-aware Installer and promote through Vapor
+        shell: bash
+        run: |
+          set -euo pipefail
+          role_installer="$(command -v vapor-installer)"
+          if [[ "${{ steps.bootstrap_role.outputs.needs_source_seed }}" == 'true' ]]; then
+            runner_workspace="$(cygpath -u "$GITHUB_WORKSPACE")"
+            checkout_root="$runner_workspace/vapor-client-bootstrap"
+            sources="$HOME/Vapor/sources"
+            bootstrap_source="$sources/.Vapor-Client.bootstrap.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
+            test -d "$sources"
+            test -f "$checkout_root/Vapor-Installer/Workspace.vapor.toml"
+            test -f "$checkout_root/Vapor-Installer/Cargo.lock"
+            test -d "$checkout_root/Vapor/crates/vapor_core"
+            test ! -e "$bootstrap_source"
+            python - "$checkout_root" "$bootstrap_source" <<'PY'
+          import shutil
+          import sys
+          from pathlib import Path
+
+          source, destination = map(Path, sys.argv[1:])
+          shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git'))
+          PY
+            rm -rf -- "$checkout_root"
+            cleanup_bootstrap_source() {
+              rm -rf -- "$bootstrap_source"
+            }
+            trap cleanup_bootstrap_source EXIT
+
+            installer_workspace="$(cygpath -w "$bootstrap_source/Vapor-Installer")"
+            runner_temp="$(cygpath -u "$RUNNER_TEMP")"
+            sdk_build_log="$runner_temp/vapor-installer-bootstrap-build.log"
+            vapor sdk --verbose --workspace "$installer_workspace" build 2>&1 | tee "$sdk_build_log"
+            cargo_target_dir="$(python - "$sdk_build_log" <<'PY'
+          import sys
+          from pathlib import Path
+
+          for line in Path(sys.argv[1]).read_text(encoding='utf-8').splitlines():
+              if line.startswith('  cargo_target_dir:'):
+                  print(line.split(':', 1)[1].strip())
+                  break
+          else:
+              raise SystemExit('Vapor SDK build did not report its managed Cargo output root')
+          PY
+          )"
+            cargo_target_dir="$(cygpath -u "$cargo_target_dir")"
+            role_installer="$cargo_target_dir/debug/vapor-installer.exe"
+            test -x "$role_installer"
+            "$role_installer" role status
+          fi
+
+          role_status="$("$role_installer" role status)"
+          case "$role_status" in
+            *"Installed role: Developer"*)
+              echo 'Vapor is already set up as Developer.'
+              ;;
+            *"Installed role: Player"*)
+              git_shell="$(command -v git)"
+              test -x "$git_shell"
+              export VAPOR_GIT="$(cygpath -w "$git_shell")"
+              "$role_installer" role promote developer
+              unset VAPOR_GIT
+              ;;
+            *)
+              printf '%s\n' "$role_status" >&2
+              echo 'Vapor returned an unrecognized installed-role state' >&2
+              exit 1
+              ;;
+          esac
+          "$role_installer" role status
 
       - name: Resolve and clone exact source revisions through Vapor
         shell: bash
