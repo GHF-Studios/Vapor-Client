@@ -160,7 +160,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
+          vapor_root_shell="$(cygpath -u "$VAPOR_HOME")"
+          role_installer="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
+          runner_temp="$(cygpath -u "$RUNNER_TEMP")"
+          test -x "$role_installer"
+          if "$role_installer" role --help >/dev/null 2>&1; then
+            echo 'The signed stable installation provides role management; skipping the temporary bootstrap.'
+          else
+            echo 'The signed stable installation predates role management; using the pinned temporary bootstrap.'
+            python - <<'PY'
           import hashlib
           import io
           import json
@@ -224,16 +232,40 @@ jobs:
                   output.write_bytes(data)
 
           PY
-          runner_temp="$(cygpath -u "$RUNNER_TEMP")"
-          role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
-          test -x "$role_installer"
-          # The signed App Instance establishes the release trust root. This
-          # exact, pinned bootstrap owns Developer setup until stable publish;
-          # promotion installs Vapor-managed tools and Git as one operation.
+            role_installer="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
+            test -x "$role_installer"
+          fi
+
           role_status="$("$role_installer" role status)"
           case "$role_status" in
             *"Installed role: Developer"*) echo 'Vapor is already set up as Developer.' ;;
-            *"Installed role: Player"*) "$role_installer" role promote developer ;;
+            *"Installed role: Player"*)
+              promotion_log="$runner_temp/vapor-role-promotion.log"
+              if "$role_installer" role promote developer >"$promotion_log" 2>&1; then
+                cat "$promotion_log"
+              else
+                promotion_status=$?
+                cat "$promotion_log" >&2
+                if ! grep -Fq 'signed stable Vapor release does not include a distributable Git payload' "$promotion_log"; then
+                  exit "$promotion_status"
+                fi
+
+                # This fallback is limited to the ephemeral hosted release
+                # job while the signed stable manifest has no eligible Git
+                # payload. Vapor owns and invokes the explicit provider; the
+                # runner executable is never packaged. Managed signed Git is
+                # always attempted first and remains authoritative when present.
+                runner_git="$(command -v git)"
+                test -n "$runner_git"
+                "$role_installer" provider git link "$(cygpath -w "$runner_git")"
+                provider_status="$("$role_installer" provider git status)"
+                printf '%s\n' "$provider_status"
+                grep -Fq 'Status: ready' <<<"$provider_status"
+                grep -Fq 'Source: linked provider' <<<"$provider_status"
+                echo 'VAPOR_RELEASE_CI_GIT_PROVIDER_LINKED=true' >> "$GITHUB_ENV"
+                "$role_installer" role promote developer
+              fi
+              ;;
             *) printf '%s\n' "$role_status" >&2; echo 'Unexpected Vapor role state' >&2; exit 1 ;;
           esac
           "$role_installer" role status
@@ -281,9 +313,10 @@ jobs:
           export GIT_CONFIG_KEY_1=credential.helper
           export GIT_CONFIG_VALUE_1="!$credential_helper"
           export GIT_TERMINAL_PROMPT=0
-          # Developer role promotion above installs Vapor's pinned Git. Source
-          # acquisition must resolve that managed provider; Actions runner Git
-          # is not an implicit or temporary fallback.
+          # Source acquisition always uses Vapor's provider. The signed
+          # managed Git provider is preferred; if its payload is not yet
+          # distributable, the prior setup step explicitly links this
+          # ephemeral runner's Git for this job only.
           sources="$HOME/Vapor/sources"
           test -d "$sources"
           clone_pinned_source() {
@@ -336,6 +369,20 @@ jobs:
           with Path(sys.argv[2]).open("a") as env:
               env.write(f"VAPOR_STAGED_ROOT={matches[0]}\n")
           PY
+
+      - name: Clear the temporary CI Git provider link
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${VAPOR_RELEASE_CI_GIT_PROVIDER_LINKED:-}" != true ]]; then
+            echo 'No temporary runner Git provider was linked.'
+            exit 0
+          fi
+          vapor_root_shell="$(cygpath -u "$VAPOR_HOME")"
+          installed_installer="$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
+          test -x "$installed_installer"
+          "$installed_installer" provider git clear
 
       - name: Verify Windows setup and prepare the package job inputs
         shell: bash
