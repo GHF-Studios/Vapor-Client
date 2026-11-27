@@ -355,8 +355,9 @@ Git for Windows release into `User Data/cache/build/native-tools/git/windows`,
 verified its SHA-256 (`4a92850b6e917da4fd010669b614b55dccf5b0ec333a534cc4be4700dfefdafd`),
 and wrote a per-file path/size/hash inventory next to it. The 39,849,768-byte
 ZIP contains 375 files totaling 96,243,738 expanded bytes, including 91 EXEs,
-96 DLLs, and 47 license/notice paths. The cache inventory also captures the
-upstream package-version list and the complete `etc/libexec-moved.txt` mapping.
+96 DLLs, and 47 license/notice paths. The cache inventory also parses 67
+package-version rows representing 65 package names, retains the original
+package-version text, and captures the complete `etc/libexec-moved.txt` mapping.
 
 The archive confirms the stable launcher at `cmd/git.exe` and current Git at
 `ucrt64/bin/git.exe`. Relocated helper EXEs such as `git-remote-https.exe` and
