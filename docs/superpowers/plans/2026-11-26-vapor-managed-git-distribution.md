@@ -393,3 +393,30 @@ package page is not exact source/build evidence for this artifact. Keep
 Windows distribution eligibility closed until matching package sources,
 source-build inputs, component-to-file attribution, and required notices are
 established. No legal-compliance claim is made.
+
+## Shared Developer provisioning checkpoint — 2026-11-27
+
+The signed-release verifier now lives in Vapor Core and is re-exported by the
+standalone Installer, keeping the pinned key, manifest schema, and asset URL
+rules in one authority. Core's Developer reconciliation can acquire the
+manifest-declared Git payload, verify its signed size and digest, safely extract
+regular files/directories and contained hard links into same-volume staging,
+run the staged provider, then atomically activate it at `Vapor User
+Data/tools/git`. Hard links are required by the Linux candidate's argv0 command
+aliases; symbolic links and unresolved/out-of-tree hard links remain rejected.
+A valid explicit provider remains authoritative; an invalid explicit link is
+reported rather than silently replaced.
+
+Developer role reconciliation and Installer `dev-env install` use this same Git
+acquisition path. The Installer's wider SteamCMD/Rust/cross-tool setup remains
+a separate maintenance sequence, so full Developer provisioning has not yet
+converged on one reconciler. Setup writes its ready receipt only after Git
+provisioning succeeds, and explicit Developer teardown removes the managed
+`tools/git` payload. Player setup does not request Git. The complete Vapor Core
+and standalone Installer workspaces compiled in release mode through installed
+Vapor-managed Cargo. Tests and runtime installation were not run.
+
+This is implementation and compiler evidence, not a publishable payload: Linux
+Git remains marked `distribution_eligible=false`, and Windows MinGit component
+source, file attribution, notices, and redistribution review are incomplete.
+The active signed feed was not changed; no Git was installed or published.

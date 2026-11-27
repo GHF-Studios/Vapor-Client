@@ -22,7 +22,10 @@ pub fn setup_player_for(vapor_home: &Path) -> Result<(), String> {
 }
 
 fn setup_development(vapor_home: &Path) -> Result<(), String> {
-    setup_development_with_progress(vapor_home, |_| {})
+    let installer = app_control_runner(vapor_home);
+    let mut command = Command::new(installer);
+    command.args(["dev-env", "install", "--app-root"]).arg(vapor_home);
+    run(&mut command)
 }
 
 fn install_managed_toolchain() -> Result<(), String> {
@@ -48,12 +51,13 @@ fn install_managed_toolchain() -> Result<(), String> {
     Ok(())
 }
 
-/// Prepare the complete app-local developer toolchain while reporting the
-/// current setup stage to GUI callers. The CLI uses the same implementation
-/// without a progress receiver.
-pub fn setup_development_with_progress(
+/// Reconcile the complete developer tool layer, invoking the owning Core
+/// operation before marking setup ready. The Installer supplies the signed
+/// Git acquisition callback so CLI and role promotion share that provider.
+pub fn setup_development_with_git(
     vapor_home: &Path,
     mut report_progress: impl FnMut(&str),
+    ensure_git: impl FnOnce(&mut dyn FnMut(&str)) -> Result<(), String>,
 ) -> Result<(), String> {
     report_progress("Preparing Player prerequisites");
     setup_player(vapor_home)?;
@@ -61,6 +65,11 @@ pub fn setup_development_with_progress(
     fs::create_dir_all(&tools_root).map_err(io("create Vapor developer home", &tools_root))?;
     println!();
     println!("Setup Development");
+    // Git is a mandatory Developer capability and may require a signed release
+    // download. Resolve it before downloading the larger compiler/tool bundle so
+    // a missing Git release fails early instead of leaving expensive partial
+    // setup behind.
+    ensure_git(&mut report_progress)?;
     if !steamcmd_status(&tools_root).ready {
         install_steamcmd(&tools_root)?;
     } else {
@@ -123,6 +132,7 @@ fn teardown_development(vapor_home: &Path) -> Result<(), String> {
         "rustup",
         "rustup-home",
         "cargo-home",
+        "tools/git",
         "tools/steamcmd",
         "tools/zig",
         "tools/llvm-mingw",

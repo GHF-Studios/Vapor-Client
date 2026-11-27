@@ -52,9 +52,12 @@ rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardo
 ```
 
 `setup_player.rs` creates Player state in Vapor User Data; it needs no developer toolchain.
-`setup_development.rs` installs/reconciles Rust/Cargo/rustup, Rust
-targets/components, SteamCMD, Zig, llvm-mingw, and cross-linker wrappers in
-Vapor User Data. The Steam app root contains the launch and setup entry points.
+`setup_development.rs` delegates to the precompiled Installer, which
+installs/reconciles Vapor-managed Git, Rust/Cargo/rustup, Rust targets and
+components, SteamCMD, Zig, llvm-mingw, and cross-linker wrappers in Vapor User
+Data. Git comes from the signed stable Vapor release and is stored under
+`tools/git`; Player setup never provisions it. The Steam app root contains the
+launch and setup entry points.
 
 ## RustRover
 

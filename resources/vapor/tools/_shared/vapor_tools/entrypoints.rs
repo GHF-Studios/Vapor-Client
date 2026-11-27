@@ -10,7 +10,25 @@ pub fn status_main() -> Result<(), String> {
         println!("  {}", super_root.display());
     }
     println!();
+    let installation = vapor_core::VaporInstallation::from_explicit_root(vapor_home.clone())
+        .map_err(|error| error.to_string())?;
+    let git_provider = vapor_core::git_provider::resolve(&tools_root, &installation.state_root());
+    let git_status = match &git_provider {
+        Ok(provider) => ComponentStatus {
+            label: "Git provider",
+            ready: true,
+            path: provider.path().to_path_buf(),
+            missing: Vec::new(),
+        },
+        Err(error) => ComponentStatus {
+            label: "Git provider",
+            ready: false,
+            path: tools_root.join("tools/git"),
+            missing: vec![error.clone()],
+        },
+    };
     print_component(&directories_status());
+    print_component(&git_status);
     print_component(&steamcmd_status(&tools_root));
     print_component(&rust_status(&tools_root));
     print_component(&cross_status(&tools_root));
@@ -23,6 +41,7 @@ pub fn status_main() -> Result<(), String> {
             shell_arg(&vapor_home)
         );
     } else if !steamcmd_status(&tools_root).ready
+        || !git_status.ready
         || !rust_status(&tools_root).ready
         || !cross_status(&tools_root).ready
     {
