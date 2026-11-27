@@ -214,14 +214,14 @@ jobs:
           import urllib.request
           import zipfile
 
-          tag = "temp-vapor-role-bootstrap-382bedb"
-          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-bootstrap-382bedb.zip"
-          expected_archive_size = 10050812
-          expected_archive_sha256 = "481bc468cb1bd3f99f7ce9154e17912c66a6847f49c90a8d11151028892f7fca"
-          expected_revision = "382bedbdffc0b7d6fd8a18498c86843b53657051"
+          tag = "temp-vapor-role-bootstrap-1a57a19f"
+          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-bootstrap-1a57a19f.zip"
+          expected_archive_size = 9950063
+          expected_archive_sha256 = "1340a158918e13ba413e9ff7f0abc75cad3c15e5f28d2a99357a931d20ba543f"
+          expected_revision = "1a57a19f0754373db0c04a4826445e5c84fc5c86"
           expected_target = "x86_64-pc-windows-gnullvm"
           expected_files = {
-              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42724864, "31ffa5359215f550934308fe0acb08e7c7f17d12fd22906aa0cc29ce3edce10d"),
+              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42735616, "b1ec507424f70f9dd31d4845a3196a7df8f5dcabdf6bf3d79d4ade25f56556e6"),
               "bin/x86_64-pc-windows-gnullvm/libunwind.dll": (204288, "8d9f60801f50c0a6cb7beb7fd2e121f98bf39ebe40e6c7e07a8a39fccb817c03"),
           }
           with urllib.request.urlopen(archive_url, timeout=60) as response:
@@ -537,27 +537,29 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Delete only the temporary bootstrap release and tag
+      - name: Delete only the temporary bootstrap releases and tags
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           repo='GHF-Studios/Vapor-Client'
-          tag='temp-vapor-role-bootstrap-382bedb'
+          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb)
           api="https://api.github.com/repos/$repo"
           headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
-          release_json="$RUNNER_TEMP/temporary-role-bootstrap-release.json"
-          status="$(curl -sS --retry 3 --retry-all-errors -o "$release_json" -w '%{http_code}' "${headers[@]}" "$api/releases/tags/$tag")"
-          case "$status" in
-            404) echo 'Temporary bootstrap release is already absent.'; release_id='' ;;
-            200) release_id="$(jq -er '.id | select(type == "number")' "$release_json")" ;;
-            *) echo "Could not inspect temporary bootstrap release (HTTP $status)." >&2; exit 1 ;;
-          esac
-          if [[ -n "$release_id" ]]; then
-            status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/releases/$release_id")"
-            [[ "$status" == '204' ]] || { echo "Could not delete temporary bootstrap release (HTTP $status)." >&2; exit 1; }
-          fi
-          status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/git/refs/tags/$tag")"
-          [[ "$status" == '204' || "$status" == '404' ]] || { echo "Could not delete temporary bootstrap tag (HTTP $status)." >&2; exit 1; }
-          echo 'Temporary role bootstrap release and tag retired after stable publication.'
+          for tag in "${tags[@]}"; do
+            release_json="$RUNNER_TEMP/temporary-role-bootstrap-$tag.json"
+            status="$(curl -sS --retry 3 --retry-all-errors -o "$release_json" -w '%{http_code}' "${headers[@]}" "$api/releases/tags/$tag")"
+            case "$status" in
+              404) echo "Temporary bootstrap release $tag is already absent."; release_id='' ;;
+              200) release_id="$(jq -er '.id | select(type == "number")' "$release_json")" ;;
+              *) echo "Could not inspect temporary bootstrap release $tag (HTTP $status)." >&2; exit 1 ;;
+            esac
+            if [[ -n "$release_id" ]]; then
+              status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/releases/$release_id")"
+              [[ "$status" == '204' ]] || { echo "Could not delete temporary bootstrap release $tag (HTTP $status)." >&2; exit 1; }
+            fi
+            status="$(curl -sS --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' -X DELETE "${headers[@]}" "$api/git/refs/tags/$tag")"
+            [[ "$status" == '204' || "$status" == '404' ]] || { echo "Could not delete temporary bootstrap tag $tag (HTTP $status)." >&2; exit 1; }
+          done
+          echo 'Temporary role bootstrap releases and tags retired after stable publication.'
