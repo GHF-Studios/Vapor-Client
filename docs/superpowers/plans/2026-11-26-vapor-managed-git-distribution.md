@@ -199,3 +199,30 @@ can reproduce the new SDK operation.
 
 No TLS backend was activated, no runtime tool was installed or published, and
 no Steam payload changed during this investigation.
+
+## Static Linux candidate checkpoint — 2026-11-27
+
+The Linux shadow recipe now builds Git 2.56.1 and its HTTPS stack from verified
+source archives with Vapor-managed Zig for `x86_64-linux-musl`: GNU Make 4.4.1,
+zlib 1.4, OpenSSL 3.5.9, curl 8.23.0, and Git 2.56.1. The build explicitly
+selects the pinned `curl-config` ahead of ambient host tools, handles OpenSSL's
+`lib64` install layout, and recognizes static-musl `ldd` output on stderr.
+
+Vapor Core and Vapor-CLI compiled successfully through Vapor-managed Cargo.
+The source-built `sdk git build` then completed and produced Git 2.56.1 in the
+disposable native build cache under cache key
+`01905e0f15a9e17155a930cab7afd98652f2b1e99c322147595a7f14e7564eb7`. Its full
+tree contains 163 executable ELF images and the runtime inventory confirms
+each is statically linked for musl with no dynamic-library closure. A repeat
+build reused the same validated cache entry. Through Vapor's explicit Git
+provider, the candidate reports its version, reads the Vapor-Client checkout,
+and successfully resolves the Git 2.56.1 tag over HTTPS.
+
+This closes the Linux compiler/runtime portability experiment for this
+candidate, not its redistribution gate. It remains in the disposable cache,
+`distribution_eligible=false`, and is not selected under `tools/git`. Its full
+corresponding-source bundle, build-script/source archive packaging, component
+license and notice inventory, signed release references, and Developer setup
+activation are still open. Windows MinGit/source inventory and clean-machine
+bootstrap are also outstanding. No Steam payload changed and no tests were
+run.
