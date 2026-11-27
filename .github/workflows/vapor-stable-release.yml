@@ -2,7 +2,7 @@ name: Vapor stable release
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -13,10 +13,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build and publish standalone Vapor
+  build-stage:
+    name: Build and stage standalone Vapor
     runs-on: ubuntu-22.04
-    environment: vapor-stable-release
+    outputs:
+      version: ${{ steps.package.outputs.version }}
     steps:
       - name: Verify and install the signed Vapor bootstrap
         shell: bash
@@ -103,7 +104,7 @@ jobs:
         shell: bash
         env:
           VAPOR_CLIENT_REVISION: ${{ github.sha }}
-          VAPOR_SOURCE_READ_TOKEN: ${{ secrets.VAPOR_SOURCE_READ_TOKEN || github.token }}
+          VAPOR_SOURCE_READ_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           # Pin the release-preparation API to the Platform revision currently
@@ -175,18 +176,11 @@ jobs:
               env.write(f"VAPOR_STAGED_ROOT={matches[0]}\n")
           PY
 
-      - name: Package, sign, and validate immutable platform bundles
-        if: github.ref == 'refs/heads/main'
+      - name: Package candidate archives for inspection
+        id: package
         shell: bash
-        env:
-          VAPOR_RELEASE_SIGNING_KEY_B64: ${{ secrets.VAPOR_RELEASE_SIGNING_KEY_B64 }}
         run: |
           set -euo pipefail
-          test -n "$VAPOR_RELEASE_SIGNING_KEY_B64" || { echo 'Missing environment secret VAPOR_RELEASE_SIGNING_KEY_B64' >&2; exit 1; }
-          umask 077
-          key="$RUNNER_TEMP/vapor-release-private.pem"
-          printf '%s' "$VAPOR_RELEASE_SIGNING_KEY_B64" | base64 --decode > "$key"
-          chmod 600 "$key"
           platform="$HOME/Vapor/sources/Vapor-Platform-Server"
           client="$HOME/Vapor/sources/Vapor-Client"
           version="$(bash "$client/release/pre-alpha-version.sh" "$VAPOR_BOOTSTRAP_VERSION")"
@@ -194,11 +188,56 @@ jobs:
           windows_archive="$RUNNER_TEMP/vapor-windows.tar.gz"
           bash "$client/release/package-vapor-standalone-archive.sh" "$VAPOR_STAGED_ROOT" linux-x86_64 "$version" "$linux_archive"
           bash "$client/release/package-vapor-standalone-archive.sh" "$VAPOR_STAGED_ROOT" windows-x86_64 "$version" "$windows_archive"
-          bash "$platform/deploy/scripts/prepare-vapor-release-bundle.sh" "$linux_archive" "$version" stable linux-x86_64 0.5.0 vapor-release-2026-11-24 "$key" "$RUNNER_TEMP/vapor-release-linux"
-          bash "$platform/deploy/scripts/prepare-vapor-release-bundle.sh" "$windows_archive" "$version" stable windows-x86_64 0.5.0 vapor-release-2026-11-24 "$key" "$RUNNER_TEMP/vapor-release-windows"
+          candidate="$RUNNER_TEMP/vapor-release-candidate"
+          mkdir -p "$candidate"
+          cp "$linux_archive" "$candidate/vapor-linux.tar.gz"
+          cp "$windows_archive" "$candidate/vapor-windows.tar.gz"
+          cp "$platform/deploy/scripts/prepare-vapor-release-bundle.sh" "$candidate/prepare-vapor-release-bundle.sh"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Upload short-lived standalone candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: vapor-standalone-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/vapor-release-candidate/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  publish:
+    name: Sign and publish standalone Vapor
+    if: github.ref == 'refs/heads/main'
+    needs: build-stage
+    runs-on: ubuntu-22.04
+    environment: vapor-stable-release
+    steps:
+      - name: Download this run's staged candidate
+        uses: actions/download-artifact@v8
+        with:
+          name: vapor-standalone-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/vapor-release-candidate
+
+      - name: Sign and validate immutable platform bundles
+        shell: bash
+        env:
+          VAPOR_RELEASE_SIGNING_KEY_B64: ${{ secrets.VAPOR_RELEASE_SIGNING_KEY_B64 }}
+          VAPOR_RELEASE_VERSION: ${{ needs.build-stage.outputs.version }}
+        run: |
+          set -euo pipefail
+          test -n "$VAPOR_RELEASE_SIGNING_KEY_B64" || { echo 'Missing environment secret VAPOR_RELEASE_SIGNING_KEY_B64' >&2; exit 1; }
+          umask 077
+          key="$RUNNER_TEMP/vapor-release-private.pem"
+          printf '%s' "$VAPOR_RELEASE_SIGNING_KEY_B64" | base64 --decode > "$key"
+          chmod 600 "$key"
+          candidate="$RUNNER_TEMP/vapor-release-candidate"
+          prep="$candidate/prepare-vapor-release-bundle.sh"
+          test -f "$candidate/vapor-linux.tar.gz"
+          test -f "$candidate/vapor-windows.tar.gz"
+          test -f "$prep"
+          bash "$prep" "$candidate/vapor-linux.tar.gz" "$VAPOR_RELEASE_VERSION" stable linux-x86_64 0.5.0 vapor-release-2026-11-24 "$key" "$RUNNER_TEMP/vapor-release-linux"
+          bash "$prep" "$candidate/vapor-windows.tar.gz" "$VAPOR_RELEASE_VERSION" stable windows-x86_64 0.5.0 vapor-release-2026-11-24 "$key" "$RUNNER_TEMP/vapor-release-windows"
 
       - name: Publish verified bundles through the restricted publisher key
-        if: github.ref == 'refs/heads/main'
         shell: bash
         env:
           VAPOR_RELEASE_SSH_HOST: ${{ vars.VAPOR_RELEASE_SSH_HOST }}
