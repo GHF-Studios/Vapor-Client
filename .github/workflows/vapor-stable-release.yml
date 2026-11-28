@@ -188,16 +188,18 @@ jobs:
           import urllib.request
           import zipfile
 
-          tag = "temp-vapor-role-cli-bootstrap-2a4cc95"
-          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-cli-bootstrap-2a4cc95.zip"
-          expected_archive_size = 46804753
-          expected_archive_sha256 = "c652c365e1c48f1fc9040a59a7d9001ec40dafead7f81181ff0702bb85e30c65"
-          expected_revision = "2a4cc95f82cb5e36b8b3dd8c158f5938d57c43dd"
+          tag = "temp-vapor-role-cli-bootstrap-430abd0"
+          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-cli-bootstrap-430abd0.zip"
+          expected_archive_size = 47317307
+          expected_archive_sha256 = "d40c70fe20d2b7ad835984d6fee477323296d514cc1788aa3b858f19bb174fd2"
+          expected_revision = "430abd0b38e3e1a0b9a2a4d2e9b961a895a35622"
           expected_vapor_repository = "GHF-Studios/Vapor"
           expected_vapor_revision = "766a9cf077424033559dfc5c6f963c5486ec94cd"
+          expected_vapor_cli_repository = "GHF-Studios/Vapor-CLI"
+          expected_vapor_cli_revision = "ff3afe494ca239c9b655dc85c965043198b12f99"
           expected_target = "x86_64-pc-windows-gnullvm"
           expected_files = {
-              "bin/x86_64-pc-windows-gnullvm/vapor.exe": (87238144, "6480af8ed65d79513248dfdad0258cad086f061302682bea3613703bf9e7c189"),
+              "bin/x86_64-pc-windows-gnullvm/vapor.exe": (87239168, "0c661a7c39f74f64174e0c4e38f8f19f419228062f33134441439d40c2e7abb1"),
               "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42919936, "348aacbd7ff9a1771d43f30e4a3939eb5c99dce84ba53469677db0330152adfc"),
               "bin/x86_64-pc-windows-gnullvm/vapor-client-service.exe": (90383360, "3d979fcefbd6ba1196ba0ec71a2eb257b20d032fdf66b6702fb12394e440550c"),
               "bin/x86_64-pc-windows-gnullvm/libunwind.dll": (204288, "8d9f60801f50c0a6cb7beb7fd2e121f98bf39ebe40e6c7e07a8a39fccb817c03"),
@@ -232,16 +234,25 @@ jobs:
                   re.fullmatch(r"[0-9a-f]{7,40}", manifest_vapor_revision) and
                   expected_vapor_revision.startswith(manifest_vapor_revision)
               )
+              manifest_vapor_cli_revision = manifest.get("vapor_cli_revision")
+              valid_vapor_cli_revision = (
+                  isinstance(manifest_vapor_cli_revision, str) and
+                  re.fullmatch(r"[0-9a-f]{7,40}", manifest_vapor_cli_revision) and
+                  expected_vapor_cli_revision.startswith(manifest_vapor_cli_revision)
+              )
               if (manifest.get("artifact") != "vapor-role-cli-bootstrap" or
                   manifest.get("repository") != "GHF-Studios/Vapor-Client" or
                   manifest.get("source_revision") != expected_revision or
                   manifest.get("vapor_repository") != expected_vapor_repository or
+                  manifest.get("vapor_cli_repository") != expected_vapor_cli_repository or
                   manifest.get("target") != expected_target or
                   manifest.get("profile") != "dev" or
                   set(manifest.get("files", {})) != set(expected_files)):
                   raise SystemExit("temporary role bootstrap manifest identity is invalid")
               if not valid_vapor_revision:
                   raise SystemExit("temporary role bootstrap Vapor revision does not match the pinned commit")
+              if not valid_vapor_cli_revision:
+                  raise SystemExit("temporary role bootstrap Vapor-CLI revision does not match the pinned commit")
               destination_root = root / "bin" / expected_target
               destination_root.mkdir(parents=True)
               for name, (expected_size, expected_digest) in expected_files.items():
@@ -573,7 +584,7 @@ jobs:
         run: |
           set -euo pipefail
           repo='GHF-Studios/Vapor-Client'
-          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575 temp-vapor-role-cli-bootstrap-e258dbc7 temp-vapor-role-cli-bootstrap-b197e429 temp-vapor-role-cli-bootstrap-b1b56c2 temp-vapor-role-cli-bootstrap-466e640 temp-vapor-role-cli-bootstrap-2a4cc95)
+          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575 temp-vapor-role-cli-bootstrap-e258dbc7 temp-vapor-role-cli-bootstrap-b197e429 temp-vapor-role-cli-bootstrap-b1b56c2 temp-vapor-role-cli-bootstrap-466e640 temp-vapor-role-cli-bootstrap-2a4cc95 temp-vapor-role-cli-bootstrap-430abd0)
           api="https://api.github.com/repos/$repo"
           headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
           for tag in "${tags[@]}"; do
