@@ -186,15 +186,17 @@ jobs:
           import urllib.request
           import zipfile
 
-          tag = "temp-vapor-role-cli-bootstrap-d8268575"
-          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-cli-bootstrap-d8268575.zip"
-          expected_archive_size = 28556561
-          expected_archive_sha256 = "341756cdb8c67a9c13eabb057dc51379107338fd7ab8292d2a7152a5907461b7"
-          expected_revision = "d8268575934c275963d3ea7677ec307191c65676"
+          tag = "temp-vapor-role-cli-bootstrap-e258dbc7"
+          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-cli-bootstrap-e258dbc7.zip"
+          expected_archive_size = 28257931
+          expected_archive_sha256 = "db7ec0eac3f049b26be58d68aef198de81889a3d4112bbda205a4f0d9cf01319"
+          expected_revision = "e258dbc71418b31f6bfa9f2784258acf0a2b2839"
+          expected_vapor_repository = "GHF-Studios/Vapor"
+          expected_vapor_revision = "b1c80909301db98b94108554e71aeedec072fd41"
           expected_target = "x86_64-pc-windows-gnullvm"
           expected_files = {
-              "bin/x86_64-pc-windows-gnullvm/vapor.exe": (87129600, "e64d1e79d8b40b79d5ff57d1c9dccd77adf8600470a2a54a15ce5d8f390178f9"),
-              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42747904, "3c219bfca864f16dff6a85fd2b71ea668d936ff330f9b9c1770e5f29d7d108a2"),
+              "bin/x86_64-pc-windows-gnullvm/vapor.exe": (87221248, "0386034fad786b3bf784f68bf4ba4db4b85b1b3bc9de38a14ad05a740a997a21"),
+              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42892800, "dec7eddc2b83050481b99f4a419309d9204e548835c1bade23cecb7b52024845"),
               "bin/x86_64-pc-windows-gnullvm/libunwind.dll": (204288, "8d9f60801f50c0a6cb7beb7fd2e121f98bf39ebe40e6c7e07a8a39fccb817c03"),
           }
           with urllib.request.urlopen(archive_url, timeout=60) as response:
@@ -224,6 +226,8 @@ jobs:
               if (manifest.get("artifact") != "vapor-role-cli-bootstrap" or
                   manifest.get("repository") != "GHF-Studios/Vapor-Client" or
                   manifest.get("source_revision") != expected_revision or
+                  manifest.get("vapor_repository") != expected_vapor_repository or
+                  manifest.get("vapor_revision") != expected_vapor_revision or
                   manifest.get("target") != expected_target or
                   manifest.get("profile") != "dev" or
                   set(manifest.get("files", {})) != set(expected_files)):
@@ -555,7 +559,7 @@ jobs:
         run: |
           set -euo pipefail
           repo='GHF-Studios/Vapor-Client'
-          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575)
+          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575 temp-vapor-role-cli-bootstrap-e258dbc7)
           api="https://api.github.com/repos/$repo"
           headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
           for tag in "${tags[@]}"; do
