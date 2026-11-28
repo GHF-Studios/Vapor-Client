@@ -223,15 +223,22 @@ jobs:
                   if entry.is_dir() or file_type not in (0, stat.S_IFREG):
                       raise SystemExit("temporary role bootstrap contains a non-regular file")
               manifest = json.loads(bundle.read("bootstrap-manifest.json"))
+              manifest_vapor_revision = manifest.get("vapor_revision")
+              valid_vapor_revision = (
+                  isinstance(manifest_vapor_revision, str) and
+                  re.fullmatch(r"[0-9a-f]{7,40}", manifest_vapor_revision) and
+                  expected_vapor_revision.startswith(manifest_vapor_revision)
+              )
               if (manifest.get("artifact") != "vapor-role-cli-bootstrap" or
                   manifest.get("repository") != "GHF-Studios/Vapor-Client" or
                   manifest.get("source_revision") != expected_revision or
                   manifest.get("vapor_repository") != expected_vapor_repository or
-                  manifest.get("vapor_revision") != expected_vapor_revision or
                   manifest.get("target") != expected_target or
                   manifest.get("profile") != "dev" or
                   set(manifest.get("files", {})) != set(expected_files)):
                   raise SystemExit("temporary role bootstrap manifest identity is invalid")
+              if not valid_vapor_revision:
+                  raise SystemExit("temporary role bootstrap Vapor revision does not match the pinned commit")
               destination_root = root / "bin" / expected_target
               destination_root.mkdir(parents=True)
               for name, (expected_size, expected_digest) in expected_files.items():
