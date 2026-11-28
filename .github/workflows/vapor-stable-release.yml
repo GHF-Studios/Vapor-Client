@@ -182,6 +182,7 @@ jobs:
           import json
           import os
           import pathlib
+          import re
           import stat
           import urllib.request
           import zipfile
