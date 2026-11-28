@@ -29,7 +29,7 @@ jobs:
           fi
 
           repo='GHF-Studios/Vapor-Client'
-          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575 temp-vapor-role-cli-bootstrap-e258dbc7)
+          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575 temp-vapor-role-cli-bootstrap-e258dbc7 temp-vapor-role-cli-bootstrap-b197e429)
           api="https://api.github.com/repos/$repo"
           headers=(-H 'Accept: application/vnd.github+json' -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
           for tag in "${tags[@]}"; do

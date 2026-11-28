@@ -186,17 +186,17 @@ jobs:
           import urllib.request
           import zipfile
 
-          tag = "temp-vapor-role-cli-bootstrap-e258dbc7"
-          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-cli-bootstrap-e258dbc7.zip"
-          expected_archive_size = 28257931
-          expected_archive_sha256 = "db7ec0eac3f049b26be58d68aef198de81889a3d4112bbda205a4f0d9cf01319"
-          expected_revision = "e258dbc71418b31f6bfa9f2784258acf0a2b2839"
+          tag = "temp-vapor-role-cli-bootstrap-b197e429"
+          archive_url = f"https://github.com/GHF-Studios/Vapor-Client/releases/download/{tag}/vapor-role-cli-bootstrap-b197e429.zip"
+          expected_archive_size = 28575518
+          expected_archive_sha256 = "e5a533f1a9a4dcc21d24ef247776d274135bb2af3b94049018f751b38def3768"
+          expected_revision = "b197e4297ec1f881e16313a707ba1334c0353e6b"
           expected_vapor_repository = "GHF-Studios/Vapor"
-          expected_vapor_revision = "b1c80909301db98b94108554e71aeedec072fd41"
+          expected_vapor_revision = "3af39358d33e21b035dee16fc4d340eb1bbf95a3"
           expected_target = "x86_64-pc-windows-gnullvm"
           expected_files = {
-              "bin/x86_64-pc-windows-gnullvm/vapor.exe": (87221248, "0386034fad786b3bf784f68bf4ba4db4b85b1b3bc9de38a14ad05a740a997a21"),
-              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42892800, "dec7eddc2b83050481b99f4a419309d9204e548835c1bade23cecb7b52024845"),
+              "bin/x86_64-pc-windows-gnullvm/vapor.exe": (87237120, "4883c1a1c0e6c33d67dd7f56752130b5fc30615eb31fb406b45f7f4c8ff2f993"),
+              "bin/x86_64-pc-windows-gnullvm/vapor-installer.exe": (42917888, "571a48be82a68c6f6b67ce34993cb006dd0552dec96cf66727a46e1f877a0dbc"),
               "bin/x86_64-pc-windows-gnullvm/libunwind.dll": (204288, "8d9f60801f50c0a6cb7beb7fd2e121f98bf39ebe40e6c7e07a8a39fccb817c03"),
           }
           with urllib.request.urlopen(archive_url, timeout=60) as response:
@@ -559,7 +559,7 @@ jobs:
         run: |
           set -euo pipefail
           repo='GHF-Studios/Vapor-Client'
-          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575 temp-vapor-role-cli-bootstrap-e258dbc7)
+          tags=(temp-vapor-role-bootstrap-1a57a19f temp-vapor-role-bootstrap-382bedb temp-vapor-role-bootstrap-35300e47 temp-vapor-role-bootstrap-74a45cbe temp-vapor-role-bootstrap-26cdce1a temp-vapor-role-cli-bootstrap-d8268575 temp-vapor-role-cli-bootstrap-e258dbc7 temp-vapor-role-cli-bootstrap-b197e429)
           api="https://api.github.com/repos/$repo"
           headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H 'X-GitHub-Api-Version: 2022-11-28')
           for tag in "${tags[@]}"; do
