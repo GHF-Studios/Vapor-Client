@@ -152,6 +152,7 @@ jobs:
           vapor_root_shell="$(cygpath -u "$vapor_root")"
           test -x "$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor-installer.exe"
           test -x "$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor.exe"
+          test -f "$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/vapor-client-service.exe"
           test -f "$vapor_root_shell/bin/x86_64-pc-windows-gnullvm/steam_api64.dll"
           export VAPOR_HOME="$vapor_root"
           echo "VAPOR_HOME=$vapor_root" >> "$GITHUB_ENV"
@@ -255,12 +256,10 @@ jobs:
           PY
             helper_bin="$runner_temp/vapor-temporary-role-bootstrap/bin/x86_64-pc-windows-gnullvm"
             role_installer="$helper_bin/vapor-installer.exe"
-            release_cli="$helper_bin/vapor.exe"
             test -x "$role_installer"
-            test -x "$release_cli"
-            echo "$(cygpath -w "$helper_bin")" >> "$GITHUB_PATH"
-            echo "VAPOR_RELEASE_CLI=$release_cli" >> "$GITHUB_ENV"
-            export PATH="$helper_bin:$vapor_root_shell/bin/x86_64-pc-windows-gnullvm:$PATH"
+            # Keep the release CLI from the signed App Instance. It shares its
+            # directory with vapor-client-service.exe; this temporary bundle
+            # provides Installer setup commands, not a complete Vapor runtime.
             role_status="$("$role_installer" role status)"
           else
             echo 'The signed stable installation provides role management; skipping the temporary bootstrap.'
